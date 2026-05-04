@@ -48,11 +48,20 @@
               withKeystonePlatform = "unmatched";
             };
           };
+          keystone-sdk = {
+            default = pkgsRiscv64.callPackage ./nix/pkgs/sdk.nix { };
+            musl = pkgsRiscv64Musl.callPackage ./nix/pkgs/sdk.nix { };
+            bench = pkgsRiscv64.callPackage ./nix/pkgs/sdk.nix { withBenchmark = true; };
+            musl-bench = pkgsRiscv64Musl.callPackage ./nix/pkgs/sdk.nix { withBenchmark = true; };
+          };
         };
 
         devShells = {
           keystone-sm = pkgsRiscv64.callPackage ./nix/shells/keystone-sm.nix {
             keystone-sm = self.packages.${system}.keystone-sm.generic;
+          };
+          keystone-sdk = pkgsRiscv64.callPackage ./nix/shells/sdk.nix {
+            keystone-sdk = self.packages.${system}.keystone-sdk.default;
           };
         };
 
