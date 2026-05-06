@@ -1,0 +1,8 @@
+eyrie-rt
+loader.bin
+.options_log
+*.o
+obj/
+.exists
+.format-diff
+.vscode/

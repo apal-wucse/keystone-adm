@@ -6,7 +6,6 @@
   cpplint,
   which,
   withBenchmark ? false,
-  ...
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "keystone-sdk";
