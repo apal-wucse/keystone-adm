@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: BSD-3-Clause
+
+obj-m += keystone-driver.o
+keystone-driver-y := \
+	keystone.o \
+	keystone-page.o \
+	keystone-ioctl.o \
+	keystone-enclave.o \
+	keystone-sbi.o
+
+KDIR ?= /usr/lib/modules/$(KVER)/build
+
+default:
+	$(MAKE) -C $(KDIR) M=$(PWD)
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
+

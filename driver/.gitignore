@@ -1,0 +1,16 @@
+# Build Artifacts
+*.ko
+*.o
+*.o.d
+*.mod.c
+*.mod
+*.cmd
+Module.symvers
+modules.order
+
+# Compiledb
+.cache/
+compile_commands.json
+
+# Editor Settings
+.vscode

@@ -1,0 +1,115 @@
+//******************************************************************************
+// Copyright (c) 2018, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+// Copyright (c) 2023, Akihiro Saiki. All Rights Reserved.
+//
+// SPDX-License-Identifier: BSD-3-Clause
+//------------------------------------------------------------------------------
+#ifndef _KEYSTONE_H_
+#define _KEYSTONE_H_
+
+#include <asm/csr.h>
+#include <asm/sbi.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/idr.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+
+/* IMPORTANT: This code assumes Sv39 */
+#include "riscv64.h"
+
+typedef uintptr_t vaddr_t;
+typedef uintptr_t paddr_t;
+
+extern struct miscdevice keystone_dev;
+
+long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg);
+int keystone_release(struct inode *inode, struct file *file);
+int keystone_mmap(struct file *filp, struct vm_area_struct *vma);
+
+/* enclave private memory */
+struct epm {
+    pte_t *root_page_table;
+    vaddr_t alloc_ptr;
+    vaddr_t ptr;
+    size_t alloc_size;
+    size_t size;
+    unsigned long order;
+    paddr_t alloc_pa;
+    paddr_t pa;
+    bool is_cma;
+};
+
+struct utm {
+    pte_t *root_page_table;
+    void *ptr;
+    size_t size;
+    unsigned long order;
+    bool is_cma;
+};
+
+/* Additional Data Memory */
+struct adm {
+    vaddr_t ptr;
+    size_t size;
+    unsigned long order;
+    paddr_t pa;
+    bool is_cma;
+    __u8 protection;
+};
+
+struct enclave {
+    unsigned long eid;
+    int close_on_pexit;
+    struct utm *utm;
+    struct epm *epm;
+    struct adm *adm;
+    bool adm_enabled;
+    __u8 map_target;
+};
+
+// global debug functions
+void debug_dump(char *ptr, unsigned long size);
+
+// runtime/app loader
+int keystone_rtld_init_runtime(
+    struct enclave *enclave, void *__user rt_ptr, size_t rt_sz, unsigned long rt_stack_sz,
+    unsigned long *rt_offset);
+
+int keystone_rtld_init_app(
+    struct enclave *enclave, void *__user app_ptr, size_t app_sz, size_t app_stack_sz,
+    unsigned long stack_offset);
+
+// untrusted memory mapper
+int keystone_rtld_init_untrusted(
+    struct enclave *enclave, void *untrusted_ptr, size_t untrusted_size);
+
+struct enclave *get_enclave_by_id(unsigned int ueid);
+struct enclave *create_enclave(unsigned long min_pages);
+int destroy_enclave(struct enclave *enclave);
+
+unsigned int enclave_idr_alloc(struct enclave *enclave);
+struct enclave *enclave_idr_remove(unsigned int ueid);
+struct enclave *get_enclave_by_id(unsigned int ueid);
+
+static inline uintptr_t epm_satp(struct epm *epm) {
+    return ((uintptr_t)epm->root_page_table >> RISCV_PGSHIFT | SATP_MODE_CHOICE);
+}
+
+int epm_destroy(struct epm *epm);
+int epm_init(struct epm *epm, unsigned int count);
+int utm_destroy(struct utm *utm);
+int utm_init(struct utm *utm, size_t untrusted_size);
+int adm_destroy(struct adm *adm);
+int adm_init(struct adm *adm, size_t adm_size, __u8 protection);
+paddr_t epm_va_to_pa(struct epm *epm, vaddr_t addr);
+
+#define keystone_info(fmt, ...) pr_info("keystone_enclave: " fmt, ##__VA_ARGS__)
+#define keystone_err(fmt, ...) pr_err("keystone_enclave: " fmt, ##__VA_ARGS__)
+#define keystone_warn(fmt, ...) pr_warn("keystone_enclave: " fmt, ##__VA_ARGS__)
+#endif

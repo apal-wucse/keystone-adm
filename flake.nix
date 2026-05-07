@@ -84,6 +84,7 @@
               withEdgeProtection = true;
             };
           };
+          driver = pkgsRiscv64.linuxPackages.callPackage ./nix/pkgs/driver.nix { };
         };
 
         devShells = {
@@ -96,6 +97,9 @@
           runtime = pkgsRiscv64.callPackage ./nix/shells/runtime.nix {
             runtime = self.packages.${system}.runtime.default;
             keystone-sdk = self.packages.${system}.keystone-sdk.default;
+          };
+          driver = pkgsRiscv64.callPackage ./nix/shells/driver.nix {
+            keystone-driver = self.packages.${system}.driver;
           };
         };
 
