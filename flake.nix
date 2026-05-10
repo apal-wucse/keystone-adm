@@ -92,6 +92,7 @@
 
           driver = pkgsRiscv64.linuxPackages.callPackage ./nix/pkgs/driver.nix { };
           bootrom = pkgsRiscv64.callPackage ./nix/pkgs/bootrom.nix { };
+          qemu = pkgs.callPackage ./nix/pkgs/qemu.nix { };
         };
 
         devShells = {
