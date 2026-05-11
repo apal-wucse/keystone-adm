@@ -39,83 +39,32 @@
             config = "riscv64-unknown-linux-musl";
           };
         };
+
+        nixosSystems = import ./nix/nixos {
+          inherit
+            nixpkgs
+            system
+            ;
+        };
       in
       {
-        packages = {
-          keystone-sm = {
-            default = pkgsRiscv64.callPackage ./nix/pkgs/keystone-sm.nix { };
-            unmatched = pkgsRiscv64.callPackage ./nix/pkgs/keystone-sm.nix {
-              withKeystonePlatform = "unmatched";
-            };
-          };
-
-          keystone-sdk = {
-            default = pkgsRiscv64.callPackage ./nix/pkgs/sdk.nix { };
-            musl = pkgsRiscv64Musl.callPackage ./nix/pkgs/sdk.nix { };
-            bench = pkgsRiscv64.callPackage ./nix/pkgs/sdk.nix { withBenchmark = true; };
-            musl-bench = pkgsRiscv64Musl.callPackage ./nix/pkgs/sdk.nix { withBenchmark = true; };
-          };
-
-          runtime = {
-            default = pkgsRiscv64.callPackage ./nix/pkgs/runtime.nix {
-              keystone-sdk = self.packages.${system}.keystone-sdk.default;
-              withFreeMem = true;
-              withLinuxSyscall = true;
-              withIoSyscall = true;
-              withNetSyscall = true;
-              withEdgeProtection = true;
-              withGlibc = true;
-            };
-
-            nolibc = pkgsRiscv64.callPackage ./nix/pkgs/runtime.nix {
-              keystone-sdk = self.packages.${system}.keystone-sdk.default;
-              withFreeMem = true;
-              withEdgeProtection = true;
-            };
-
-            musl = pkgsRiscv64Musl.callPackage ./nix/pkgs/runtime.nix {
-              keystone-sdk = self.packages.${system}.keystone-sdk.musl;
-              withFreeMem = true;
-              withLinuxSyscall = true;
-              withIoSyscall = true;
-              withNetSyscall = true;
-              withEdgeProtection = true;
-              withGlibc = true;
-            };
-
-            musl-nolibc = pkgsRiscv64Musl.callPackage ./nix/pkgs/runtime.nix {
-              keystone-sdk = self.packages.${system}.keystone-sdk.musl;
-              withFreeMem = true;
-              withEdgeProtection = true;
-            };
-          };
-
-          driver = pkgsRiscv64.linuxPackages.callPackage ./nix/pkgs/driver.nix { };
-          bootrom = pkgsRiscv64.callPackage ./nix/pkgs/bootrom.nix { };
-          qemu = pkgs.callPackage ./nix/pkgs/qemu.nix { };
+        packages = import ./nix/pkgs {
+          inherit
+            self
+            pkgs
+            pkgsRiscv64
+            pkgsRiscv64Musl
+            system
+            nixosSystems
+            ;
         };
 
-        devShells = {
-          keystone-sm = pkgsRiscv64.callPackage ./nix/shells/keystone-sm.nix {
-            keystone-sm = self.packages.${system}.keystone-sm.default;
-          };
-
-          keystone-sdk = pkgsRiscv64.callPackage ./nix/shells/sdk.nix {
-            keystone-sdk = self.packages.${system}.keystone-sdk.default;
-          };
-
-          runtime = pkgsRiscv64.callPackage ./nix/shells/runtime.nix {
-            runtime = self.packages.${system}.runtime.default;
-            keystone-sdk = self.packages.${system}.keystone-sdk.default;
-          };
-
-          driver = pkgsRiscv64.callPackage ./nix/shells/driver.nix {
-            keystone-driver = self.packages.${system}.driver;
-          };
-
-          bootrom = pkgsRiscv64.callPackage ./nix/shells/bootrom.nix {
-            bootrom = self.packages.${system}.bootrom;
-          };
+        devShells = import ./nix/shells {
+          inherit
+            self
+            pkgsRiscv64
+            system
+            ;
         };
 
         formatter = treefmt-nix.lib.mkWrapper pkgs {
