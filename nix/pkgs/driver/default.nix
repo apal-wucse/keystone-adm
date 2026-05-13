@@ -6,7 +6,7 @@ stdenv.mkDerivation (finalAttrs: {
   pname = "keystone-driver-adm";
   version = "1.0.0";
 
-  src = ../../driver;
+  src = ../../../driver;
   hardeningDisable = [
     "pic"
     "format"

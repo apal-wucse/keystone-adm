@@ -9,7 +9,8 @@ override CFLAGS := \
 	-nostdlib -nostartfiles -fno-common -std=gnu11 \
 	-static \
 	-fPIC \
-	-O2 -Wall
+	-O2 -Wall \
+	-DBOOTROM_BUILD
 O ?=.
 
 # ^ consider taking out -g -Og and putting in -O2

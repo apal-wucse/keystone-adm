@@ -10,7 +10,7 @@
 stdenv.mkDerivation (finalAttrs: {
   pname = "keystone-sdk";
   version = "1.0.0-adm" + (if withBenchmark then "-benchmark" else "");
-  src = ../../sdk;
+  src = ../../../sdk;
 
   nativeBuildInputs = [
     cmake

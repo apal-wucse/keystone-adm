@@ -34,7 +34,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   pname = "eyrie";
   version = lib.concatStringsSep "_" finalAttrs.verWithOptions;
-  src = ../../runtime;
+  src = ../../../runtime;
 
   nativeBuildInputs = [
     cmake

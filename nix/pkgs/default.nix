@@ -6,24 +6,24 @@
   system,
   nixosSystems,
 }:
-{
+rec {
   keystone-sm = {
-    default = pkgsRiscv64.callPackage ./keystone-sm.nix { };
-    unmatched = pkgsRiscv64.callPackage ./keystone-sm.nix {
+    default = pkgsRiscv64.callPackage ./keystone-sm { };
+    unmatched = pkgsRiscv64.callPackage ./keystone-sm {
       withKeystonePlatform = "unmatched";
     };
   };
 
   keystone-sdk = {
-    default = pkgsRiscv64.callPackage ./sdk.nix { };
-    musl = pkgsRiscv64Musl.callPackage ./sdk.nix { };
-    bench = pkgsRiscv64.callPackage ./sdk.nix { withBenchmark = true; };
-    musl-bench = pkgsRiscv64Musl.callPackage ./sdk.nix { withBenchmark = true; };
+    default = pkgsRiscv64.callPackage ./sdk { };
+    musl = pkgsRiscv64Musl.callPackage ./sdk { };
+    bench = pkgsRiscv64.callPackage ./sdk { withBenchmark = true; };
+    musl-bench = pkgsRiscv64Musl.callPackage ./sdk { withBenchmark = true; };
   };
 
   runtime = {
-    default = pkgsRiscv64.callPackage ./runtime.nix {
-      keystone-sdk = self.packages.${system}.keystone-sdk.default;
+    default = pkgsRiscv64.callPackage ./runtime {
+      keystone-sdk = keystone-sdk.default;
       withFreeMem = true;
       withLinuxSyscall = true;
       withIoSyscall = true;
@@ -32,14 +32,14 @@
       withGlibc = true;
     };
 
-    nolibc = pkgsRiscv64.callPackage ./runtime.nix {
-      keystone-sdk = self.packages.${system}.keystone-sdk.default;
+    nolibc = pkgsRiscv64.callPackage ./runtime {
+      keystone-sdk = keystone-sdk.default;
       withFreeMem = true;
       withEdgeProtection = true;
     };
 
-    musl = pkgsRiscv64Musl.callPackage ./runtime.nix {
-      keystone-sdk = self.packages.${system}.keystone-sdk.musl;
+    musl = pkgsRiscv64Musl.callPackage ./runtime {
+      keystone-sdk = keystone-sdk.musl;
       withFreeMem = true;
       withLinuxSyscall = true;
       withIoSyscall = true;
@@ -48,25 +48,43 @@
       withGlibc = true;
     };
 
-    musl-nolibc = pkgsRiscv64Musl.callPackage ./runtime.nix {
-      keystone-sdk = self.packages.${system}.keystone-sdk.musl;
+    musl-nolibc = pkgsRiscv64Musl.callPackage ./runtime {
+      keystone-sdk = keystone-sdk.musl;
       withFreeMem = true;
       withEdgeProtection = true;
     };
   };
 
-  driver = pkgsRiscv64.linuxPackages.callPackage ./driver.nix { };
-  bootrom = pkgsRiscv64.callPackage ./bootrom.nix { };
-  qemu = pkgs.callPackage ./qemu.nix { };
+  driver = pkgsRiscv64.linuxPackages.callPackage ./driver { };
+
+  qemu = pkgs.callPackage ./qemu { };
+
+  meta-sifive = pkgs.callPackage ./meta-sifive { };
+
+  bootloader = {
+    bootrom = pkgsRiscv64.callPackage ./bootrom { };
+    u-boot = {
+      unmatched = pkgsRiscv64.callPackage ./u-boot {
+        inherit meta-sifive;
+        keystone-sm = keystone-sm.unmatched;
+        defconfig = "sifive_unmatched_keystone_defconfig";
+      };
+    };
+  };
 
   image = {
     virt = nixosSystems.virt.config.system.build.qcow2;
+    unmatched = pkgs.callPackage ./unmatched-sd-image {
+      u-boot-keystone = bootloader.u-boot.unmatched;
+      nixosSystem = nixosSystems.unmatched;
+    };
+    unmatched-root = nixosSystems.unmatched.config.system.build.rootfsImage;
   };
 
-  run-virt = pkgs.callPackage ./run-virt.nix {
+  run-virt = pkgs.callPackage ./run-virt {
     nixos-virt = nixosSystems.virt;
-    qemu-keystone = self.packages.${system}.qemu;
-    keystone-bootrom = self.packages.${system}.bootrom;
-    keystone-sm = self.packages.${system}.keystone-sm.default;
+    qemu-keystone = qemu;
+    keystone-bootrom = bootloader.bootrom;
+    keystone-sm = keystone-sm.default;
   };
 }

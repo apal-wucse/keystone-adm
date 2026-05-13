@@ -26,16 +26,16 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   smSrc = lib.fileset.toSource {
-    root = ../../sm;
+    root = ../../../sm;
     fileset = lib.fileset.unions [
-      ../../sm/plat
-      ../../sm/src
+      ../../../sm/plat
+      ../../../sm/src
     ];
   };
 
   patches = [
-    ../patches/opensbi/opensbi-change-basename.patch
-    ../patches/opensbi/opensbi-firmware-secure-boot.patch
+    ../../patches/opensbi/opensbi-change-basename.patch
+    ../../patches/opensbi/opensbi-firmware-secure-boot.patch
   ];
 
   postPatch = ''

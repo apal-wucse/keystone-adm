@@ -6,13 +6,13 @@ stdenv.mkDerivation (finalAttrs: {
   pname = "keystone-bootrom";
   version = "1.0.0";
 
-  src = ../../bootloader/bootrom;
+  src = ../../../bootloader/bootrom;
 
   crypto = lib.fileset.toSource {
-    root = ../../crypto;
+    root = ../../../crypto;
     fileset = lib.fileset.unions [
-      ../../crypto/sha3
-      ../../crypto/ed25519
+      ../../../crypto/sha3
+      ../../../crypto/ed25519
     ];
   };
 

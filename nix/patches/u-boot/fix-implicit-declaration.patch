@@ -1,0 +1,26 @@
+diff --git a/board/sifive/unmatched/spl.c b/board/sifive/unmatched/spl.c
+index 7c0beedc083..45bbd2763d0 100644
+--- a/board/sifive/unmatched/spl.c
++++ b/board/sifive/unmatched/spl.c
+@@ -26,6 +26,8 @@
+ #define MODE_SELECT_SD         0xb
+ #define MODE_SELECT_MASK       GENMASK(3, 0)
+
++extern void pwm_device_init(void);
++
+ static inline int spl_reset_device_by_gpio(const char *label, int pin, int low_width)
+ {
+        int ret;
+diff --git a/board/sifive/unmatched/unmatched.c b/board/sifive/unmatched/unmatched.c
+index 6295deeae23..ea7743fc301 100644
+--- a/board/sifive/unmatched/unmatched.c
++++ b/board/sifive/unmatched/unmatched.c
+@@ -11,6 +11,8 @@
+ #include <dm.h>
+ #include <asm/sections.h>
+
++extern void pwm_device_init(void);
++
+ void *board_fdt_blob_setup(int *err)
+ {
+        *err = 0;

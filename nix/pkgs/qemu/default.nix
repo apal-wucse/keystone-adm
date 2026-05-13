@@ -18,7 +18,7 @@ pkgs.qemu.overrideAttrs (
       python3Packages.qemu-qmp
     ];
     patches = (prev.patches or [ ]) ++ [
-      ../patches/qemu/qemu-bootrom.patch
+      ../../patches/qemu/qemu-bootrom.patch
     ];
     configureFlags =
       (pkgs.lib.filter (x: !(pkgs.lib.hasPrefix "--target-list=" x)) prev.configureFlags)

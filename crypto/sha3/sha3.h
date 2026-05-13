@@ -6,6 +6,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#if !defined(BOOTROM_BUILD)
+    #include <linux/types.h>
+#endif
 
 #ifndef KECCAKF_ROUNDS
 #define KECCAKF_ROUNDS 24
