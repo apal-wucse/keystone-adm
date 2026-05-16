@@ -1,4 +1,5 @@
 {
+  inputs,
   config,
   lib,
   pkgs,
@@ -13,6 +14,10 @@ in
 
   nix = {
     checkConfig = true;
+
+    nixPath = lib.mkForce [
+      "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixpkgs"
+    ];
 
     settings = {
       auto-optimise-store = true;
@@ -67,7 +72,29 @@ in
     pciutils
     usbutils
     fastfetch
+    perf
   ];
+
+  environment.etc."nix/registry.json".text = builtins.toJSON {
+    version = 2;
+    flakes = [
+      {
+        from = {
+          id = "nixpkgs";
+          type = "indirect";
+        };
+        to = {
+          type = "path";
+          path = "${pkgs.path}";
+        };
+      }
+    ];
+  };
+
+  system.activationScripts.linkNixpkgs = ''
+    mkdir -p /nix/var/nix/profiles/per-user/root/channels
+    ln -sfT ${inputs.nixpkgs} /nix/var/nix/profiles/per-user/root/channels/nixpkgs
+  '';
 
   system.stateVersion = "25.11";
 }

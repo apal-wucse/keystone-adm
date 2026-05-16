@@ -18,7 +18,7 @@
       flake-utils,
       treefmt-nix,
       ...
-    }:
+    }@inputs:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -42,7 +42,7 @@
 
         nixosSystems = import ./nix/nixos {
           inherit
-            nixpkgs
+            inputs
             system
             ;
         };

@@ -27,10 +27,10 @@ pkgs.writeShellApplication {
     WORKDIR=''${WORKDIR:-./images}
     mkdir -p "$WORKDIR"
 
-    if [ ! -f "$WORKDIR/nixos-virt-ovarlay.qcow2" ]; then
+    if [ ! -f "$WORKDIR/nixos-virt-overlay.qcow2" ]; then
       qemu-img create -f qcow2 \
         -F qcow2 -b ${nixos-virt.config.system.build.qcow2}/nixos-virt.qcow2 \
-        "$WORKDIR/nixos-virt-overlay.qcow2"
+        "$WORKDIR/nixos-virt-overlay.qcow2" 128G
     fi
 
     exec qemu-system-riscv64 \

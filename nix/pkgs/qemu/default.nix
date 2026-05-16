@@ -23,8 +23,6 @@ pkgs.qemu.overrideAttrs (
     configureFlags =
       (pkgs.lib.filter (x: !(pkgs.lib.hasPrefix "--target-list=" x)) prev.configureFlags)
       ++ [ "--target-list=riscv64-softmmu" ];
-    postInstall = pkgs.lib.pipe (prev.postInstall or "") [
-      (pkgs.lib.replaceStrings [ "ln -s $out/bin/qemu-system-x86_64 $out/bin/qemu-kvm" ] [ "" ])
-    ];
+    postInstall = "";
   }
 )

@@ -1,9 +1,12 @@
-{ nixpkgs, system }:
+{ inputs, system }:
 let
-  inherit (nixpkgs.lib) nixosSystem;
+  inherit (inputs.nixpkgs.lib) nixosSystem;
 in
 {
   virt = nixosSystem {
+    specialArgs = {
+      inherit inputs;
+    };
     modules = [
       ./common.nix
       ./virt/configurations.nix
@@ -14,6 +17,9 @@ in
   };
 
   unmatched = nixosSystem {
+    specialArgs = {
+      inherit inputs;
+    };
     modules = [
       ./common.nix
       ./unmatched/configurations.nix
