@@ -4,11 +4,9 @@
   lib,
   pkgs,
   modulesPath,
+  keystoneOverlay,
   ...
 }:
-let
-  keystone-driver = config.boot.kernelPackages.callPackage ../pkgs/driver { };
-in
 {
   imports = [ "${modulesPath}/profiles/base.nix" ];
 
@@ -29,7 +27,10 @@ in
     };
   };
 
-  nixpkgs.hostPlatform = "riscv64-linux";
+  nixpkgs = {
+    hostPlatform = "riscv64-linux";
+    overlays = [ keystoneOverlay ];
+  };
 
   boot.kernelPackages = pkgs.linuxPackages_6_12;
 
@@ -50,7 +51,7 @@ in
     }
   ];
 
-  boot.extraModulePackages = [ keystone-driver ];
+  boot.extraModulePackages = [ pkgs.linuxPackages_6_12.keystone-driver ];
   boot.kernelModules = [ "keystone-driver" ];
 
   services.openssh.enable = true;

@@ -1,11 +1,15 @@
-{ inputs, system }:
+{
+  inputs,
+  system,
+  keystoneOverlay,
+}:
 let
   inherit (inputs.nixpkgs.lib) nixosSystem;
 in
 {
   virt = nixosSystem {
     specialArgs = {
-      inherit inputs;
+      inherit inputs keystoneOverlay;
     };
     modules = [
       ./common.nix
@@ -18,7 +22,7 @@ in
 
   unmatched = nixosSystem {
     specialArgs = {
-      inherit inputs;
+      inherit inputs keystoneOverlay;
     };
     modules = [
       ./common.nix

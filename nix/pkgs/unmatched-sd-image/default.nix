@@ -1,7 +1,7 @@
 {
   runCommand,
   buildPackages,
-  u-boot-keystone,
+  keystonePkgs,
   nixosSystem,
   imageSize ? "4G",
   label ? "unmatched",
@@ -46,10 +46,10 @@ runCommand "nixos-sd-image-${label}.img"
     mkfs.vfat -F32 boot.img
     mcopy -i boot.img -s files/boot/* ::/
 
-    dd if=${u-boot-keystone}/u-boot-spl.bin of="$img" \
+    dd if=${keystonePkgs.u-boot}/u-boot-spl.bin of="$img" \
        bs=512 seek=34 conv=notrunc status=progress
 
-    dd if=${u-boot-keystone}/u-boot.itb of="$img" \
+    dd if=${keystonePkgs.u-boot}/u-boot.itb of="$img" \
        bs=512 seek=2082 conv=notrunc status=progress
 
     dd if=boot.img of="$img" \

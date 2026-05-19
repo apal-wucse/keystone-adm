@@ -1,10 +1,13 @@
 {
   buildUBoot,
   fetchurl,
-  keystone-sm,
+  keystonePkgs,
   meta-sifive,
   defconfig ? "sifive_unmatched_keystone_defconfig",
 }:
+let
+  keystone-sm = keystonePkgs.keystone-sm.override { withKeystonePlatform = "unmatched"; };
+in
 buildUBoot rec {
   version = "2023.07.02";
 

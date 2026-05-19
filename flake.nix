@@ -19,58 +19,75 @@
       treefmt-nix,
       ...
     }@inputs:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
+    flake-utils.lib.eachSystem
+      [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+        "riscv64-linux"
+      ]
+      (
+        system:
+        let
+          keystoneOverlay = import ./nix/pkgs/riscv-overlay.nix;
 
-        pkgsRiscv64 = import nixpkgs {
-          inherit system;
-          crossSystem = {
-            config = "riscv64-unknown-linux-gnu";
+          pkgs = import nixpkgs {
+            inherit system;
           };
-        };
 
-        pkgsRiscv64Musl = import nixpkgs {
-          inherit system;
-          crossSystem = {
-            config = "riscv64-unknown-linux-musl";
+          pkgsRiscv64 = import nixpkgs {
+            inherit system;
+            crossSystem = {
+              config = "riscv64-unknown-linux-gnu";
+            };
+            overlays = [ keystoneOverlay ];
           };
-        };
 
-        nixosSystems = import ./nix/nixos {
-          inherit
-            inputs
-            system
-            ;
-        };
-      in
-      {
-        packages = import ./nix/pkgs {
-          inherit
-            self
-            pkgs
-            pkgsRiscv64
-            pkgsRiscv64Musl
-            system
-            nixosSystems
-            ;
-        };
+          nixosSystems = import ./nix/nixos {
+            inherit
+              inputs
+              system
+              keystoneOverlay
+              ;
+          };
+        in
+        {
+          packages =
+            import ./nix/pkgs {
+              inherit
+                self
+                pkgs
+                system
+                nixosSystems
+                ;
+              inherit (pkgsRiscv64) keystonePkgs;
+            }
+            // {
+              inherit (pkgsRiscv64.linuxPackages)
+                keystone-driver
+                ;
+              inherit (pkgsRiscv64.keystonePkgs)
+                bootrom
+                u-boot
+                keystone-sm
+                keystone-sdk
+                runtime
+                ;
+            };
 
-        devShells = import ./nix/shells {
-          inherit
-            self
-            pkgsRiscv64
-            system
-            ;
-        };
+          devShells = import ./nix/shells {
+            inherit
+              self
+              pkgsRiscv64
+              system
+              ;
+          };
 
-        formatter = treefmt-nix.lib.mkWrapper pkgs {
-          projectRootFile = "flake.nix";
-          programs.nixfmt.enable = true;
-        };
-      }
-    );
+          formatter = treefmt-nix.lib.mkWrapper pkgs {
+            projectRootFile = "flake.nix";
+            programs.nixfmt.enable = true;
+          };
+        }
+      );
 }

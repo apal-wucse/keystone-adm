@@ -2,9 +2,8 @@
   lib,
   pkgs,
   nixos-virt,
-  qemu-keystone,
-  keystone-bootrom,
-  keystone-sm,
+  qemu,
+  keystonePkgs,
 }:
 let
   kernelParams = lib.concatStringsSep " " (
@@ -20,7 +19,7 @@ pkgs.writeShellApplication {
   name = "run-qemu-virt";
   runtimeInputs = [
     pkgs.coreutils
-    qemu-keystone
+    qemu
   ];
   text = ''
     set -euo pipefail
@@ -34,9 +33,9 @@ pkgs.writeShellApplication {
     fi
 
     exec qemu-system-riscv64 \
-      -machine virt,rom=${keystone-bootrom}/bin/bootrom.bin,acpi=off \
+      -machine virt,rom=${keystonePkgs.bootrom}/bin/bootrom.bin,acpi=off \
       -cpu rva23s64,pmp=true -smp cpus=4 -m 4G -nographic \
-      -bios ${keystone-sm}/share/opensbi/lp64/generic/firmware/fw_jump.bin \
+      -bios ${keystonePkgs.keystone-sm}/share/opensbi/lp64/generic/firmware/fw_jump.bin \
       -kernel ${nixos-virt.config.system.build.kernel}/Image \
       -initrd ${nixos-virt.config.system.build.initialRamdisk}/initrd \
       -append "${kernelParams}" \

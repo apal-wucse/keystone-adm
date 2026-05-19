@@ -1,10 +1,9 @@
 {
   mkShell,
-  runtime,
-  keystone-sdk,
+  keystonePkgs,
 }:
 mkShell {
   name = "eyrie-devshell";
-  inputsFrom = [ runtime ];
-  KEYSTONE_SDK_DIR = "${keystone-sdk}";
+  inputsFrom = [ keystonePkgs.runtime ];
+  KEYSTONE_SDK_DIR = "${keystonePkgs.keystone-sdk}";
 }

@@ -1,8 +1,8 @@
 {
   mkShell,
-  bootrom,
+  keystonePkgs,
 }:
 mkShell {
   name = "keystone-bootrom-devshell";
-  inputsFrom = [ bootrom ];
+  inputsFrom = [ keystonePkgs.bootrom ];
 }
