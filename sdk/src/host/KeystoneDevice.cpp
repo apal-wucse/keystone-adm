@@ -152,7 +152,7 @@ KeystoneDevice::__run(bool resume, uintptr_t* ret) {
       return Error::Success;
     default:
       ERROR(
-          "Unknown SBI error (%d) returned by %s_enclave\n", encl.error,
+          "Unknown SBI error (%lu) returned by %s_enclave\n", encl.error,
           resume ? "resume" : "run");
       return error;
   }
