@@ -286,11 +286,11 @@ init_edge_internals() {
 void
 init_adm_internals(uintptr_t pa) {
   if (pa == 0 || additional_memory == 0 || additional_memory_size == 0) {
-    printf("[runtime] adm is disabled\r\n");
+    debug("[runtime] adm is disabled\r\n");
     return;
   }
   adm_init_internals(additional_memory, additional_memory_size);
-  printf(
+  debug(
       "[runtime] adm is configured, ptr: 0x%lx, size: 0x%lx\r\n",
       additional_memory, additional_memory_size);
 }

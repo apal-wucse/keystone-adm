@@ -74,6 +74,8 @@
                 keystone-sdk
                 runtime
                 ;
+              inherit (pkgsRiscv64.keystoneApps)
+                hello;
             };
 
           devShells = import ./nix/shells {

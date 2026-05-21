@@ -3,8 +3,12 @@ final: prev: {
     bootrom = final.callPackage ./bootrom { };
     u-boot = final.callPackage ./u-boot { };
     keystone-sm = final.callPackage ./keystone-sm { };
-    keystone-sdk = final.callPackage ./keystone-sdk { };
+    keystone-sdk = final.callPackage ./sdk { };
     runtime = final.callPackage ./runtime { };
+  };
+
+  keystoneApps = {
+    hello = final.callPackage ../../apps/hello/package.nix { };
   };
 
   meta-sifive = final.callPackage ./meta-sifive { };

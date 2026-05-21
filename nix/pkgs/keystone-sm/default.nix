@@ -55,6 +55,7 @@ stdenv.mkDerivation (finalAttrs: {
     "KEYSTONE_PLATFORM=${finalAttrs.keystonePlat}"
     "KEYSTONE_SM=${finalAttrs.smSrc}"
     "PLATFORM_DIR=${finalAttrs.smSrc}/plat/"
+    "CROSS_COMPILE=${stdenv.cc.targetPrefix}"
   ]
   ++ lib.optionals (withPayload != null) [
     "FW_PAYLOAD_PATH=${withPayload}"
@@ -65,6 +66,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   enableParallelBuilding = true;
 
+  dontFixup = true;
   dontStrip = true;
   dontPatchELF = true;
 

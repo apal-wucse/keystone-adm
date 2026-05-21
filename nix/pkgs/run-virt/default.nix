@@ -33,8 +33,8 @@ pkgs.writeShellApplication {
     fi
 
     exec qemu-system-riscv64 \
-      -machine virt,rom=${keystonePkgs.bootrom}/bin/bootrom.bin,acpi=off \
-      -cpu rva23s64,pmp=true -smp cpus=4 -m 4G -nographic \
+      -machine virt,rom=${keystonePkgs.bootrom}/bin/bootrom.bin \
+      -cpu rv64 -smp cpus=4 -m 8G -nographic \
       -bios ${keystonePkgs.keystone-sm}/share/opensbi/lp64/generic/firmware/fw_jump.bin \
       -kernel ${nixos-virt.config.system.build.kernel}/Image \
       -initrd ${nixos-virt.config.system.build.initialRamdisk}/initrd \
@@ -43,6 +43,6 @@ pkgs.writeShellApplication {
       -netdev user,id=net0,hostfwd=tcp::2222-:22 \
       -device virtio-net-device,netdev=net0 \
       -object rng-random,filename=/dev/urandom,id=rng0 \
-      -device virtio-rng-device,rng=rng0 
+      -device virtio-rng-device,rng=rng0 "$@"
   '';
 }

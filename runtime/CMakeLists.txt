@@ -65,7 +65,10 @@ include_directories(include)
 
 # medany creates PIC w/o a GOT. loader-binary (and thus libs) inherently needs PIC
 # because it's in physical addressing; currently doesn't work with Global Offset Table
-add_compile_options(-Wall -Werror -fno-builtin -static -mcmodel=medany -std=c11 -g -fno-stack-protector)
+# buildroot toolchain enables no-pie by default, but ordinary toolchain often built with --enable-default-pie.
+# It's better explicitly specifying -fno-pie and -fno-pic.
+
+add_compile_options(-Wall -Werror -fno-builtin -static -mcmodel=medany -std=c11 -g -fno-stack-protector -fno-pie -fno-pic)
 
 # Generate all the library targets
 add_subdirectory(call)
