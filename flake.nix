@@ -75,7 +75,8 @@
                 runtime
                 ;
               inherit (pkgsRiscv64.keystoneApps)
-                hello;
+                hello
+                ;
             };
 
           devShells = import ./nix/shells {

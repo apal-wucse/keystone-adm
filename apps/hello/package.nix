@@ -7,9 +7,10 @@
   withPlatform ? "generic",
 }:
 let
-  runtime = (keystonePkgs.runtime.override {
-    inherit withPlatform;
-  }).weakSyscall;
+  runtime =
+    (keystonePkgs.runtime.override {
+      inherit withPlatform;
+    }).weakSyscall;
 
   encApp = stdenv.mkDerivation (finalAttrs: {
     pname = "keystone-hello-eapp";
