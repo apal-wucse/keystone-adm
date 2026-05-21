@@ -70,6 +70,6 @@ stdenv.mkDerivation (finalAttrs: {
       $TMPDIR/pkg-files \
       $out/bin/hello.ke \
       "Keystone Enclave Package" \
-      "./hello-runner hello eyrie-rt loader.bin"
+      "./hello-runner" "hello" "eyrie-rt" "loader.bin"
   '';
 })
