@@ -7,9 +7,7 @@ final: prev: {
     runtime = final.callPackage ./runtime { };
   };
 
-  keystoneApps = {
-    hello = final.callPackage ../../apps/hello/package.nix { };
-  };
+  keystoneApps = final.callPackage ./apps { };
 
   meta-sifive = final.callPackage ./meta-sifive { };
 

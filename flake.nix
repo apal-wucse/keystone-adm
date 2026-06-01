@@ -74,8 +74,8 @@
                 keystone-sdk
                 runtime
                 ;
-              inherit (pkgsRiscv64.keystoneApps)
-                hello
+              inherit (pkgsRiscv64)
+                keystoneApps
                 ;
             };
 
@@ -89,7 +89,14 @@
 
           formatter = treefmt-nix.lib.mkWrapper pkgs {
             projectRootFile = "flake.nix";
-            programs.nixfmt.enable = true;
+            programs = {
+              nixfmt.enable = true;
+              clang-format = true;
+            };
+            settings.formatter.clang-format.excludes = [
+              "sdk/**/json11.cpp"
+              "sdk/**/json11.h"
+            ];
           };
         }
       );

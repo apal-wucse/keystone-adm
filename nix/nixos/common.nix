@@ -65,23 +65,18 @@
     initialPassword = "nixos";
   };
 
-  environment.systemPackages =
-    with pkgs;
-    [
-      vim
-      git
-      tmux
-      htop
-      pciutils
-      usbutils
-      fastfetch
-      perf
-      gdb
-      binutils
-    ]
-    ++ (with pkgs.keystoneApps; [
-      hello
-    ]);
+  environment.systemPackages = with pkgs; [
+    vim
+    git
+    tmux
+    htop
+    pciutils
+    usbutils
+    fastfetch
+    perf
+    gdb
+    binutils
+  ];
 
   environment.etc."nix/registry.json".text = builtins.toJSON {
     version = 2;

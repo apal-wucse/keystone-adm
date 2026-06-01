@@ -86,6 +86,7 @@ in
 
   environment.systemPackages = with pkgs; [
     mtdutils
+    (keystoneApps.override { withPlatform = "unmatched"; })
   ];
 
   system.build.rootfsImage = rootfsImage;
