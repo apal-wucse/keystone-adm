@@ -12,6 +12,8 @@ let
       inherit withPlatform;
     }).weakSyscall;
 
+  runtimeAdm = keystonePkgs.runtime.override { inherit withPlatform; };
+
   encApp = stdenv.mkDerivation (finalAttrs: {
     pname = "keystone-hello-eapp";
     version = "0.1.0";
@@ -35,6 +37,24 @@ let
     pname = "keystone-hello-host";
     version = "0.1.0";
     src = ./host;
+
+    buildInputs = [
+      keystonePkgs.keystone-sdk
+    ];
+
+    nativeBuildInputs = [
+      cmake
+    ];
+
+    cmakeFlags = [
+      "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
+    ];
+  });
+
+  hostAppAdm = stdenv.mkDerivation (finalAttrs: {
+    pname = "keystone-hello-host-adm";
+    version = "0.1.0";
+    src = ./host-adm;
 
     buildInputs = [
       keystonePkgs.keystone-sdk
@@ -72,4 +92,31 @@ stdenv.mkDerivation (finalAttrs: {
       "Keystone Enclave Package" \
       "./hello-runner" "hello" "eyrie-rt" "loader.bin"
   '';
+
+  passthru = {
+    adm = stdenv.mkDerivation (finalAttrs: {
+      pname = "keystone-hello-adm";
+      version = "0.1.0";
+
+      nativeBuildInputs = [
+        makeself
+      ];
+
+      dontUnpack = true;
+      dontBuild = true;
+      dontFixup = true;
+
+      installPhase = ''
+        mkdir -p $out/bin
+        mkdir -p $TMPDIR/pkg-files
+        cp ${encApp}/bin/hello ${hostAppAdm}/bin/hello-runner $TMPDIR/pkg-files/
+        cp ${runtimeAdm}/bin/eyrie-rt ${runtimeAdm}/bin/loader.bin $TMPDIR/pkg-files/
+        makeself --noprogress \
+          $TMPDIR/pkg-files \
+          $out/bin/hello-adm.ke \
+          "Keystone Enclave Package" \
+          "./hello-runner" "hello" "eyrie-rt" "loader.bin"
+      '';
+    });
+  };
 })

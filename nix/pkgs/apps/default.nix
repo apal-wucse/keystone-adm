@@ -17,6 +17,7 @@ symlinkJoin {
 
   paths = [
     hello
+    hello.adm
     hello-native
     iotest
     iotest-adm
