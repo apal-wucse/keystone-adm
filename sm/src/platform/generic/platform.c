@@ -5,17 +5,17 @@ unsigned long platform_init_global_once() { return SBI_ERR_SM_ENCLAVE_SUCCESS; }
 
 unsigned long platform_init_global() { return SBI_ERR_SM_ENCLAVE_SUCCESS; }
 
-void platform_init_enclave(struct enclave *enclave) { return; }
+void platform_init_enclave(struct enclave* enclave) { return; }
 
-void platform_destroy_enclave(struct enclave *enclave) { return; }
+void platform_destroy_enclave(struct enclave* enclave) { return; }
 
-unsigned long platform_create_enclave(struct enclave *enclave) {
+unsigned long platform_create_enclave(struct enclave* enclave) {
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-void platform_switch_to_enclave(struct enclave *enclave) { return; }
+void platform_switch_to_enclave(struct enclave* enclave) { return; }
 
-void platform_switch_from_enclave(struct enclave *enclave) { return; }
+void platform_switch_from_enclave(struct enclave* enclave) { return; }
 
 uint64_t platform_random() {
 #pragma message("Platform has no entropy source, this is unsafe. TEST ONLY")

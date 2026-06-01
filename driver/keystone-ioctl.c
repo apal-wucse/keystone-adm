@@ -15,11 +15,11 @@
 
 int __keystone_destroy_enclave(unsigned int ueid);
 
-int keystone_create_enclave(struct file *filep, unsigned long arg) {
+int keystone_create_enclave(struct file* filep, unsigned long arg) {
     /* create parameters */
-    struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *)arg;
+    struct keystone_ioctl_create_enclave* enclp = (struct keystone_ioctl_create_enclave*)arg;
 
-    struct enclave *enclave;
+    struct enclave* enclave;
     enclave = create_enclave(enclp->min_pages);
 
     if (enclave == NULL) {
@@ -27,25 +27,25 @@ int keystone_create_enclave(struct file *filep, unsigned long arg) {
     }
 
     /* Pass base page table */
-    enclp->pt_ptr = __pa(enclave->epm->root_page_table);
+    enclp->pt_ptr   = __pa(enclave->epm->root_page_table);
     enclp->epm_size = enclave->epm->size;
 
     /* allocate UID */
     enclp->eid = enclave_idr_alloc(enclave);
 
-    filep->private_data = (void *)enclp->eid;
+    filep->private_data = (void*)enclp->eid;
 
     return 0;
 }
 
 int keystone_finalize_enclave(unsigned long arg) {
     struct sbiret ret;
-    struct enclave *enclave;
-    struct utm *utm;
-    struct adm *adm;
+    struct enclave* enclave;
+    struct utm* utm;
+    struct adm* adm;
     struct keystone_sbi_create_t create_args;
 
-    struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *)arg;
+    struct keystone_ioctl_create_enclave* enclp = (struct keystone_ioctl_create_enclave*)arg;
 
     enclave = get_enclave_by_id(enclp->eid);
     if (!enclave) {
@@ -59,34 +59,34 @@ int keystone_finalize_enclave(unsigned long arg) {
 
     /* SBI Call */
     create_args.epm_region.paddr = enclave->epm->pa;
-    create_args.epm_region.size = enclave->epm->size;
+    create_args.epm_region.size  = enclave->epm->size;
 
     utm = enclave->utm;
 
     if (utm) {
         create_args.utm_region.paddr = __pa(utm->ptr);
-        create_args.utm_region.size = utm->size;
+        create_args.utm_region.size  = utm->size;
     } else {
         create_args.utm_region.paddr = 0;
-        create_args.utm_region.size = 0;
+        create_args.utm_region.size  = 0;
     }
 
     adm = enclave->adm;
 
     if (enclave->adm_enabled && adm) {
         create_args.adm_region.paddr = adm->pa;
-        create_args.adm_region.size = adm->size;
-        create_args.adm_protection = adm->protection;
+        create_args.adm_region.size  = adm->size;
+        create_args.adm_protection   = adm->protection;
     } else {
         create_args.adm_region.paddr = 0;
-        create_args.adm_region.size = 0;
-        create_args.adm_protection = ADM_DEFAULT_NOPERM;
+        create_args.adm_region.size  = 0;
+        create_args.adm_protection   = ADM_DEFAULT_NOPERM;
     }
 
     // physical addresses for runtime, user, and freemem
     create_args.runtime_paddr = enclp->runtime_paddr;
-    create_args.user_paddr = enclp->user_paddr;
-    create_args.free_paddr = enclp->free_paddr;
+    create_args.user_paddr    = enclp->user_paddr;
+    create_args.free_paddr    = enclp->free_paddr;
 
     create_args.params = enclp->params;
 
@@ -117,10 +117,10 @@ error_destroy_enclave:
 int keystone_run_enclave(unsigned long data) {
     struct sbiret ret;
     unsigned long ueid;
-    struct enclave *enclave;
-    struct keystone_ioctl_run_enclave *arg = (struct keystone_ioctl_run_enclave *)data;
+    struct enclave* enclave;
+    struct keystone_ioctl_run_enclave* arg = (struct keystone_ioctl_run_enclave*)data;
 
-    ueid = arg->eid;
+    ueid    = arg->eid;
     enclave = get_enclave_by_id(ueid);
 
     if (!enclave) {
@@ -141,12 +141,12 @@ int keystone_run_enclave(unsigned long data) {
     return 0;
 }
 
-int utm_init_ioctl(struct file *filp, unsigned long arg) {
+int utm_init_ioctl(struct file* filp, unsigned long arg) {
     int ret = 0;
-    struct utm *utm;
-    struct enclave *enclave;
-    struct keystone_ioctl_memalloc *enclp = (struct keystone_ioctl_memalloc *)arg;
-    long long unsigned untrusted_size = enclp->size;
+    struct utm* utm;
+    struct enclave* enclave;
+    struct keystone_ioctl_memalloc* enclp = (struct keystone_ioctl_memalloc*)arg;
+    long long unsigned untrusted_size     = enclp->size;
 
     enclave = get_enclave_by_id(enclp->eid);
 
@@ -166,18 +166,18 @@ int utm_init_ioctl(struct file *filp, unsigned long arg) {
     /* prepare for mmap */
     enclave->utm = utm;
 
-    enclp->paddr = __pa(utm->ptr);
+    enclp->paddr      = __pa(utm->ptr);
     enclp->alloc_size = utm->size;
 
     return ret;
 }
 
-int adm_init_ioctl(struct file *filep, unsigned long arg) {
+int adm_init_ioctl(struct file* filep, unsigned long arg) {
     int ret = 0;
-    struct adm *adm;
-    struct enclave *enclave;
-    struct keystone_ioctl_memalloc *enclp = (struct keystone_ioctl_memalloc *)arg;
-    long long unsigned additional_size = enclp->size;
+    struct adm* adm;
+    struct enclave* enclave;
+    struct keystone_ioctl_memalloc* enclp = (struct keystone_ioctl_memalloc*)arg;
+    long long unsigned additional_size    = enclp->size;
 
     enclave = get_enclave_by_id(enclp->eid);
 
@@ -196,18 +196,18 @@ int adm_init_ioctl(struct file *filep, unsigned long arg) {
     ret = adm_init(adm, additional_size, enclp->protect_type);
 
     enclave->adm_enabled = true;
-    enclave->adm = adm;
+    enclave->adm         = adm;
 
-    enclp->paddr = adm->pa;
+    enclp->paddr      = adm->pa;
     enclp->alloc_size = adm->size;
 
     return ret;
 }
 
-int keystone_destroy_enclave(struct file *filep, unsigned long arg) {
+int keystone_destroy_enclave(struct file* filep, unsigned long arg) {
     int ret;
-    struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *)arg;
-    unsigned long ueid = enclp->eid;
+    struct keystone_ioctl_create_enclave* enclp = (struct keystone_ioctl_create_enclave*)arg;
+    unsigned long ueid                          = enclp->eid;
 
     ret = __keystone_destroy_enclave(ueid);
     if (!ret) {
@@ -218,7 +218,7 @@ int keystone_destroy_enclave(struct file *filep, unsigned long arg) {
 
 int __keystone_destroy_enclave(unsigned int ueid) {
     struct sbiret ret;
-    struct enclave *enclave;
+    struct enclave* enclave;
     enclave = get_enclave_by_id(ueid);
 
     if (!enclave) {
@@ -247,9 +247,9 @@ int __keystone_destroy_enclave(unsigned int ueid) {
 
 int keystone_resume_enclave(unsigned long data) {
     struct sbiret ret;
-    struct keystone_ioctl_run_enclave *arg = (struct keystone_ioctl_run_enclave *)data;
-    unsigned long ueid = arg->eid;
-    struct enclave *enclave;
+    struct keystone_ioctl_run_enclave* arg = (struct keystone_ioctl_run_enclave*)data;
+    unsigned long ueid                     = arg->eid;
+    struct enclave* enclave;
     enclave = get_enclave_by_id(ueid);
 
     if (!enclave) {
@@ -271,9 +271,9 @@ int keystone_resume_enclave(unsigned long data) {
 }
 
 int keystone_swap_map(unsigned long data) {
-    struct keystone_ioctl_memalloc *arg = (struct keystone_ioctl_memalloc *)data;
-    unsigned long ueid = arg->eid;
-    struct enclave *enclave;
+    struct keystone_ioctl_memalloc* arg = (struct keystone_ioctl_memalloc*)data;
+    unsigned long ueid                  = arg->eid;
+    struct enclave* enclave;
     enclave = get_enclave_by_id(ueid);
 
     if (!enclave) {
@@ -296,7 +296,7 @@ int keystone_swap_map(unsigned long data) {
     return 0;
 }
 
-long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg) {
+long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg) {
     long ret;
     char data[768];
 
@@ -308,7 +308,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg) {
     ioc_size = _IOC_SIZE(cmd);
     ioc_size = ioc_size > sizeof(data) ? sizeof(data) : ioc_size;
 
-    if (copy_from_user(data, (void __user *)arg, ioc_size))
+    if (copy_from_user(data, (void __user*)arg, ioc_size))
         return -EFAULT;
 
     switch (cmd) {
@@ -353,15 +353,15 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg) {
         return -ENOSYS;
     }
 
-    if (copy_to_user((void __user *)arg, data, ioc_size))
+    if (copy_to_user((void __user*)arg, data, ioc_size))
         return -EFAULT;
 
     return ret;
 }
 
-int keystone_release(struct inode *inode, struct file *file) {
+int keystone_release(struct inode* inode, struct file* file) {
     unsigned long ueid = (unsigned long)(file->private_data);
-    struct enclave *enclave;
+    struct enclave* enclave;
 
     /* enclave has been already destroyed */
     if (!ueid) {

@@ -29,12 +29,12 @@
 #define KEYSTONE_IOC_ADM_INIT _IOR(KEYSTONE_IOC_MAGIC, 0x08, struct keystone_ioctl_memalloc)
 #define KEYSTONE_IOC_SWAP_MAP _IOR(KEYSTONE_IOC_MAGIC, 0x09, struct keystone_ioctl_memalloc)
 
-#define RT_NOEXEC 0
+#define RT_NOEXEC   0
 #define USER_NOEXEC 1
-#define RT_FULL 2
-#define USER_FULL 3
-#define UTM_FULL 4
-#define ADM_FULL 5
+#define RT_FULL     2
+#define USER_FULL   3
+#define UTM_FULL    4
+#define ADM_FULL    5
 
 struct runtime_params_t {
     uintptr_t runtime_entry;

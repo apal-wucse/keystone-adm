@@ -6,10 +6,9 @@
 #define _INTERRUPT_H_
 
 #define INTERRUPT_CAUSE_SOFTWARE 1
-#define INTERRUPT_CAUSE_TIMER 5
+#define INTERRUPT_CAUSE_TIMER    5
 #define INTERRUPT_CAUSE_EXTERNAL 9
 
-void
-init_timer(void);
+void init_timer(void);
 
 #endif

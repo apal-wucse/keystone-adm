@@ -12,7 +12,7 @@
 
 #define FILENAME "data.tmp"
 #define BLOCK_SZ 4096
-#define BLOCK_N 1
+#define BLOCK_N  1
 
 int check_blk(unsigned char* buf1, unsigned char* buf2, size_t cnt) {
     for (size_t i = 0; i < cnt; i++) {
@@ -29,7 +29,8 @@ int main() {
     size_t adm_size;
     adm_ptr = map_adm(&adm_size);
     adm_init_internals(adm_ptr, adm_size);
-    if (adm_dynalloc_init(2 * 1024 * 1024)) return 1;
+    if (adm_dynalloc_init(2 * 1024 * 1024))
+        return 1;
 
     printf("## I/O syscall delegation test\n");
     printf("## Size of block: %d\n", BLOCK_SZ);
@@ -59,8 +60,7 @@ int main() {
         printf("failed to open file: %s\n", FILENAME);
         return 1;
     }
-    unsigned char* read_buf =
-        (unsigned char*)adm_malloc(sizeof(char) * BLOCK_SZ);
+    unsigned char* read_buf = (unsigned char*)adm_malloc(sizeof(char) * BLOCK_SZ);
     for (int i = 0; i < BLOCK_N; i++) {
         if (read(fd, read_buf, BLOCK_SZ) != BLOCK_SZ) {
             printf("ERROR\n");

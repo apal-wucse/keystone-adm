@@ -1,19 +1,15 @@
 #include <asm/linkage.h>
 
-#define ASM_NL           ;
-#define ALIGN __ALIGN
+#define ASM_NL    ;
+#define ALIGN     __ALIGN
 #define ALIGN_STR __ALIGN_STR
 
 #ifndef ENTRY
-#define ENTRY(name) \
-          .globl name ASM_NL \
-	          ALIGN ASM_NL \
-	  name:
+#define ENTRY(name) .globl name ASM_NL ALIGN ASM_NL name:
 #endif
 
 #ifndef END
-#define END(name) \
-  .size name, .-name
+#define END(name) .size name, .- name
 #endif
 
 /* If symbol 'name' is treated as a subroutine (gets called, and returns)
@@ -21,7 +17,5 @@
  * static analysis tools such as stack depth analyzer.
  */
 #ifndef ENDPROC
-#define ENDPROC(name) \
-  .type name, @function ASM_NL \
-    END(name)
+#define ENDPROC(name) .type name, @function ASM_NL END(name)
 #endif

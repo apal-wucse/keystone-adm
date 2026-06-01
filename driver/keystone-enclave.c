@@ -34,10 +34,10 @@ unsigned long calculate_required_pages(
 }
 
 /* Smart destroy, handles partial initialization of epm and utm etc */
-int destroy_enclave(struct enclave *enclave) {
-    struct epm *epm;
-    struct utm *utm;
-    struct adm *adm;
+int destroy_enclave(struct enclave* enclave) {
+    struct epm* epm;
+    struct utm* utm;
+    struct adm* adm;
     if (enclave == NULL)
         return -ENOSYS;
 
@@ -62,8 +62,8 @@ int destroy_enclave(struct enclave *enclave) {
     return 0;
 }
 
-struct enclave *create_enclave(unsigned long min_pages) {
-    struct enclave *enclave;
+struct enclave* create_enclave(unsigned long min_pages) {
+    struct enclave* enclave;
 
     enclave = kmalloc(sizeof(struct enclave), GFP_KERNEL);
     if (!enclave) {
@@ -71,11 +71,11 @@ struct enclave *create_enclave(unsigned long min_pages) {
         goto error_no_free;
     }
 
-    enclave->eid = -1;
-    enclave->utm = NULL;
+    enclave->eid            = -1;
+    enclave->utm            = NULL;
     enclave->close_on_pexit = 1;
-    enclave->adm = NULL;
-    enclave->adm_enabled = false;
+    enclave->adm            = NULL;
+    enclave->adm_enabled    = false;
 
     enclave->epm = kmalloc(sizeof(struct epm), GFP_KERNEL);
     if (!enclave->epm) {
@@ -96,7 +96,7 @@ error_no_free:
     return NULL;
 }
 
-unsigned int enclave_idr_alloc(struct enclave *enclave) {
+unsigned int enclave_idr_alloc(struct enclave* enclave) {
     unsigned int ueid;
 
     mutex_lock(&idr_enclave_lock);
@@ -111,16 +111,16 @@ unsigned int enclave_idr_alloc(struct enclave *enclave) {
     return ueid;
 }
 
-struct enclave *enclave_idr_remove(unsigned int ueid) {
-    struct enclave *enclave;
+struct enclave* enclave_idr_remove(unsigned int ueid) {
+    struct enclave* enclave;
     mutex_lock(&idr_enclave_lock);
     enclave = idr_remove(&idr_enclave, ueid);
     mutex_unlock(&idr_enclave_lock);
     return enclave;
 }
 
-struct enclave *get_enclave_by_id(unsigned int ueid) {
-    struct enclave *enclave;
+struct enclave* get_enclave_by_id(unsigned int ueid) {
+    struct enclave* enclave;
     mutex_lock(&idr_enclave_lock);
     enclave = idr_find(&idr_enclave, ueid);
     mutex_unlock(&idr_enclave_lock);

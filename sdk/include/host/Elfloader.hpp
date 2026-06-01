@@ -1,4 +1,3 @@
 #include "ElfFile.hpp"
 
-int
-parseElf(char* fileName);
+int parseElf(char* fileName);

@@ -347,16 +347,16 @@ extern "C" {
    | MSS_UART_921600_BAUD | 921600 baud rate |
 
   */
-#define MSS_UART_110_BAUD 110U
-#define MSS_UART_300_BAUD 300U
-#define MSS_UART_600_BAUD 600U
-#define MSS_UART_1200_BAUD 1200U
-#define MSS_UART_2400_BAUD 2400U
-#define MSS_UART_4800_BAUD 4800U
-#define MSS_UART_9600_BAUD 9600U
-#define MSS_UART_19200_BAUD 19200U
-#define MSS_UART_38400_BAUD 38400U
-#define MSS_UART_57600_BAUD 57600U
+#define MSS_UART_110_BAUD    110U
+#define MSS_UART_300_BAUD    300U
+#define MSS_UART_600_BAUD    600U
+#define MSS_UART_1200_BAUD   1200U
+#define MSS_UART_2400_BAUD   2400U
+#define MSS_UART_4800_BAUD   4800U
+#define MSS_UART_9600_BAUD   9600U
+#define MSS_UART_19200_BAUD  19200U
+#define MSS_UART_38400_BAUD  38400U
+#define MSS_UART_57600_BAUD  57600U
 #define MSS_UART_115200_BAUD 115200U
 #define MSS_UART_230400_BAUD 230400U
 #define MSS_UART_460800_BAUD 460800U
@@ -396,9 +396,9 @@ extern "C" {
    | MSS_UART_STICK_PARITY_1 | Stick parity bit to one  |
 
   */
-#define MSS_UART_NO_PARITY ((uint8_t)0x00)
-#define MSS_UART_ODD_PARITY ((uint8_t)0x08)
-#define MSS_UART_EVEN_PARITY ((uint8_t)0x18)
+#define MSS_UART_NO_PARITY      ((uint8_t)0x00)
+#define MSS_UART_ODD_PARITY     ((uint8_t)0x08)
+#define MSS_UART_EVEN_PARITY    ((uint8_t)0x18)
 #define MSS_UART_STICK_PARITY_0 ((uint8_t)0x38)
 #define MSS_UART_STICK_PARITY_1 ((uint8_t)0x28)
 
@@ -415,9 +415,9 @@ extern "C" {
    | MSS_UART_TWO_STOP_BITS    | Two stop bits            |
 
   */
-#define MSS_UART_ONE_STOP_BIT ((uint8_t)0x00)
+#define MSS_UART_ONE_STOP_BIT     ((uint8_t)0x00)
 #define MSS_UART_ONEHALF_STOP_BIT ((uint8_t)0x04)
-#define MSS_UART_TWO_STOP_BITS ((uint8_t)0x04)
+#define MSS_UART_TWO_STOP_BITS    ((uint8_t)0x04)
 
 /***************************************************************************/ /**
    Receiver Error Status
@@ -440,12 +440,12 @@ extern "C" {
 
   */
 #define MSS_UART_INVALID_PARAM ((uint8_t)0xFF)
-#define MSS_UART_NO_ERROR ((uint8_t)0x00)
-#define MSS_UART_OVERUN_ERROR ((uint8_t)0x02)
-#define MSS_UART_PARITY_ERROR ((uint8_t)0x04)
+#define MSS_UART_NO_ERROR      ((uint8_t)0x00)
+#define MSS_UART_OVERUN_ERROR  ((uint8_t)0x02)
+#define MSS_UART_PARITY_ERROR  ((uint8_t)0x04)
 #define MSS_UART_FRAMING_ERROR ((uint8_t)0x08)
-#define MSS_UART_BREAK_ERROR ((uint8_t)0x10)
-#define MSS_UART_FIFO_ERROR ((uint8_t)0x80)
+#define MSS_UART_BREAK_ERROR   ((uint8_t)0x10)
+#define MSS_UART_FIFO_ERROR    ((uint8_t)0x80)
 
 /***************************************************************************/ /**
    Transmitter Status
@@ -462,8 +462,8 @@ extern "C" {
 
   */
 #define MSS_UART_TX_BUSY ((uint8_t)0x00)
-#define MSS_UART_THRE ((uint8_t)0x20)
-#define MSS_UART_TEMT ((uint8_t)0x40)
+#define MSS_UART_THRE    ((uint8_t)0x20)
+#define MSS_UART_TEMT    ((uint8_t)0x40)
 
 /***************************************************************************/ /**
    Modem Status
@@ -489,10 +489,10 @@ extern "C" {
 #define MSS_UART_DDSR ((uint8_t)0x02)
 #define MSS_UART_TERI ((uint8_t)0x04)
 #define MSS_UART_DDCD ((uint8_t)0x08)
-#define MSS_UART_CTS ((uint8_t)0x10)
-#define MSS_UART_DSR ((uint8_t)0x20)
-#define MSS_UART_RI ((uint8_t)0x40)
-#define MSS_UART_DCD ((uint8_t)0x80)
+#define MSS_UART_CTS  ((uint8_t)0x10)
+#define MSS_UART_DSR  ((uint8_t)0x20)
+#define MSS_UART_RI   ((uint8_t)0x40)
+#define MSS_UART_DCD  ((uint8_t)0x80)
 
 /***************************************************************************/ /**
    This enumeration specifies the receiver FIFO trigger level. This is the number
@@ -501,9 +501,9 @@ extern "C" {
    MSS_UART_set_rx_handler() function trigger_level parameter.
   */
 typedef enum {
-    MSS_UART_FIFO_SINGLE_BYTE = 0x00,
-    MSS_UART_FIFO_FOUR_BYTES = 0x40,
-    MSS_UART_FIFO_EIGHT_BYTES = 0x80,
+    MSS_UART_FIFO_SINGLE_BYTE    = 0x00,
+    MSS_UART_FIFO_FOUR_BYTES     = 0x40,
+    MSS_UART_FIFO_EIGHT_BYTES    = 0x80,
     MSS_UART_FIFO_FOURTEEN_BYTES = 0xC0,
     MSS_UART_FIFO_INVALID_TRIG_LEVEL
 
@@ -533,7 +533,7 @@ typedef enum {
    This is passed as parameters in MSS_UART_irda_init() function.
   */
 typedef enum {
-    MSS_UART_ACTIVE_LOW = 0u,
+    MSS_UART_ACTIVE_LOW  = 0u,
     MSS_UART_ACTIVE_HIGH = 1u,
     MSS_UART_INVALID_POLARITY
 
@@ -546,7 +546,7 @@ typedef enum {
   */
 typedef enum {
     MSS_UART_3_BY_16 = 0u,
-    MSS_UART_1_BY_4 = 1u,
+    MSS_UART_1_BY_4  = 1u,
     MSS_UART_INVALID_PW
 
 } mss_uart_rzi_pulsewidth_t;
@@ -570,14 +570,14 @@ typedef enum {
    MSS_UART_set_filter_length() accepts the parameter of this type.
   */
 typedef enum {
-    MSS_UART_LEN0 = 0,
-    MSS_UART_LEN1 = 1,
-    MSS_UART_LEN2 = 2,
-    MSS_UART_LEN3 = 3,
-    MSS_UART_LEN4 = 4,
-    MSS_UART_LEN5 = 5,
-    MSS_UART_LEN6 = 6,
-    MSS_UART_LEN7 = 7,
+    MSS_UART_LEN0                  = 0,
+    MSS_UART_LEN1                  = 1,
+    MSS_UART_LEN2                  = 2,
+    MSS_UART_LEN3                  = 3,
+    MSS_UART_LEN4                  = 4,
+    MSS_UART_LEN5                  = 5,
+    MSS_UART_LEN6                  = 6,
+    MSS_UART_LEN7                  = 7,
     MSS_UART_INVALID_FILTER_LENGTH = 8
 
 } mss_uart_filter_length_t;
@@ -601,12 +601,12 @@ typedef enum {
    type.
   */
 typedef enum {
-    MSS_UART_ASYNC_MODE = 0,
-    MSS_UART_SYNC_SLAVE_POS_EDGE_CLK = 1,
-    MSS_UART_SYNC_SLAVE_NEG_EDGE_CLK = 2,
+    MSS_UART_ASYNC_MODE               = 0,
+    MSS_UART_SYNC_SLAVE_POS_EDGE_CLK  = 1,
+    MSS_UART_SYNC_SLAVE_NEG_EDGE_CLK  = 2,
     MSS_UART_SYNC_MASTER_POS_EDGE_CLK = 3,
     MSS_UART_SYNC_MASTER_NEG_EDGE_CLK = 4,
-    MSS_UART_INVALID_SYNC_MODE = 5
+    MSS_UART_INVALID_SYNC_MODE        = 5
 
 } mss_uart_usart_mode_t;
 
@@ -620,7 +620,7 @@ typedef enum {
     MSS_UART1_HI = 6,
     MSS_UART2_HI = 7,
     MSS_UART3_HI = 8,
-    MSS_UAR4_HI = 9,
+    MSS_UAR4_HI  = 9,
 
 } mss_uart_num_t;
 
@@ -714,17 +714,17 @@ typedef struct {
   */
 struct mss_uart_instance {
     /* CMSIS related defines identifying the UART hardware. */
-    MSS_UART_TypeDef *hw_reg; /*!< Pointer to UART registers. */
+    MSS_UART_TypeDef* hw_reg; /*!< Pointer to UART registers. */
     uint32_t baudrate;        /*!< Operating baud rate. */
     uint8_t lineconfig;       /*!< Line configuration parameters. */
     uint8_t status;           /*!< Sticky line status. */
 
     /* transmit related info (used with interrupt driven transmit): */
-    const uint8_t *tx_buffer; /*!< Pointer to transmit buffer. */
+    const uint8_t* tx_buffer; /*!< Pointer to transmit buffer. */
     uint32_t tx_buff_size;    /*!< Transmit buffer size. */
     uint32_t tx_idx;          /*!< Index within transmit buffer of next byte to transmit.*/
 
-    void *user_data; /*!< Pointer to user provided pointer for user specific use. */
+    void* user_data; /*!< Pointer to user provided pointer for user specific use. */
 };
 
 /***************************************************************************/ /**
@@ -832,7 +832,7 @@ extern mss_uart_instance_t g_mss_uart4_hi;
    }
    @endcode
   */
-void MSS_UART_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config);
+void MSS_UART_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config);
 
 /***************************************************************************/ /**
   The MSS_UART_lin_init() function is used to initialize the MSS UART for
@@ -919,7 +919,7 @@ void MSS_UART_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t l
    }
    @endcode
   */
-void MSS_UART_lin_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config);
+void MSS_UART_lin_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config);
 
 /***************************************************************************/ /**
    The MSS_UART_irda_init() function is used to initialize the MSS UART instance
@@ -1003,7 +1003,7 @@ void MSS_UART_lin_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8
    @endcode
   */
 void MSS_UART_irda_init(
-    mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config,
+    mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config,
     mss_uart_rzi_polarity_t rxpol, mss_uart_rzi_polarity_t txpol, mss_uart_rzi_pulsewidth_t pw);
 
 /***************************************************************************/ /**
@@ -1093,8 +1093,8 @@ void MSS_UART_irda_init(
        }
    @endcode
   */
-void MSS_UART_smartcard_init(
-    mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config);
+void
+MSS_UART_smartcard_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config);
 
 /***************************************************************************/ /**
    The function MSS_UART_polled_tx() is used to transmit data. It transfers the
@@ -1154,7 +1154,7 @@ void MSS_UART_smartcard_init(
    }
    @endcode
   */
-void MSS_UART_polled_tx(mss_uart_instance_t *this_uart, const uint8_t *pbuff, uint32_t tx_size);
+void MSS_UART_polled_tx(mss_uart_instance_t* this_uart, const uint8_t* pbuff, uint32_t tx_size);
 
 /***************************************************************************/ /**
    The function MSS_UART_polled_tx_string() is used to transmit a NULL ('\0')
@@ -1211,7 +1211,7 @@ void MSS_UART_polled_tx(mss_uart_instance_t *this_uart, const uint8_t *pbuff, ui
    @endcode
 
   */
-void MSS_UART_polled_tx_string(mss_uart_instance_t *this_uart, const uint8_t *p_sz_string);
+void MSS_UART_polled_tx_string(mss_uart_instance_t* this_uart, const uint8_t* p_sz_string);
 
 /***************************************************************************/ /**
    The MSS_UART_get_rx() function reads the content of the UART receiver's FIFO
@@ -1320,7 +1320,7 @@ void MSS_UART_polled_tx_string(mss_uart_instance_t *this_uart, const uint8_t *p_
     }
    @endcode
   */
-size_t MSS_UART_get_rx(mss_uart_instance_t *this_uart, uint8_t *rx_buff, size_t buff_size);
+size_t MSS_UART_get_rx(mss_uart_instance_t* this_uart, uint8_t* rx_buff, size_t buff_size);
 
 /***************************************************************************/ /**
    The MSS_UART_set_loopback() function is used to locally loop-back the Tx and
@@ -1361,7 +1361,7 @@ size_t MSS_UART_get_rx(mss_uart_instance_t *this_uart, uint8_t *rx_buff, size_t 
        MSS_UART_set_loopback(&g_mss_uart0_lo, MSS_UART_LOCAL_LOOPBACK_OFF);
    @endcode
   */
-void MSS_UART_set_loopback(mss_uart_instance_t *this_uart, mss_uart_loopback_t loopback);
+void MSS_UART_set_loopback(mss_uart_instance_t* this_uart, mss_uart_loopback_t loopback);
 
 /***************************************************************************/ /**
    The MSS_UART_fill_tx_fifo() function fills the UART's hardware transmitter
@@ -1416,7 +1416,7 @@ void MSS_UART_set_loopback(mss_uart_instance_t *this_uart, mss_uart_loopback_t l
    @endcode
   */
 size_t
-MSS_UART_fill_tx_fifo(mss_uart_instance_t *this_uart, const uint8_t *tx_buffer, size_t tx_size);
+MSS_UART_fill_tx_fifo(mss_uart_instance_t* this_uart, const uint8_t* tx_buffer, size_t tx_size);
 
 /***************************************************************************/ /**
    The MSS_UART_get_rx_status() function returns the receiver error status of the
@@ -1484,7 +1484,7 @@ MSS_UART_fill_tx_fifo(mss_uart_instance_t *this_uart, const uint8_t *tx_buffer, 
      }
    @endcode
   */
-uint8_t MSS_UART_get_rx_status(mss_uart_instance_t *this_uart);
+uint8_t MSS_UART_get_rx_status(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_get_modem_status() function returns the modem status of the
@@ -1534,7 +1534,7 @@ uint8_t MSS_UART_get_rx_status(mss_uart_instance_t *this_uart);
      }
    @endcode
   */
-uint8_t MSS_UART_get_modem_status(const mss_uart_instance_t *this_uart);
+uint8_t MSS_UART_get_modem_status(const mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_get_tx_status() function returns the transmitter status of the
@@ -1584,7 +1584,7 @@ uint8_t MSS_UART_get_modem_status(const mss_uart_instance_t *this_uart);
      }
    @endcode
   */
-uint8_t MSS_UART_get_tx_status(mss_uart_instance_t *this_uart);
+uint8_t MSS_UART_get_tx_status(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_set_break() function is used to send the break
@@ -1614,7 +1614,7 @@ uint8_t MSS_UART_get_tx_status(mss_uart_instance_t *this_uart);
      MSS_UART_set_break(&g_mss_uart0);
    @endcode
   */
-void MSS_UART_set_break(mss_uart_instance_t *this_uart);
+void MSS_UART_set_break(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_clear_break() function is used to remove the break signal on the
@@ -1644,7 +1644,7 @@ void MSS_UART_set_break(mss_uart_instance_t *this_uart);
      MSS_UART_clear_break(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_clear_break(mss_uart_instance_t *this_uart);
+void MSS_UART_clear_break(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_enable_half_duplex() function is used to enable the half-duplex
@@ -1674,7 +1674,7 @@ void MSS_UART_clear_break(mss_uart_instance_t *this_uart);
      MSS_UART_enable_half_duplex(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_enable_half_duplex(mss_uart_instance_t *this_uart);
+void MSS_UART_enable_half_duplex(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_disable_half_duplex() function is used to disable the half-duplex
@@ -1704,7 +1704,7 @@ void MSS_UART_enable_half_duplex(mss_uart_instance_t *this_uart);
      MSS_UART_disable_half_duplex(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_disable_half_duplex(mss_uart_instance_t *this_uart);
+void MSS_UART_disable_half_duplex(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_set_rx_endian() function is used to configure the LSB first or
@@ -1737,7 +1737,7 @@ void MSS_UART_disable_half_duplex(mss_uart_instance_t *this_uart);
      MSS_UART_set_rx_endian(&g_mss_uart0_lo, MSS_UART_LITTLEEND);
    @endcode
   */
-void MSS_UART_set_rx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t endian);
+void MSS_UART_set_rx_endian(mss_uart_instance_t* this_uart, mss_uart_endian_t endian);
 
 /***************************************************************************/ /**
    The MSS_UART_set_tx_endian() function is used to configure the LSB first or
@@ -1770,7 +1770,7 @@ void MSS_UART_set_rx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t en
      MSS_UART_set_tx_endian(&g_mss_uart0_lo, MSS_UART_LITTLEEND);
    @endcode
   */
-void MSS_UART_set_tx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t endian);
+void MSS_UART_set_tx_endian(mss_uart_instance_t* this_uart, mss_uart_endian_t endian);
 
 /***************************************************************************/ /**
    The MSS_UART_set_filter_length () function is used to configure the glitch
@@ -1804,7 +1804,7 @@ void MSS_UART_set_tx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t en
      MSS_UART_set_filter_length(&g_mss_uart0_lo, MSS_UART_LEN2);
    @endcode
   */
-void MSS_UART_set_filter_length(mss_uart_instance_t *this_uart, mss_uart_filter_length_t length);
+void MSS_UART_set_filter_length(mss_uart_instance_t* this_uart, mss_uart_filter_length_t length);
 
 /***************************************************************************/ /**
    The MSS_UART_enable_afm() function is used to enable address flag detection
@@ -1833,7 +1833,7 @@ void MSS_UART_set_filter_length(mss_uart_instance_t *this_uart, mss_uart_filter_
      MSS_UART_enable_afm(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_enable_afm(mss_uart_instance_t *this_uart);
+void MSS_UART_enable_afm(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_disable_afm() function is used to disable address flag detection
@@ -1867,7 +1867,7 @@ void MSS_UART_enable_afm(mss_uart_instance_t *this_uart);
      MSS_UART_disable_afm(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_disable_afm(mss_uart_instance_t *this_uart);
+void MSS_UART_disable_afm(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_enable_afclear () function is used to enable address flag clear
@@ -1897,7 +1897,7 @@ void MSS_UART_disable_afm(mss_uart_instance_t *this_uart);
      MSS_UART_enable_afclear(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_enable_afclear(mss_uart_instance_t *this_uart);
+void MSS_UART_enable_afclear(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_disable_afclear () function is used to disable address flag
@@ -1932,7 +1932,7 @@ void MSS_UART_enable_afclear(mss_uart_instance_t *this_uart);
      MSS_UART_disable_afclear(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_disable_afclear(mss_uart_instance_t *this_uart);
+void MSS_UART_disable_afclear(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_enable_rx_timeout() function is used to enable and configure
@@ -1967,7 +1967,7 @@ void MSS_UART_disable_afclear(mss_uart_instance_t *this_uart);
      MSS_UART_enable_rx_timeout(&g_mss_uart0_lo, 24);
    @endcode
   */
-void MSS_UART_enable_rx_timeout(mss_uart_instance_t *this_uart, uint8_t timeout);
+void MSS_UART_enable_rx_timeout(mss_uart_instance_t* this_uart, uint8_t timeout);
 
 /***************************************************************************/ /**
    The MSS_UART_disable_rx_timeout() function is used to disable the receiver
@@ -2001,7 +2001,7 @@ void MSS_UART_enable_rx_timeout(mss_uart_instance_t *this_uart, uint8_t timeout)
      MSS_UART_disable_rx_timeout(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_disable_rx_timeout(mss_uart_instance_t *this_uart);
+void MSS_UART_disable_rx_timeout(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_enable_tx_time_guard() function is used to enable and configure
@@ -2041,7 +2041,7 @@ void MSS_UART_disable_rx_timeout(mss_uart_instance_t *this_uart);
      MSS_UART_enable_tx_time_guard(&g_mss_uart0_lo, 24);
    @endcode
   */
-void MSS_UART_enable_tx_time_guard(mss_uart_instance_t *this_uart, uint8_t timeguard);
+void MSS_UART_enable_tx_time_guard(mss_uart_instance_t* this_uart, uint8_t timeguard);
 
 /***************************************************************************/ /**
    The MSS_UART_disable_tx_time_guard() function is used to disable the
@@ -2075,7 +2075,7 @@ void MSS_UART_enable_tx_time_guard(mss_uart_instance_t *this_uart, uint8_t timeg
      MSS_UART_disable_tx_time_guard(&g_mss_uart0_lo);
    @endcode
   */
-void MSS_UART_disable_tx_time_guard(mss_uart_instance_t *this_uart);
+void MSS_UART_disable_tx_time_guard(mss_uart_instance_t* this_uart);
 
 /***************************************************************************/ /**
    The MSS_UART_set_address() function is used to set the 8-bit address for
@@ -2108,7 +2108,7 @@ void MSS_UART_disable_tx_time_guard(mss_uart_instance_t *this_uart);
      MSS_UART_set_address(&g_mss_uart0_lo, 0xAA);
    @endcode
   */
-void MSS_UART_set_address(mss_uart_instance_t *this_uart, uint8_t address);
+void MSS_UART_set_address(mss_uart_instance_t* this_uart, uint8_t address);
 
 /***************************************************************************/ /**
    The MSS_UART_set_ready_mode() function is used to configure the MODE0 or MODE1
@@ -2142,7 +2142,7 @@ void MSS_UART_set_address(mss_uart_instance_t *this_uart, uint8_t address);
      MSS_UART_set_ready_mode(&g_mss_uart0_lo, MSS_UART_READY_MODE0);
    @endcode
   */
-void MSS_UART_set_ready_mode(mss_uart_instance_t *this_uart, mss_uart_ready_mode_t mode);
+void MSS_UART_set_ready_mode(mss_uart_instance_t* this_uart, mss_uart_ready_mode_t mode);
 
 /***************************************************************************/ /**
    The MSS_UART_set_usart_mode() function is used to configure the MSS UART
@@ -2177,7 +2177,7 @@ void MSS_UART_set_ready_mode(mss_uart_instance_t *this_uart, mss_uart_ready_mode
      MSS_UART_set_usart_mode(&g_mss_uart0_lo, MSS_UART_SYNC_MASTER_POS_EDGE_CLK);
    @endcode
   */
-void MSS_UART_set_usart_mode(mss_uart_instance_t *this_uart, mss_uart_usart_mode_t mode);
+void MSS_UART_set_usart_mode(mss_uart_instance_t* this_uart, mss_uart_usart_mode_t mode);
 
 #ifdef __cplusplus
 }

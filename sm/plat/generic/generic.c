@@ -5,7 +5,7 @@
 
 #include "sm.h"
 
-static int generic_final_init(bool cold_boot, const struct fdt_match *match) {
+static int generic_final_init(bool cold_boot, const struct fdt_match* match) {
     sm_init(cold_boot);
     return 0;
 }

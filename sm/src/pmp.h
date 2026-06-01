@@ -8,12 +8,12 @@
 #include "sm.h"
 #include <sbi/riscv_atomic.h>
 
-#define PMP_N_REG 8         // number of PMP registers
+#define PMP_N_REG        8  // number of PMP registers
 #define PMP_MAX_N_REGION 16 // maximum number of PMP regions
 
-#define SET_BIT(bitmap, n) (bitmap |= (0x1 << (n)))
+#define SET_BIT(bitmap, n)   (bitmap |= (0x1 << (n)))
 #define UNSET_BIT(bitmap, n) (bitmap &= ~(0x1 << (n)))
-#define TEST_BIT(bitmap, n) (bitmap & (0x1 << (n)))
+#define TEST_BIT(bitmap, n)  (bitmap & (0x1 << (n)))
 
 enum pmp_priority {
     PMP_PRI_ANY,
@@ -22,22 +22,26 @@ enum pmp_priority {
 };
 
 #define PMP_ALL_PERM (PMP_W | PMP_X | PMP_R)
-#define PMP_NO_PERM 0
-#define PMP_RW_PERM (PMP_W | PMP_R)
+#define PMP_NO_PERM  0
+#define PMP_RW_PERM  (PMP_W | PMP_R)
 
 #if __riscv_xlen == 64
 #define LIST_OF_PMP_REGS                                                                           \
     X(0, 0)                                                                                        \
     X(1, 0)                                                                                        \
-    X(2, 0) X(3, 0) X(4, 0) X(5, 0) X(6, 0) X(7, 0) X(8, 2) X(9, 2) X(10, 2) X(11, 2) X(12, 2)     \
-        X(13, 2) X(14, 2) X(15, 2)
+    X(2, 0)                                                                                        \
+    X(3, 0)                                                                                        \
+    X(4, 0)                                                                                        \
+    X(5, 0) X(6, 0) X(7, 0) X(8, 2) X(9, 2) X(10, 2) X(11, 2) X(12, 2) X(13, 2) X(14, 2) X(15, 2)
 #define PMP_PER_GROUP 8
 #else
 #define LIST_OF_PMP_REGS                                                                           \
     X(0, 0)                                                                                        \
     X(1, 0)                                                                                        \
-    X(2, 0) X(3, 0) X(4, 1) X(5, 1) X(6, 1) X(7, 1) X(8, 2) X(9, 2) X(10, 2) X(11, 2) X(12, 3)     \
-        X(13, 3) X(14, 3) X(15, 3)
+    X(2, 0)                                                                                        \
+    X(3, 0)                                                                                        \
+    X(4, 1)                                                                                        \
+    X(5, 1) X(6, 1) X(7, 1) X(8, 2) X(9, 2) X(10, 2) X(11, 2) X(12, 3) X(13, 3) X(14, 3) X(15, 3)
 #define PMP_PER_GROUP 4
 #endif
 
@@ -100,9 +104,9 @@ typedef int region_id;
 /* external functions */
 void pmp_init();
 int pmp_region_init_atomic(
-    uintptr_t start, uint64_t size, enum pmp_priority pri, region_id *rid, int allow_overlap);
+    uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_init(
-    uintptr_t start, uint64_t size, enum pmp_priority pri, region_id *rid, int allow_overlap);
+    uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_free_atomic(region_id region);
 int pmp_set_keystone(region_id n, uint8_t perm);
 int pmp_set_global(region_id n, uint8_t perm);

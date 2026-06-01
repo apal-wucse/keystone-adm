@@ -49,13 +49,13 @@
 
 #include <sm.h>
 
-#define MPFS_HART_COUNT 5
+#define MPFS_HART_COUNT      5
 #define MPFS_HART_STACK_SIZE 8192
 
 #define MPFS_CLINT_ADDR 0x2000000
 
-#define MPFS_PLIC_ADDR 0xc000000
-#define MPFS_PLIC_NUM_SOURCES 0x35
+#define MPFS_PLIC_ADDR           0xc000000
+#define MPFS_PLIC_NUM_SOURCES    0x35
 #define MPFS_PLIC_NUM_PRIORITIES 7
 
 /**
@@ -72,7 +72,7 @@ static u32 hart_idx2id[MPFS_HART_COUNT - 1] = {
 extern unsigned long STACK_SIZE_PER_HART;
 
 static int mpfs_early_init(bool cold_boot) {
-    struct sbi_scratch *sbi = sbi_scratch_thishart_ptr();
+    struct sbi_scratch* sbi = sbi_scratch_thishart_ptr();
 
     // The SM expects that we'll be able to protect a region of size
     // 0x200000. If we don't grow the fw_size, OpenSBI will only mark
@@ -90,7 +90,7 @@ static int mpfs_final_init(bool cold_boot) {
     if (!cold_boot)
         return 0;
 
-    void *fdt = sbi_scratch_thishart_arg1_ptr();
+    void* fdt = sbi_scratch_thishart_arg1_ptr();
     fdt_cpu_fixup(fdt);
     fdt_fixups(fdt);
     fdt_reserved_memory_nomap_fixup(fdt);
@@ -167,9 +167,9 @@ static int mpfs_irqchip_init(bool cold_boot) {
 }
 
 static struct clint_data clint = {
-    .addr = MPFS_CLINT_ADDR,
-    .first_hartid = 0,
-    .hart_count = MPFS_HART_COUNT,
+    .addr           = MPFS_CLINT_ADDR,
+    .first_hartid   = 0,
+    .hart_count     = MPFS_HART_COUNT,
     .has_64bit_mmio = true,
 };
 
@@ -218,29 +218,29 @@ const struct sbi_platform_operations platform_ops = {
 
     .irqchip_init = mpfs_irqchip_init,
 
-    .ipi_send = clint_ipi_send,
+    .ipi_send  = clint_ipi_send,
     .ipi_clear = clint_ipi_clear,
-    .ipi_init = mpfs_ipi_init,
+    .ipi_init  = mpfs_ipi_init,
 
     .get_tlbr_flush_limit = mpfs_get_tlbr_flush_limit,
 
-    .timer_value = clint_timer_value,
+    .timer_value       = clint_timer_value,
     .timer_event_start = clint_timer_event_start,
-    .timer_event_stop = clint_timer_event_stop,
-    .timer_init = mpfs_timer_init,
+    .timer_event_stop  = clint_timer_event_stop,
+    .timer_init        = mpfs_timer_init,
 
     .system_reset_check = mpfs_reset_check,
 };
 
 const struct sbi_platform platform = {
-    .opensbi_version = OPENSBI_VERSION,
+    .opensbi_version  = OPENSBI_VERSION,
     .platform_version = SBI_PLATFORM_VERSION(0x0, 0x01),
-    .name = "Microchip PolarFire SoC",
+    .name             = "Microchip PolarFire SoC",
     //.features = SBI_PLATFORM_DEFAULT_FEATURES & (~SBI_PLATFORM_HAS_PMP), // already have PMPs
-    //setup
-    .features = SBI_PLATFORM_DEFAULT_FEATURES, // already have PMPs setup
-    .hart_count = (MPFS_HART_COUNT - 1),
-    .hart_stack_size = MPFS_HART_STACK_SIZE, // TODO: revisit
-    .hart_index2id = hart_idx2id,
+    // setup
+    .features          = SBI_PLATFORM_DEFAULT_FEATURES, // already have PMPs setup
+    .hart_count        = (MPFS_HART_COUNT - 1),
+    .hart_stack_size   = MPFS_HART_STACK_SIZE, // TODO: revisit
+    .hart_index2id     = hart_idx2id,
     .platform_ops_addr = (unsigned long)&platform_ops,
-    .firmware_context = 0};
+    .firmware_context  = 0};

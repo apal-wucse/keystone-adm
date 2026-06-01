@@ -7,7 +7,7 @@
 
 /* Copy type_info from enclave */
 static inline unsigned long
-copy_adm_type_info(uintptr_t src, unsigned long count, AdmTypeInfo *dst) {
+copy_adm_type_info(uintptr_t src, unsigned long count, AdmTypeInfo* dst) {
     if (count > ADM_SLOT_MAX)
         return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
 

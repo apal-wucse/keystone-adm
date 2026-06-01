@@ -7,34 +7,32 @@
 namespace Keystone {
 
 /* Close and free the ofstream if applicable. */
-static void
-DestroyIfFile(std::ostream* os) {
-  if (os != &std::cout && os != &std::cerr) {
-    dynamic_cast<std::ofstream*>(os)->close();
-    delete os;
-  }
+static void DestroyIfFile(std::ostream* os) {
+    if (os != &std::cout && os != &std::cerr) {
+        dynamic_cast<std::ofstream*>(os)->close();
+        delete os;
+    }
 }
 
 Logger::~Logger() {
-  ForceWrite_();
-  DestroyIfFile(os_);
+    ForceWrite_();
+    DestroyIfFile(os_);
 }
 
-bool
-Logger::ResetOutputStream_(std::ostream* replacement) {
-  if (!replacement) {
-    return false;
-  }
+bool Logger::ResetOutputStream_(std::ostream* replacement) {
+    if (!replacement) {
+        return false;
+    }
 
-  if (replacement->fail()) {
-    DestroyIfFile(replacement);
-    return false;
-  }
+    if (replacement->fail()) {
+        DestroyIfFile(replacement);
+        return false;
+    }
 
-  ForceWrite_();
-  DestroyIfFile(os_);
-  os_ = replacement;
-  return true;
+    ForceWrite_();
+    DestroyIfFile(os_);
+    os_ = replacement;
+    return true;
 }
 
 Logger LogDebug{false};
@@ -42,4 +40,4 @@ Logger LogInfo{};
 Logger LogWarn{};
 Logger LogError{};
 
-}  // namespace Keystone
+} // namespace Keystone

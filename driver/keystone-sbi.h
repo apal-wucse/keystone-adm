@@ -12,11 +12,11 @@
 
 #include "keystone_user.h"
 
-#define KEYSTONE_SBI_EXT_ID 0x08424b45
-#define SBI_SM_CREATE_ENCLAVE 2001
+#define KEYSTONE_SBI_EXT_ID    0x08424b45
+#define SBI_SM_CREATE_ENCLAVE  2001
 #define SBI_SM_DESTROY_ENCLAVE 2002
-#define SBI_SM_RUN_ENCLAVE 2003
-#define SBI_SM_RESUME_ENCLAVE 2005
+#define SBI_SM_RUN_ENCLAVE     2003
+#define SBI_SM_RESUME_ENCLAVE  2005
 
 struct keystone_sbi_pregion_t {
     uintptr_t paddr;
@@ -36,13 +36,13 @@ struct keystone_sbi_create_t {
 
     // Parameters
     struct runtime_params_t params;
-    unsigned int *eid_pptr; // TODO: remove?
+    unsigned int* eid_pptr; // TODO: remove?
 
     AdmTypeInfo type_info[ADM_SLOT_MAX];
     __u8 adm_protection;
 };
 
-struct sbiret sbi_sm_create_enclave(struct keystone_sbi_create_t *args);
+struct sbiret sbi_sm_create_enclave(struct keystone_sbi_create_t* args);
 struct sbiret sbi_sm_destroy_enclave(unsigned long eid);
 struct sbiret sbi_sm_run_enclave(unsigned long eid);
 struct sbiret sbi_sm_resume_enclave(unsigned long eid);

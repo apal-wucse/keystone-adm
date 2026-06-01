@@ -16,18 +16,18 @@ region_id l2_controller_rid;
 
 void waymask_debug_printstatus() {
     unsigned int hartid = csr_read(mhartid);
-    sbi_printf("mhartid: %x, coremasters: %x & %x\r\n", hartid, (hartid)*2, (hartid)*2 + 1);
+    sbi_printf("mhartid: %x, coremasters: %x & %x\r\n", hartid, (hartid) * 2, (hartid) * 2 + 1);
 
     unsigned int master;
     for (master = 0; master < WM_NUM_MASTERS; master++) {
-        waymask_t *master_mask = WM_REG_ADDR(master);
+        waymask_t* master_mask = WM_REG_ADDR(master);
         sbi_printf("Master %x : %lx\r\n", master, *master_mask);
     }
 }
 
-size_t waymask_allocate_ways(size_t n_ways, unsigned int target_hart, waymask_t *mask) {
+size_t waymask_allocate_ways(size_t n_ways, unsigned int target_hart, waymask_t* mask) {
 
-    *mask = 0;
+    *mask            = 0;
     size_t remaining = _wm_choose_ways_for_hart(n_ways, mask, target_hart);
 
     if (remaining == n_ways) {
@@ -81,7 +81,7 @@ void waymask_free_ways(waymask_t _mask) {
 
 // Simplest possible way choosing, with reserved way for each hart
 // Returns number of ways it couldn't allocate
-int _wm_choose_ways_for_hart(size_t n_ways, waymask_t *mask, unsigned int target_hart) {
+int _wm_choose_ways_for_hart(size_t n_ways, waymask_t* mask, unsigned int target_hart) {
 
     *mask = 0;
     // Best effort, we may not be able to allocate n_ways
@@ -118,9 +118,9 @@ int _wm_lockout_ways(waymask_t mask, unsigned int master) {
     // Note that we DO allow entirely locking out a master
     //  Supposedly this isn't allowed, we'll see what happens.
     //  "At least one cache way must be enabled. "
-    waymask_t *master_mask = WM_REG_ADDR(master);
+    waymask_t* master_mask = WM_REG_ADDR(master);
     waymask_t current_mask = *master_mask;
-    *master_mask = current_mask & WM_FLIP_MASK(mask);
+    *master_mask           = current_mask & WM_FLIP_MASK(mask);
     return 0;
 }
 
@@ -131,7 +131,7 @@ int _wm_grant_ways(waymask_t mask, unsigned int master) {
         return -1;
     }
 
-    waymask_t *master_mask = WM_REG_ADDR(master);
+    waymask_t* master_mask = WM_REG_ADDR(master);
 
     *master_mask |= mask;
     return 0;
@@ -144,15 +144,15 @@ int _wm_assign_mask(waymask_t mask, unsigned int master) {
         return -1;
     }
 
-    waymask_t *master_mask = WM_REG_ADDR(master);
+    waymask_t* master_mask = WM_REG_ADDR(master);
 
     *master_mask = mask;
     return 0;
 }
 
 void waymask_init() {
-    allocated_ways = 0;
-    enclave_allocated_ways = 0;
+    allocated_ways            = 0;
+    enclave_allocated_ways    = 0;
     scratchpad_allocated_ways = 0;
 }
 
@@ -198,7 +198,7 @@ void waymask_clear_ways(waymask_t mask, unsigned int core) {
             /* We iterate by line size, one for each set */
             uintptr_t next = L2_SCRATCH_START;
             for (j = 0; j < L2_NUM_SETS; next += L2_LINE_SIZE, j++) {
-                *(uintptr_t *)next = 0;
+                *(uintptr_t*)next = 0;
             }
         }
     }

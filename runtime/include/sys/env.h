@@ -3,7 +3,6 @@
 
 #include "util/rt_elf.h"
 
-void*
-setup_start(void* _sp, ELF(Ehdr) * hdr);
+void* setup_start(void* _sp, ELF(Ehdr) * hdr);
 
 #endif

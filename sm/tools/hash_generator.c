@@ -4,17 +4,17 @@
 #include <string.h>
 
 #define FW_MEMORY_SIZE 0x1ff000
-#define HASH_SIZE 64
+#define HASH_SIZE      64
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     if (argc != 3) {
         printf("Usage: %s <firmware> <fwsize>\n", argv[0]);
         return 0;
     }
 
     unsigned char sm_hash[HASH_SIZE];
-    unsigned char *buf;
-    FILE *fw = fopen(argv[1], "rb");
+    unsigned char* buf;
+    FILE* fw = fopen(argv[1], "rb");
     int fwsize;
 
     if (!fw) {
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     fwsize = strtol(argv[2], NULL, 16);
 
     // copy all file contents
-    buf = (unsigned char *)malloc(FW_MEMORY_SIZE);
+    buf = (unsigned char*)malloc(FW_MEMORY_SIZE);
     memset(buf, 0, FW_MEMORY_SIZE);
     if (!buf) {
         printf("Failed to allocate buffer\n");

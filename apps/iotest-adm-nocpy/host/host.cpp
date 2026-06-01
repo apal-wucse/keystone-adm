@@ -35,10 +35,8 @@ int main(int argc, char** argv) {
     enclave.init(argv[1], argv[2], argv[3], params);
 
     enclave.registerOcallDispatchProtected(protected_incoming_call_dispatch);
-    edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(),
-                             enclave.getSharedBufferSize());
-    adm_init_internals((uintptr_t)enclave.getAdditionalMemory(),
-                       enclave.getAdditionalMemorySize());
+    edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
+    adm_init_internals((uintptr_t)enclave.getAdditionalMemory(), enclave.getAdditionalMemorySize());
 
     enclave.run();
 

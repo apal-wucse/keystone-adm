@@ -91,11 +91,21 @@
             projectRootFile = "flake.nix";
             programs = {
               nixfmt.enable = true;
-              clang-format = true;
+              clang-format.enable = true;
             };
             settings.formatter.clang-format.excludes = [
+              "crypto/**"
+              "runtime/crypto/**"
+              "runtime/include/crypto/**"
+              "sdk/**/common/**"
               "sdk/**/json11.cpp"
               "sdk/**/json11.h"
+              "sdk/**/verifier/ed25519/**"
+              "sdk/src/app-tmalloc/**"
+              "sm/src/ed25519/**"
+              "sm/src/hkdf_sha3_512/**"
+              "sm/src/hmac_sha3/**"
+              "sm/src/sha3/**"
             ];
           };
         }

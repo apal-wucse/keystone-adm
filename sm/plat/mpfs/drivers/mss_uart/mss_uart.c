@@ -18,17 +18,17 @@
 extern "C" {
 #endif
 
-#define MSS_UART0_LO_BASE (MSS_UART_TypeDef *)0x20000000UL
-#define MSS_UART1_LO_BASE (MSS_UART_TypeDef *)0x20100000UL
-#define MSS_UART2_LO_BASE (MSS_UART_TypeDef *)0x20102000UL
-#define MSS_UART3_LO_BASE (MSS_UART_TypeDef *)0x20104000UL
-#define MSS_UART4_LO_BASE (MSS_UART_TypeDef *)0x20106000UL
+#define MSS_UART0_LO_BASE (MSS_UART_TypeDef*)0x20000000UL
+#define MSS_UART1_LO_BASE (MSS_UART_TypeDef*)0x20100000UL
+#define MSS_UART2_LO_BASE (MSS_UART_TypeDef*)0x20102000UL
+#define MSS_UART3_LO_BASE (MSS_UART_TypeDef*)0x20104000UL
+#define MSS_UART4_LO_BASE (MSS_UART_TypeDef*)0x20106000UL
 
-#define MSS_UART0_HI_BASE (MSS_UART_TypeDef *)0x28000000UL
-#define MSS_UART1_HI_BASE (MSS_UART_TypeDef *)0x28100000UL
-#define MSS_UART2_HI_BASE (MSS_UART_TypeDef *)0x28102000UL
-#define MSS_UART3_HI_BASE (MSS_UART_TypeDef *)0x28104000UL
-#define MSS_UART4_HI_BASE (MSS_UART_TypeDef *)0x28106000UL
+#define MSS_UART0_HI_BASE (MSS_UART_TypeDef*)0x28000000UL
+#define MSS_UART1_HI_BASE (MSS_UART_TypeDef*)0x28100000UL
+#define MSS_UART2_HI_BASE (MSS_UART_TypeDef*)0x28102000UL
+#define MSS_UART3_HI_BASE (MSS_UART_TypeDef*)0x28104000UL
+#define MSS_UART4_HI_BASE (MSS_UART_TypeDef*)0x28106000UL
 
 mss_uart_instance_t g_mss_uart0_lo;
 mss_uart_instance_t g_mss_uart1_lo;
@@ -58,7 +58,7 @@ static uint8_t g_uart_axi_pos = 0x0u;
 /*******************************************************************************
  * Defines
  */
-#define TX_COMPLETE 0u
+#define TX_COMPLETE  0u
 #define TX_FIFO_SIZE 16u
 
 #define FCR_TRIG_LEVEL_MASK 0xC0u
@@ -74,12 +74,12 @@ static uint8_t g_uart_axi_pos = 0x0u;
 /*******************************************************************************
  * Possible values for Interrupt Identification Register Field.
  */
-#define IIRF_MODEM_STATUS 0x00u
-#define IIRF_THRE 0x02u
-#define IIRF_MMI 0x03u
-#define IIRF_RX_DATA 0x04u
+#define IIRF_MODEM_STATUS   0x00u
+#define IIRF_THRE           0x02u
+#define IIRF_MMI            0x03u
+#define IIRF_RX_DATA        0x04u
 #define IIRF_RX_LINE_STATUS 0x06u
-#define IIRF_DATA_TIMEOUT 0x0Cu
+#define IIRF_DATA_TIMEOUT   0x0Cu
 
 /*******************************************************************************
  * Receiver error status mask.
@@ -91,8 +91,8 @@ static uint8_t g_uart_axi_pos = 0x0u;
 /*******************************************************************************
  * Local functions.
  */
-static void global_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config);
-static void config_baud_divisors(mss_uart_instance_t *this_uart, uint32_t baudrate);
+static void global_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config);
+static void config_baud_divisors(mss_uart_instance_t* this_uart, uint32_t baudrate);
 
 /*******************************************************************************
  * Public Functions
@@ -102,7 +102,7 @@ static void config_baud_divisors(mss_uart_instance_t *this_uart, uint32_t baudra
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config) {
+void MSS_UART_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config) {
     /* Perform generic initialization */
     global_init(this_uart, baud_rate, line_config);
 
@@ -121,7 +121,7 @@ void MSS_UART_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t l
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_lin_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config) {
+void MSS_UART_lin_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config) {
     /* Perform generic initialization */
     global_init(this_uart, baud_rate, line_config);
 
@@ -141,7 +141,7 @@ void MSS_UART_lin_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8
                                                                                * use this function.
                                                                                */
 void MSS_UART_irda_init(
-    mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config,
+    mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config,
     mss_uart_rzi_polarity_t rxpol, mss_uart_rzi_polarity_t txpol, mss_uart_rzi_pulsewidth_t pw) {
     /* Perform generic initialization */
     global_init(this_uart, baud_rate, line_config);
@@ -169,8 +169,8 @@ void MSS_UART_irda_init(
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_smartcard_init(
-    mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config) {
+void
+MSS_UART_smartcard_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config) {
     /* Perform generic initialization */
     global_init(this_uart, baud_rate, line_config);
 
@@ -195,16 +195,16 @@ void MSS_UART_smartcard_init(
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_polled_tx(mss_uart_instance_t *this_uart, const uint8_t *pbuff, uint32_t tx_size) {
+void MSS_UART_polled_tx(mss_uart_instance_t* this_uart, const uint8_t* pbuff, uint32_t tx_size) {
     uint32_t char_idx = 0u;
     uint32_t size_sent;
     uint8_t status;
     uint32_t temp_tx_size = tx_size;
 
-    ASSERT(pbuff != ((uint8_t *)0));
+    ASSERT(pbuff != ((uint8_t*)0));
     ASSERT(tx_size > 0u);
 
-    if ((pbuff != ((uint8_t *)0)) && (temp_tx_size > 0u)) {
+    if ((pbuff != ((uint8_t*)0)) && (temp_tx_size > 0u)) {
         /* Remain in this loop until the entire input buffer
          * has been transferred to the UART.
          */
@@ -241,15 +241,15 @@ void MSS_UART_polled_tx(mss_uart_instance_t *this_uart, const uint8_t *pbuff, ui
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_polled_tx_string(mss_uart_instance_t *this_uart, const uint8_t *p_sz_string) {
+void MSS_UART_polled_tx_string(mss_uart_instance_t* this_uart, const uint8_t* p_sz_string) {
     uint32_t char_idx = 0u;
     uint32_t fill_size;
     uint8_t data_byte;
     uint8_t status;
 
-    ASSERT(p_sz_string != ((uint8_t *)0));
+    ASSERT(p_sz_string != ((uint8_t*)0));
 
-    if (p_sz_string != ((uint8_t *)0)) {
+    if (p_sz_string != ((uint8_t*)0)) {
         /* Get the first data byte from the input buffer */
         data_byte = p_sz_string[char_idx];
 
@@ -286,9 +286,9 @@ void MSS_UART_polled_tx_string(mss_uart_instance_t *this_uart, const uint8_t *p_
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-int8_t MSS_UART_tx_complete(mss_uart_instance_t *this_uart) {
+int8_t MSS_UART_tx_complete(mss_uart_instance_t* this_uart) {
     int8_t ret_value = 0;
-    uint8_t status = 0u;
+    uint8_t status   = 0u;
 
     /* Read the Line Status Register and update the sticky record. */
     status = this_uart->hw_reg->LSR;
@@ -306,14 +306,14 @@ int8_t MSS_UART_tx_complete(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-size_t MSS_UART_get_rx(mss_uart_instance_t *this_uart, uint8_t *rx_buff, size_t buff_size) {
+size_t MSS_UART_get_rx(mss_uart_instance_t* this_uart, uint8_t* rx_buff, size_t buff_size) {
     size_t rx_size = 0u;
     uint8_t status = 0u;
 
-    ASSERT(rx_buff != ((uint8_t *)0));
+    ASSERT(rx_buff != ((uint8_t*)0));
     ASSERT(buff_size > 0u);
 
-    if ((rx_buff != (uint8_t *)0) && (buff_size > 0u)) {
+    if ((rx_buff != (uint8_t*)0) && (buff_size > 0u)) {
         status = this_uart->hw_reg->LSR;
         this_uart->status |= status;
 
@@ -333,7 +333,7 @@ size_t MSS_UART_get_rx(mss_uart_instance_t *this_uart, uint8_t *rx_buff, size_t 
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_loopback(mss_uart_instance_t *this_uart, mss_uart_loopback_t loopback) {
+void MSS_UART_set_loopback(mss_uart_instance_t* this_uart, mss_uart_loopback_t loopback) {
     ASSERT(MSS_UART_INVALID_LOOPBACK > loopback);
 
     if (MSS_UART_INVALID_LOOPBACK > loopback) {
@@ -379,16 +379,16 @@ void MSS_UART_set_loopback(mss_uart_instance_t *this_uart, mss_uart_loopback_t l
                                                                                * use this function.
                                                                                */
 size_t
-MSS_UART_fill_tx_fifo(mss_uart_instance_t *this_uart, const uint8_t *tx_buffer, size_t tx_size) {
-    uint8_t status = 0u;
+MSS_UART_fill_tx_fifo(mss_uart_instance_t* this_uart, const uint8_t* tx_buffer, size_t tx_size) {
+    uint8_t status     = 0u;
     uint32_t size_sent = 0u;
 
-    ASSERT(tx_buffer != ((uint8_t *)0));
+    ASSERT(tx_buffer != ((uint8_t*)0));
     ASSERT(tx_size > 0);
 
     /* Fill the UART's Tx FIFO until the FIFO is full or the complete input
      * buffer has been written. */
-    if ((tx_buffer != ((uint8_t *)0)) && (tx_size > 0u)) {
+    if ((tx_buffer != ((uint8_t*)0)) && (tx_size > 0u)) {
         status = this_uart->hw_reg->LSR;
         this_uart->status |= status;
 
@@ -415,7 +415,7 @@ MSS_UART_fill_tx_fifo(mss_uart_instance_t *this_uart, const uint8_t *tx_buffer, 
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-uint8_t MSS_UART_get_rx_status(mss_uart_instance_t *this_uart) {
+uint8_t MSS_UART_get_rx_status(mss_uart_instance_t* this_uart) {
     uint8_t status = MSS_UART_INVALID_PARAM;
 
     /*
@@ -439,7 +439,7 @@ uint8_t MSS_UART_get_rx_status(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-uint8_t MSS_UART_get_modem_status(const mss_uart_instance_t *this_uart) {
+uint8_t MSS_UART_get_modem_status(const mss_uart_instance_t* this_uart) {
     uint8_t status = MSS_UART_INVALID_PARAM;
 
     /*
@@ -464,7 +464,7 @@ uint8_t MSS_UART_get_modem_status(const mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-uint8_t MSS_UART_get_tx_status(mss_uart_instance_t *this_uart) {
+uint8_t MSS_UART_get_tx_status(mss_uart_instance_t* this_uart) {
     uint8_t status = MSS_UART_TX_BUSY;
 
     /* Read the Line Status Register and update the sticky record. */
@@ -488,7 +488,7 @@ uint8_t MSS_UART_get_tx_status(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_break(mss_uart_instance_t *this_uart) {
+void MSS_UART_set_break(mss_uart_instance_t* this_uart) {
     /* set break character on Tx line */
     this_uart->hw_reg->LCR |= SB_MASK;
 }
@@ -498,7 +498,7 @@ void MSS_UART_set_break(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_clear_break(mss_uart_instance_t *this_uart) {
+void MSS_UART_clear_break(mss_uart_instance_t* this_uart) {
     /* remove break character from Tx line */
     this_uart->hw_reg->LCR &= ~SB_MASK;
 }
@@ -508,7 +508,7 @@ void MSS_UART_clear_break(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_enable_half_duplex(mss_uart_instance_t *this_uart) {
+void MSS_UART_enable_half_duplex(mss_uart_instance_t* this_uart) {
     /* enable single wire half-duplex mode */
     this_uart->hw_reg->MM2 |= ESWM_MASK;
 }
@@ -518,7 +518,7 @@ void MSS_UART_enable_half_duplex(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_disable_half_duplex(mss_uart_instance_t *this_uart) {
+void MSS_UART_disable_half_duplex(mss_uart_instance_t* this_uart) {
     /* enable single wire half-duplex mode */
     this_uart->hw_reg->MM2 &= ~ESWM_MASK;
 }
@@ -528,7 +528,7 @@ void MSS_UART_disable_half_duplex(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_rx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t endian) {
+void MSS_UART_set_rx_endian(mss_uart_instance_t* this_uart, mss_uart_endian_t endian) {
     ASSERT(MSS_UART_INVALID_ENDIAN > endian);
 
     if (MSS_UART_INVALID_ENDIAN > endian) {
@@ -543,7 +543,7 @@ void MSS_UART_set_rx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t en
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_tx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t endian) {
+void MSS_UART_set_tx_endian(mss_uart_instance_t* this_uart, mss_uart_endian_t endian) {
     ASSERT(MSS_UART_INVALID_ENDIAN > endian);
 
     if (MSS_UART_INVALID_ENDIAN > endian) {
@@ -558,7 +558,7 @@ void MSS_UART_set_tx_endian(mss_uart_instance_t *this_uart, mss_uart_endian_t en
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_filter_length(mss_uart_instance_t *this_uart, mss_uart_filter_length_t length) {
+void MSS_UART_set_filter_length(mss_uart_instance_t* this_uart, mss_uart_filter_length_t length) {
     ASSERT(MSS_UART_INVALID_FILTER_LENGTH > length);
 
     if (MSS_UART_INVALID_FILTER_LENGTH > length) {
@@ -572,7 +572,7 @@ void MSS_UART_set_filter_length(mss_uart_instance_t *this_uart, mss_uart_filter_
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_enable_afm(mss_uart_instance_t *this_uart) {
+void MSS_UART_enable_afm(mss_uart_instance_t* this_uart) {
     /* Disable RX FIFO till address flag with correct address is received */
     this_uart->hw_reg->MM2 |= EAFM_MASK;
 }
@@ -582,7 +582,7 @@ void MSS_UART_enable_afm(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_disable_afm(mss_uart_instance_t *this_uart) {
+void MSS_UART_disable_afm(mss_uart_instance_t* this_uart) {
     /* Enable RX FIFO irrespective of address flag and
        correct address is received */
     this_uart->hw_reg->MM2 &= ~EAFM_MASK;
@@ -593,7 +593,7 @@ void MSS_UART_disable_afm(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_enable_afclear(mss_uart_instance_t *this_uart) {
+void MSS_UART_enable_afclear(mss_uart_instance_t* this_uart) {
     /* Enable address flag clearing */
     /* Disable RX FIFO till another address flag with
        correct address is received */
@@ -605,7 +605,7 @@ void MSS_UART_enable_afclear(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_disable_afclear(mss_uart_instance_t *this_uart) {
+void MSS_UART_disable_afclear(mss_uart_instance_t* this_uart) {
     /* Disable address flag clearing */
     this_uart->hw_reg->MM2 &= ~EAFC_MASK;
 }
@@ -615,7 +615,7 @@ void MSS_UART_disable_afclear(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_enable_rx_timeout(mss_uart_instance_t *this_uart, uint8_t timeout) {
+void MSS_UART_enable_rx_timeout(mss_uart_instance_t* this_uart, uint8_t timeout) {
     /* Load the receive timeout value */
     this_uart->hw_reg->RTO = timeout;
 
@@ -628,7 +628,7 @@ void MSS_UART_enable_rx_timeout(mss_uart_instance_t *this_uart, uint8_t timeout)
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_disable_rx_timeout(mss_uart_instance_t *this_uart) {
+void MSS_UART_disable_rx_timeout(mss_uart_instance_t* this_uart) {
     /*Disable receiver time-out */
     this_uart->hw_reg->MM0 &= ~ERTO_MASK;
 }
@@ -638,7 +638,7 @@ void MSS_UART_disable_rx_timeout(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_enable_tx_time_guard(mss_uart_instance_t *this_uart, uint8_t timeguard) {
+void MSS_UART_enable_tx_time_guard(mss_uart_instance_t* this_uart, uint8_t timeguard) {
     /* Load the transmitter time guard value */
     this_uart->hw_reg->TTG = timeguard;
 
@@ -651,7 +651,7 @@ void MSS_UART_enable_tx_time_guard(mss_uart_instance_t *this_uart, uint8_t timeg
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_disable_tx_time_guard(mss_uart_instance_t *this_uart) {
+void MSS_UART_disable_tx_time_guard(mss_uart_instance_t* this_uart) {
     /*Disable transmitter time guard */
     this_uart->hw_reg->MM0 &= ~ETTG_MASK;
 }
@@ -661,7 +661,7 @@ void MSS_UART_disable_tx_time_guard(mss_uart_instance_t *this_uart) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_address(mss_uart_instance_t *this_uart, uint8_t address) {
+void MSS_UART_set_address(mss_uart_instance_t* this_uart, uint8_t address) {
     this_uart->hw_reg->ADR = address;
 }
 
@@ -670,7 +670,7 @@ void MSS_UART_set_address(mss_uart_instance_t *this_uart, uint8_t address) {
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_ready_mode(mss_uart_instance_t *this_uart, mss_uart_ready_mode_t mode) {
+void MSS_UART_set_ready_mode(mss_uart_instance_t* this_uart, mss_uart_ready_mode_t mode) {
     ASSERT(MSS_UART_INVALID_READY_MODE > mode);
 
     if (MSS_UART_INVALID_READY_MODE > mode) {
@@ -685,7 +685,7 @@ void MSS_UART_set_ready_mode(mss_uart_instance_t *this_uart, mss_uart_ready_mode
                                                                                * details of how to
                                                                                * use this function.
                                                                                */
-void MSS_UART_set_usart_mode(mss_uart_instance_t *this_uart, mss_uart_usart_mode_t mode) {
+void MSS_UART_set_usart_mode(mss_uart_instance_t* this_uart, mss_uart_usart_mode_t mode) {
     ASSERT(MSS_UART_INVALID_SYNC_MODE > mode);
 
     if (MSS_UART_INVALID_SYNC_MODE > mode) {
@@ -703,7 +703,7 @@ void MSS_UART_set_usart_mode(mss_uart_instance_t *this_uart, mss_uart_usart_mode
 /*******************************************************************************
  * Global initialization for all modes
  */
-static void global_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint8_t line_config) {
+static void global_init(mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config) {
     if ((&g_mss_uart0_lo == this_uart)) {
         this_uart->hw_reg = MSS_UART0_LO_BASE;
         g_uart_axi_pos &= ~0x01u;
@@ -819,11 +819,11 @@ static void global_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint
     this_uart->hw_reg->LCR = line_config;
 
     /* Instance setup */
-    this_uart->baudrate = baud_rate;
-    this_uart->lineconfig = line_config;
+    this_uart->baudrate     = baud_rate;
+    this_uart->lineconfig   = line_config;
     this_uart->tx_buff_size = TX_COMPLETE;
-    this_uart->tx_buffer = (const uint8_t *)0;
-    this_uart->tx_idx = 0u;
+    this_uart->tx_buffer    = (const uint8_t*)0;
+    this_uart->tx_idx       = 0u;
 
     /* Initialize the sticky status */
     this_uart->status = 0u;
@@ -835,7 +835,7 @@ static void global_init(mss_uart_instance_t *this_uart, uint32_t baud_rate, uint
                                                                                * fractional baud
                                                                                * rate if possible.
                                                                                */
-static void config_baud_divisors(mss_uart_instance_t *this_uart, uint32_t baudrate) {
+static void config_baud_divisors(mss_uart_instance_t* this_uart, uint32_t baudrate) {
     uint32_t baud_value;
     uint32_t baud_value_by_64;
     uint32_t baud_value_by_128;
@@ -852,9 +852,9 @@ static void config_baud_divisors(mss_uart_instance_t *this_uart, uint32_t baudra
      * The baud value is computed using the following equation:
      *      baud_value = PCLK_Frequency / (baud_rate * 16)
      */
-    baud_value_by_128 = (uint32_t)((8UL * pclk_freq) / baudrate);
-    baud_value_by_64 = baud_value_by_128 / 2u;
-    baud_value = baud_value_by_64 / 64u;
+    baud_value_by_128     = (uint32_t)((8UL * pclk_freq) / baudrate);
+    baud_value_by_64      = baud_value_by_128 / 2u;
+    baud_value            = baud_value_by_64 / 64u;
     fractional_baud_value = baud_value_by_64 - (baud_value * 64u);
     fractional_baud_value +=
         (baud_value_by_128 - (baud_value * 128u)) - (fractional_baud_value * 2u);

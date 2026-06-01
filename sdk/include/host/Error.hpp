@@ -8,33 +8,33 @@
 namespace Keystone {
 
 enum class Error {
-  Success = 0,
-  FileInitFailure,
-  DeviceInitFailure,
-  DeviceError,
-  IoctlErrorCreate,
-  IoctlErrorDestroy,
-  IoctlErrorFinalize,
-  IoctlErrorRun,
-  IoctlErrorResume,
-  IoctlErrorUTMInit,
-  DeviceMemoryMapError,
-  ELFLoadFailure,
-  InvalidEnclave,
-  VSpaceAllocationFailure,
-  PageAllocationFailure,
-  EdgeCallHost,
-  EnclaveInterrupted,
-  IoctlErrorFinalizePte,
-  DevicePteFinalizeError,
-  AdmInvalidMemory,
-  AdmFinalizeFailure,
+    Success = 0,
+    FileInitFailure,
+    DeviceInitFailure,
+    DeviceError,
+    IoctlErrorCreate,
+    IoctlErrorDestroy,
+    IoctlErrorFinalize,
+    IoctlErrorRun,
+    IoctlErrorResume,
+    IoctlErrorUTMInit,
+    DeviceMemoryMapError,
+    ELFLoadFailure,
+    InvalidEnclave,
+    VSpaceAllocationFailure,
+    PageAllocationFailure,
+    EdgeCallHost,
+    EnclaveInterrupted,
+    IoctlErrorFinalizePte,
+    DevicePteFinalizeError,
+    AdmInvalidMemory,
+    AdmFinalizeFailure,
 #ifdef TIME_BENCHMARK
-  PerfInitFailure,
+    PerfInitFailure,
 #endif
 };
 
-}  // namespace Keystone
+} // namespace Keystone
 /*
 
 {

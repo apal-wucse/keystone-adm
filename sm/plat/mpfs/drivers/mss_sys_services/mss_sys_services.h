@@ -201,8 +201,8 @@ extern "C" {
      expected by this driver.
 
  */
-#define MSS_SYS_SUCCESS 0u
-#define MSS_SYS_BUSY 0xEFu
+#define MSS_SYS_SUCCESS   0u
+#define MSS_SYS_BUSY      0xEFu
 #define MSS_SYS_PARAM_ERR 0xFFu
 
 /*-------------------------------------------------------------------------*/ /**
@@ -242,9 +242,9 @@ extern "C" {
    MSS_SYS_DCF_SYSTEM_ERROR
      PUF or storage failure
  */
-#define MSS_SYS_DCF_DEVICE_MISMATCH 1u
+#define MSS_SYS_DCF_DEVICE_MISMATCH   1u
 #define MSS_SYS_DCF_INVALID_SIGNATURE 2u
-#define MSS_SYS_DCF_SYSTEM_ERROR 3u
+#define MSS_SYS_DCF_SYSTEM_ERROR      3u
 
 /*------------------------------------------------------------------------*/ /**
    Read ENVM parameters service error codes
@@ -295,19 +295,19 @@ extern "C" {
      parameter (in seconds)
 
  */
-#define MSS_SYS_EXECUTE_UIC_SUCCESS 0u
-#define MSS_SYS_EXECUTE_UIC_SPI_MAX_FRAME_ERR 1u
-#define MSS_SYS_EXECUTE_UIC_POLL_TIMEOUT 2u
-#define MSS_SYS_EXECUTE_UIC_SPI_AUTHEN_ERR 3u
-#define MSS_SYS_EXECUTE_UIC_SPI_DECRYPT_ERR 4u
-#define MSS_SYS_EXECUTE_UIC_SPI_NOTMASTER_ERR 5u
-#define MSS_SYS_EXECUTE_UIC_FABRIC_APB_ERR 6u
-#define MSS_SYS_EXECUTE_UIC_SCB_ERR 7u
-#define MSS_SYS_EXECUTE_UIC_PNVM_ENCRYPT_ERR 8u
-#define MSS_SYS_EXECUTE_UIC_ADDR_OUTOFRANGE_ERR 9u
-#define MSS_SYS_EXECUTE_UIC_JUMP_MAX_ERR 10u
+#define MSS_SYS_EXECUTE_UIC_SUCCESS               0u
+#define MSS_SYS_EXECUTE_UIC_SPI_MAX_FRAME_ERR     1u
+#define MSS_SYS_EXECUTE_UIC_POLL_TIMEOUT          2u
+#define MSS_SYS_EXECUTE_UIC_SPI_AUTHEN_ERR        3u
+#define MSS_SYS_EXECUTE_UIC_SPI_DECRYPT_ERR       4u
+#define MSS_SYS_EXECUTE_UIC_SPI_NOTMASTER_ERR     5u
+#define MSS_SYS_EXECUTE_UIC_FABRIC_APB_ERR        6u
+#define MSS_SYS_EXECUTE_UIC_SCB_ERR               7u
+#define MSS_SYS_EXECUTE_UIC_PNVM_ENCRYPT_ERR      8u
+#define MSS_SYS_EXECUTE_UIC_ADDR_OUTOFRANGE_ERR   9u
+#define MSS_SYS_EXECUTE_UIC_JUMP_MAX_ERR          10u
 #define MSS_SYS_EXECUTE_UIC_UNEXPECTED_FORMAT_ERR 11u
-#define MSS_SYS_EXECUTE_UIC_SCRIPT_TIMEOUT_ERR 12u
+#define MSS_SYS_EXECUTE_UIC_SCRIPT_TIMEOUT_ERR    12u
 
 /*-------------------------------------------------------------------------*/ /**
    bitstream authentication and IAP bitstream authentication error codes
@@ -419,36 +419,36 @@ extern "C" {
    BSTREAM_AUTH_HVSTATE
      HV programming subsystem in unexpected state (internal error)
    */
-#define MSS_SYS_BSTREAM_AUTH_CHAINING_MISMATCH_ERR 1u
-#define MSS_SYS_BSTREAM_AUTH_UNEXPECTED_DATA_ERR 2u
-#define MSS_SYS_BSTREAM_AUTH_INVALID_ENCRY_KEY_ERR 3u
-#define MSS_SYS_BSTREAM_AUTH_INVALID_HEADER_ERR 4u
-#define MSS_SYS_BSTREAM_AUTH_BACK_LEVEL_NOT_SATISFIED_ERR 5u
-#define MSS_SYS_BSTREAM_AUTH_ILLEGAL_BITSTREAM_MODE_ERR 6u
-#define MSS_SYS_BSTREAM_AUTH_DNS_BINDING_MISMATCH_ERR 7u
+#define MSS_SYS_BSTREAM_AUTH_CHAINING_MISMATCH_ERR          1u
+#define MSS_SYS_BSTREAM_AUTH_UNEXPECTED_DATA_ERR            2u
+#define MSS_SYS_BSTREAM_AUTH_INVALID_ENCRY_KEY_ERR          3u
+#define MSS_SYS_BSTREAM_AUTH_INVALID_HEADER_ERR             4u
+#define MSS_SYS_BSTREAM_AUTH_BACK_LEVEL_NOT_SATISFIED_ERR   5u
+#define MSS_SYS_BSTREAM_AUTH_ILLEGAL_BITSTREAM_MODE_ERR     6u
+#define MSS_SYS_BSTREAM_AUTH_DNS_BINDING_MISMATCH_ERR       7u
 #define MSS_SYS_BSTREAM_AUTH_ILLEGAL_COMPONENT_SEQUENCE_ERR 8u
-#define MSS_SYS_BSTREAM_AUTH_INSUFF_DEVICE_CAPAB_ERR 9u
-#define MSS_SYS_BSTREAM_AUTH_INCORRECT_DEVICEID_ERR 10u
-#define MSS_SYS_BSTREAM_AUTH_PROTOCOL_VERSION_ERR 11u
-#define MSS_SYS_BSTREAM_AUTH_VERIFY_ERR 12u
-#define MSS_SYS_BSTREAM_AUTH_INVALID_DEV_CERT_ERR 13u
-#define MSS_SYS_BSTREAM_AUTH_INVALID_DIB_ERR 14u
-#define MSS_SYS_BSTREAM_AUTH_SPI_NOT_MASTER_ERR 21u
-#define MSS_SYS_BSTREAM_AUTH_AUTOIAP_NO_VALID_IMAGE_ERR 22u
-#define MSS_SYS_BSTREAM_AUTH_INDEXIAP_NO_VALID_IMAGE_ERR 23u
-#define MSS_SYS_BSTREAM_AUTH_NEWER_DESIGN_VERSION_ERR 24u
+#define MSS_SYS_BSTREAM_AUTH_INSUFF_DEVICE_CAPAB_ERR        9u
+#define MSS_SYS_BSTREAM_AUTH_INCORRECT_DEVICEID_ERR         10u
+#define MSS_SYS_BSTREAM_AUTH_PROTOCOL_VERSION_ERR           11u
+#define MSS_SYS_BSTREAM_AUTH_VERIFY_ERR                     12u
+#define MSS_SYS_BSTREAM_AUTH_INVALID_DEV_CERT_ERR           13u
+#define MSS_SYS_BSTREAM_AUTH_INVALID_DIB_ERR                14u
+#define MSS_SYS_BSTREAM_AUTH_SPI_NOT_MASTER_ERR             21u
+#define MSS_SYS_BSTREAM_AUTH_AUTOIAP_NO_VALID_IMAGE_ERR     22u
+#define MSS_SYS_BSTREAM_AUTH_INDEXIAP_NO_VALID_IMAGE_ERR    23u
+#define MSS_SYS_BSTREAM_AUTH_NEWER_DESIGN_VERSION_ERR       24u
 /*25            Reserved*/
-#define MSS_SYS_BSTREAM_AUTH_INVALID_IMAGE_ERR 26u
+#define MSS_SYS_BSTREAM_AUTH_INVALID_IMAGE_ERR        26u
 #define MSS_SYS_BSTREAM_AUTH_IMAGE_PROGRAM_FAILED_ERR 27u
-#define MSS_SYS_BSTREAM_AUTH_ABORT_ERR 127u
-#define MSS_SYS_BSTREAM_AUTH_NVMVERIFY_ERR 128u
-#define MSS_SYS_BSTREAM_AUTH_PROTECTED_ERR 129u
-#define MSS_SYS_BSTREAM_AUTH_NOTENA 130u
-#define MSS_SYS_BSTREAM_AUTH_PNVMVERIFY 131u
-#define MSS_SYS_BSTREAM_AUTH_SYSTEM 132u
-#define MSS_SYS_BSTREAM_AUTH_BADCOMPONENT 133u
-#define MSS_SYS_BSTREAM_AUTH_HVPROGERR 134u
-#define MSS_SYS_BSTREAM_AUTH_HVSTATE 135u
+#define MSS_SYS_BSTREAM_AUTH_ABORT_ERR                127u
+#define MSS_SYS_BSTREAM_AUTH_NVMVERIFY_ERR            128u
+#define MSS_SYS_BSTREAM_AUTH_PROTECTED_ERR            129u
+#define MSS_SYS_BSTREAM_AUTH_NOTENA                   130u
+#define MSS_SYS_BSTREAM_AUTH_PNVMVERIFY               131u
+#define MSS_SYS_BSTREAM_AUTH_SYSTEM                   132u
+#define MSS_SYS_BSTREAM_AUTH_BADCOMPONENT             133u
+#define MSS_SYS_BSTREAM_AUTH_HVPROGERR                134u
+#define MSS_SYS_BSTREAM_AUTH_HVSTATE                  135u
 
 /*-------------------------------------------------------------------------*/ /**
   Digital Signature Service error code
@@ -463,8 +463,8 @@ extern "C" {
      ECDSA failed
  */
 #define MSS_SYS_DIGITAL_SIGNATURE_FEK_FAILURE_ERROR 0x01u
-#define MSS_SYS_DIGITAL_SIGNATURE_DRBG_ERROR 0x02u
-#define MSS_SYS_DIGITAL_SIGNATURE_ECDSA_ERROR 0x03u
+#define MSS_SYS_DIGITAL_SIGNATURE_DRBG_ERROR        0x02u
+#define MSS_SYS_DIGITAL_SIGNATURE_ECDSA_ERROR       0x03u
 
 /*-------------------------------------------------------------------------*/ /**
    Secure NVM write error codes
@@ -482,9 +482,9 @@ extern "C" {
      Write is not permitted
  */
 #define MSS_SYS_SNVM_WRITE_INVALID_SNVMADDR 1u
-#define MSS_SYS_SNVM_WRITE_FAILURE 2u
-#define MSS_SYS_SNVM_WRITE_SYSTEM_ERROR 3u
-#define MSS_SYS_SNVM_WRITE_NOT_PERMITTED 4u
+#define MSS_SYS_SNVM_WRITE_FAILURE          2u
+#define MSS_SYS_SNVM_WRITE_SYSTEM_ERROR     3u
+#define MSS_SYS_SNVM_WRITE_NOT_PERMITTED    4u
 
 /*-------------------------------------------------------------------------*/ /**
    Secure NVM read error codes
@@ -498,9 +498,9 @@ extern "C" {
    SNVM_READ_SYSTEM_ERROR
      PUF or storage failure
  */
-#define MSS_SYS_SNVM_READ_INVALID_SNVMADDR 1u
+#define MSS_SYS_SNVM_READ_INVALID_SNVMADDR       1u
 #define MSS_SYS_SNVM_READ_AUTHENTICATION_FAILURE 2u
-#define MSS_SYS_SNVM_READ_SYSTEM_ERROR 3u
+#define MSS_SYS_SNVM_READ_SYSTEM_ERROR           3u
 
 /*-------------------------------------------------------------------------*/ /**
     PUF emulation service error codes
@@ -520,7 +520,7 @@ extern "C" {
      Error generating seed
  */
 #define MSS_SYS_NONCE_PUK_FETCH_ERROR 1u
-#define MSS_SYS_NONCE_SEED_GEN_ERROR 2u
+#define MSS_SYS_NONCE_SEED_GEN_ERROR  2u
 
 /*-------------------------------------------------------------------------*/ /**
    Digest Check service error code
@@ -540,7 +540,7 @@ extern "C" {
      AXI error
  */
 #define MSS_SYS_SPI_MASTER_MODE_ERR 1u
-#define MSS_SYS_SPI_AXI_ERR 2u
+#define MSS_SYS_SPI_AXI_ERR         2u
 
 /*-------------------------------------------------------------------------*/ /**
    Probe services error codes
@@ -567,9 +567,9 @@ extern "C" {
    MSS_SYS_MEM_LOCKERR
    Target memory failed to lock
  */
-#define MSS_SYS_MEM_SECERR 1u
+#define MSS_SYS_MEM_SECERR     1u
 #define MSS_SYS_MEM_TIMEOUTERR 2u
-#define MSS_SYS_MEM_LOCKERR 3u
+#define MSS_SYS_MEM_LOCKERR    3u
 
 /*-------------------------------------------------------------------------*/ /**
    APB services error codes
@@ -587,8 +587,8 @@ extern "C" {
    The addressed fabric APB peripheral failed to respond before the user-defined
    APB timeout or the fabric power is not on.
  */
-#define MSS_SYS_APB_SECERR 1u
-#define MSS_SYS_APB_SLVERR 2u
+#define MSS_SYS_APB_SECERR  1u
+#define MSS_SYS_APB_SLVERR  2u
 #define MSS_SYS_APB_TIMEOUT 3u
 
 /*-------------------------------------------------------------------------*/ /**
@@ -617,7 +617,7 @@ extern "C" {
    MSS_SYS_PROTOCOLERR
    Invalid key provided
  */
-#define MSS_SYS_GENERATE_OTP_SECERR 1u
+#define MSS_SYS_GENERATE_OTP_SECERR      1u
 #define MSS_SYS_GENERATE_OTP_PROTOCOLERR 2u
 
 /*-------------------------------------------------------------------------*/ /**
@@ -644,7 +644,7 @@ extern "C" {
    PASSCODE_FAIL is generated and all unlocked passcodes are re-locked.
  */
 #define MSS_SYS_UNLOCK_DEBUG_PASSCODE_SECERR 1u
-#define MSS_SYS_UNLOCK_DEBUG_PASSCODE_ERR 2u
+#define MSS_SYS_UNLOCK_DEBUG_PASSCODE_ERR    2u
 
 /*-------------------------------------------------------------------------*/ /**
    One way passcode service error codes
@@ -709,23 +709,23 @@ extern "C" {
    MSS_SYS_DIGITAL_SIGNATURE_DER_FORMAT_RESP_SIZE
      Response length for digital signature service DER format
  */
-#define MSS_SYS_NO_RESPONSE_LEN 0u
-#define MSS_SYS_SERIAL_NUMBER_RESP_LEN 16u
-#define MSS_SYS_USERCODE_RESP_LEN 4u
-#define MSS_SYS_DESIGN_INFO_RESP_LEN 36u
-#define MSS_SYS_DEVICE_CERTIFICATE_RESP_LEN 1024u
-#define MSS_SYS_READ_DIGEST_RESP_LEN 544u
-#define MSS_SYS_QUERY_SECURITY_RESP_LEN 33u
-#define MSS_SYS_READ_DEBUG_INFO_RESP_LEN 94u
-#define MSS_SYS_NONCE_SERVICE_RESP_LEN 32u
-#define MSS_SYS_READ_ENVM_PARAM_RESP_LEN 256u
-#define MSS_SYS_PUF_EMULATION_SERVICE_RESP_LEN 32u
-#define MSS_SYS_DIGEST_CHECK_SERVICE_RESP_LEN 4u
+#define MSS_SYS_NO_RESPONSE_LEN                        0u
+#define MSS_SYS_SERIAL_NUMBER_RESP_LEN                 16u
+#define MSS_SYS_USERCODE_RESP_LEN                      4u
+#define MSS_SYS_DESIGN_INFO_RESP_LEN                   36u
+#define MSS_SYS_DEVICE_CERTIFICATE_RESP_LEN            1024u
+#define MSS_SYS_READ_DIGEST_RESP_LEN                   544u
+#define MSS_SYS_QUERY_SECURITY_RESP_LEN                33u
+#define MSS_SYS_READ_DEBUG_INFO_RESP_LEN               94u
+#define MSS_SYS_NONCE_SERVICE_RESP_LEN                 32u
+#define MSS_SYS_READ_ENVM_PARAM_RESP_LEN               256u
+#define MSS_SYS_PUF_EMULATION_SERVICE_RESP_LEN         32u
+#define MSS_SYS_DIGEST_CHECK_SERVICE_RESP_LEN          4u
 #define MSS_SYS_DIGITAL_SIGNATURE_RAW_FORMAT_RESP_SIZE 96u
 #define MSS_SYS_DIGITAL_SIGNATURE_DER_FORMAT_RESP_SIZE 104u
-#define MSS_SYS_USER_SECRET_KEY_LEN 12u
-#define MSS_SYS_PROBE_READ_SERVICE_RESP_LEN 4u
-#define MSS_SYS_GENERATE_OTP_RESP_LEN 16u
+#define MSS_SYS_USER_SECRET_KEY_LEN                    12u
+#define MSS_SYS_PROBE_READ_SERVICE_RESP_LEN            4u
+#define MSS_SYS_GENERATE_OTP_RESP_LEN                  16u
 
 /*-------------------------Private constants--------------------------------*/
 
@@ -740,21 +740,21 @@ extern "C" {
 /*-------------------------------------------------------------------------*/ /**
    Device and design information services request command opcodes
   */
-#define MSS_SYS_SERIAL_NUMBER_REQUEST_CMD 0x00u
-#define MSS_SYS_USERCODE_REQUEST_CMD 0x01u
-#define MSS_SYS_DESIGN_INFO_REQUEST_CMD 0x02u
+#define MSS_SYS_SERIAL_NUMBER_REQUEST_CMD      0x00u
+#define MSS_SYS_USERCODE_REQUEST_CMD           0x01u
+#define MSS_SYS_DESIGN_INFO_REQUEST_CMD        0x02u
 #define MSS_SYS_DEVICE_CERTIFICATE_REQUEST_CMD 0x03u
-#define MSS_SYS_READ_DIGEST_REQUEST_CMD 0x04u
-#define MSS_SYS_QUERY_SECURITY_REQUEST_CMD 0x05u
-#define MSS_SYS_READ_DEBUG_INFO_REQUEST_CMD 0x06u
-#define MSS_SYS_READ_ENVM_PARAM_REQUEST_CMD 0x07u
+#define MSS_SYS_READ_DIGEST_REQUEST_CMD        0x04u
+#define MSS_SYS_QUERY_SECURITY_REQUEST_CMD     0x05u
+#define MSS_SYS_READ_DEBUG_INFO_REQUEST_CMD    0x06u
+#define MSS_SYS_READ_ENVM_PARAM_REQUEST_CMD    0x07u
 
 /*-------------------------------------------------------------------------*/ /**
    Design services request command opcodes
  */
-#define MSS_SYS_BITSTREAM_AUTHENTICATE_CMD 0x23u
+#define MSS_SYS_BITSTREAM_AUTHENTICATE_CMD     0x23u
 #define MSS_SYS_IAP_BITSTREAM_AUTHENTICATE_CMD 0x22u
-#define MSS_SYS_UIC_EXECUTE_SCRIPT_CMD 0x24u
+#define MSS_SYS_UIC_EXECUTE_SCRIPT_CMD         0x24u
 #define MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_CMD 0x25u
 
 /*-------------------------------------------------------------------------*/ /**
@@ -762,42 +762,42 @@ extern "C" {
  */
 #define MSS_SYS_DIGITAL_SIGNATURE_RAW_FORMAT_REQUEST_CMD 0x19u
 #define MSS_SYS_DIGITAL_SIGNATURE_DER_FORMAT_REQUEST_CMD 0x1Au
-#define MSS_SYS_SNVM_NON_AUTHEN_TEXT_REQUEST_CMD 0x10u
-#define MSS_SYS_SNVM_AUTHEN_TEXT_REQUEST_CMD 0x11u
-#define MSS_SYS_SNVM_AUTHEN_CIPHERTEXT_REQUEST_CMD 0x12u
-#define MSS_SYS_SNVM_READ_REQUEST_CMD 0x18u
-#define MSS_SYS_PUF_EMULATION_SERVICE_REQUEST_CMD 0x20u
-#define MSS_SYS_NONCE_SERVICE_REQUEST_CMD 0x21u
+#define MSS_SYS_SNVM_NON_AUTHEN_TEXT_REQUEST_CMD         0x10u
+#define MSS_SYS_SNVM_AUTHEN_TEXT_REQUEST_CMD             0x11u
+#define MSS_SYS_SNVM_AUTHEN_CIPHERTEXT_REQUEST_CMD       0x12u
+#define MSS_SYS_SNVM_READ_REQUEST_CMD                    0x18u
+#define MSS_SYS_PUF_EMULATION_SERVICE_REQUEST_CMD        0x20u
+#define MSS_SYS_NONCE_SERVICE_REQUEST_CMD                0x21u
 
 /*-------------------------------------------------------------------------*/ /**
    Fabric services request command opcodes
  */
-#define MSS_SYS_DIGEST_CHECK_CMD 0x47u
-#define MSS_SYS_IAP_PROGRAM_BY_SPIIDX_CMD 0x42u
-#define MSS_SYS_IAP_VERIFY_BY_SPIIDX_CMD 0x44u
+#define MSS_SYS_DIGEST_CHECK_CMD           0x47u
+#define MSS_SYS_IAP_PROGRAM_BY_SPIIDX_CMD  0x42u
+#define MSS_SYS_IAP_VERIFY_BY_SPIIDX_CMD   0x44u
 #define MSS_SYS_IAP_PROGRAM_BY_SPIADDR_CMD 0x43u
-#define MSS_SYS_IAP_VERIFY_BY_SPIADDR_CMD 0x45u
-#define MSS_SYS_IAP_AUTOUPDATE_CMD 0x46u
+#define MSS_SYS_IAP_VERIFY_BY_SPIADDR_CMD  0x45u
+#define MSS_SYS_IAP_AUTOUPDATE_CMD         0x46u
 
 /*-------------------------------------------------------------------------*/ /**
    MSS services request command opcodes
  */
-#define MSS_SYS_SPI_COPY_CMD 0X50U
-#define MSS_SYS_PROBE_READ_DEBUG_CMD 0X70U
-#define MSS_SYS_PROBE_WRITE_DEBUG_CMD 0X71U
+#define MSS_SYS_SPI_COPY_CMD           0X50U
+#define MSS_SYS_PROBE_READ_DEBUG_CMD   0X70U
+#define MSS_SYS_PROBE_WRITE_DEBUG_CMD  0X71U
 #define MSS_SYS_LIVE_PROBE_A_DEBUG_CMD 0X72U
 #define MSS_SYS_LIVE_PROBE_B_DEBUG_CMD 0X73U
-#define MSS_SYS_MEM_SELECT_DEBUG_CMD 0X74U
-#define MSS_SYS_MEM_READ_DEBUG_CMD 0X75U
-#define MSS_SYS_MEM_WRITE_DEBUG_CMD 0X76U
-#define MSS_SYS_APB_READ_DEBUG_CMD 0X77U
-#define MSS_SYS_APB_WRITE_DEBUG_CMD 0X78U
-#define MSS_SYS_DEBUG_SNAPSHOT_CMD 0X79U
-#define MSS_SYS_GENERATE_OTP_CMD 0X7AU
-#define MSS_SYS_MATCH_OTP_CMD 0X7BU
-#define MSS_SYS_UNLOCK_DEBUG_PASSCODE 0X7CU
-#define MSS_SYS_ONE_WAY_PASSCODE_CMD 0X7DU
-#define MSS_SYS_TERMINATE_DEBUG_CMD 0X7EU
+#define MSS_SYS_MEM_SELECT_DEBUG_CMD   0X74U
+#define MSS_SYS_MEM_READ_DEBUG_CMD     0X75U
+#define MSS_SYS_MEM_WRITE_DEBUG_CMD    0X76U
+#define MSS_SYS_APB_READ_DEBUG_CMD     0X77U
+#define MSS_SYS_APB_WRITE_DEBUG_CMD    0X78U
+#define MSS_SYS_DEBUG_SNAPSHOT_CMD     0X79U
+#define MSS_SYS_GENERATE_OTP_CMD       0X7AU
+#define MSS_SYS_MATCH_OTP_CMD          0X7BU
+#define MSS_SYS_UNLOCK_DEBUG_PASSCODE  0X7CU
+#define MSS_SYS_ONE_WAY_PASSCODE_CMD   0X7DU
+#define MSS_SYS_TERMINATE_DEBUG_CMD    0X7EU
 
 /*-------------------------------------------------------------------------*/ /**
    System service mailbox data length
@@ -812,7 +812,7 @@ extern "C" {
  */
 #define MSS_SYS_WITHOUT_CMD_DATA 0u
 
-#define MSS_SYS_PUF_EMULATION_SERVICE_CMD_LEN 20u
+#define MSS_SYS_PUF_EMULATION_SERVICE_CMD_LEN   20u
 #define MSS_SYS_DIGITAL_SIGNATURE_HASH_DATA_LEN 48u
 
 /*SNVMADDR + RESERVED + PT*/
@@ -821,24 +821,24 @@ extern "C" {
 /*SNVMADDR + RESERVED + PT + USK*/
 #define MSS_SYS_NON_AUTHENTICATED_TEXT_DATA_LEN 256u
 
-#define MSS_SYS_SECURE_NVM_READ_DATA_LEN 16u
-#define MSS_SYS_EXECUTE_UIC_SCRIPT_DATA_LEN 8u
+#define MSS_SYS_SECURE_NVM_READ_DATA_LEN            16u
+#define MSS_SYS_EXECUTE_UIC_SCRIPT_DATA_LEN         8u
 #define MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_DATA_LEN 4u
-#define MSS_SYS_BITSTREAM_AUTHENTICATE_DATA_LEN 4u
-#define MSS_SYS_DIGEST_CHECK_DATA_LEN 4u
-#define MSS_SYS_IAP_SERVICE_DATA_LEN 4u
-#define MSS_SYS_SPI_COPY_MAILBOX_DATA_LEN 17u
-#define MSS_SYS_PROBE_READ_SERVICE_DATA_LEN 2u
-#define MSS_SYS_PROBE_WRITE_SERVICE_DATA_LEN 11u
-#define MSS_SYS_LIVE_PROBE_DEBUG_SERVICE_DATA_LEN 6u
-#define MSS_SYS_MEM_SELECT_DATA_LEN 6u
-#define MSS_SYS_MEM_READ_WRITE_DATA_LEN 12u
-#define MSS_SYS_APB_SERVICE_DATA_LEN 24u
-#define MSS_SYS_DEBUG_SNAPSHOT_DATA_LEN 5u
-#define MSS_SYS_GENERATE_OTP_DATA_LEN 20u
-#define MSS_SYS_MATCH_OTP_DATA_LEN 80u
-#define MSS_SYS_UNLOCK_DEBUG_PASSCODE_DATA_LEN 32u
-#define MSS_SYS_ONE_WAY_PASSCODE_DATA_LEN 480u
+#define MSS_SYS_BITSTREAM_AUTHENTICATE_DATA_LEN     4u
+#define MSS_SYS_DIGEST_CHECK_DATA_LEN               4u
+#define MSS_SYS_IAP_SERVICE_DATA_LEN                4u
+#define MSS_SYS_SPI_COPY_MAILBOX_DATA_LEN           17u
+#define MSS_SYS_PROBE_READ_SERVICE_DATA_LEN         2u
+#define MSS_SYS_PROBE_WRITE_SERVICE_DATA_LEN        11u
+#define MSS_SYS_LIVE_PROBE_DEBUG_SERVICE_DATA_LEN   6u
+#define MSS_SYS_MEM_SELECT_DATA_LEN                 6u
+#define MSS_SYS_MEM_READ_WRITE_DATA_LEN             12u
+#define MSS_SYS_APB_SERVICE_DATA_LEN                24u
+#define MSS_SYS_DEBUG_SNAPSHOT_DATA_LEN             5u
+#define MSS_SYS_GENERATE_OTP_DATA_LEN               20u
+#define MSS_SYS_MATCH_OTP_DATA_LEN                  80u
+#define MSS_SYS_UNLOCK_DEBUG_PASSCODE_DATA_LEN      32u
+#define MSS_SYS_ONE_WAY_PASSCODE_DATA_LEN           480u
 
 /*-------------------------------------------------------------------------*/ /**
    System Services mailbox data constants
@@ -850,8 +850,8 @@ extern "C" {
   KM_USER_KEY2      USER Key 2
   KM_FACTORY_KEY    FK Diversified by UID
  */
-#define MSS_SYS_KM_USER_KEY1 3u
-#define MSS_SYS_KM_USER_KEY2 4u
+#define MSS_SYS_KM_USER_KEY1   3u
+#define MSS_SYS_KM_USER_KEY2   4u
 #define MSS_SYS_KM_FACTORY_KEY 7u
 
 /*Digest Check Input options
@@ -894,23 +894,23 @@ extern "C" {
   DIGEST_CHECK_SYS
     Carry out digest check on Factory and Factory Key Segments.
 */
-#define MSS_SYS_DIGEST_CHECK_FABRIC (0x01 << 0x00u)
-#define MSS_SYS_DIGEST_CHECK_CC (0x01 << 0x01u)
-#define MSS_SYS_DIGEST_CHECK_SNVM (0x01 << 0x02u)
-#define MSS_SYS_DIGEST_CHECK_UL (0x01 << 0x03u)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST0 (0x01 << 0x04u)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST1 (0x01 << 0x05u)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST2 (0x01 << 0x06u)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST3 (0x01 << 0x07u)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST4 (0x01 << 0x08u)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST5 (0x01 << 0x09u)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST6 (0x01 << 0x0au)
-#define MSS_SYS_DIGEST_CHECK_UPERM (0x01 << 0x0bu)
-#define MSS_SYS_DIGEST_CHECK_SYS (0x01 << 0x0cu)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST7 (0x01 << 0x0du)
-#define MSS_SYS_DIGEST_CHECK_ENVM (0x01 << 0x0eu)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST8 (0x01 << 0x0fu)
-#define MSS_SYS_DIGEST_CHECK_UKDIGEST9 (0x01 << 0x10u)
+#define MSS_SYS_DIGEST_CHECK_FABRIC     (0x01 << 0x00u)
+#define MSS_SYS_DIGEST_CHECK_CC         (0x01 << 0x01u)
+#define MSS_SYS_DIGEST_CHECK_SNVM       (0x01 << 0x02u)
+#define MSS_SYS_DIGEST_CHECK_UL         (0x01 << 0x03u)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST0  (0x01 << 0x04u)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST1  (0x01 << 0x05u)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST2  (0x01 << 0x06u)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST3  (0x01 << 0x07u)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST4  (0x01 << 0x08u)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST5  (0x01 << 0x09u)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST6  (0x01 << 0x0au)
+#define MSS_SYS_DIGEST_CHECK_UPERM      (0x01 << 0x0bu)
+#define MSS_SYS_DIGEST_CHECK_SYS        (0x01 << 0x0cu)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST7  (0x01 << 0x0du)
+#define MSS_SYS_DIGEST_CHECK_ENVM       (0x01 << 0x0eu)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST8  (0x01 << 0x0fu)
+#define MSS_SYS_DIGEST_CHECK_UKDIGEST9  (0x01 << 0x10u)
 #define MSS_SYS_DIGEST_CHECK_UKDIGEST10 (0x01 << 0x11u)
 
 /*-------------------------------------------------------------------------*/ /**
@@ -921,9 +921,9 @@ extern "C" {
      10: Exactly two bits erred, no correction performed.
      11: Reserved.
  */
-#define MSS_SYS_MBOX_ECC_NO_ERROR_MASK 0x00u
+#define MSS_SYS_MBOX_ECC_NO_ERROR_MASK           0x00u
 #define MSS_SYS_MBOX_ONEBIT_ERROR_CORRECTED_MASK 0x40u
-#define MSS_SYS_MBOX_TWOBIT_ERROR_MASK 0xC0u
+#define MSS_SYS_MBOX_TWOBIT_ERROR_MASK           0xC0u
 
 /*-------------------------------------------------------------------------*/ /**
                                                                                * Options for system
@@ -943,25 +943,25 @@ extern "C" {
   UIC_SOURCE_PERIPH_AUTHEN_SPIFLASH
     Execute UIC from SPI flash (Authenticated)
 */
-#define MSS_SYS_UIC_SOURCE_PERIPH_UPROM 0x01u
+#define MSS_SYS_UIC_SOURCE_PERIPH_UPROM              0x01u
 #define MSS_SYS_UIC_SOURCE_PERIPH_NONAUTHEN_SPIFLASH 0x02u
-#define MSS_SYS_UIC_SOURCE_PERIPH_SNVM 0x03u
-#define MSS_SYS_UIC_SOURCE_PERIPH_AUTHEN_SPIFLASH 0x06u
+#define MSS_SYS_UIC_SOURCE_PERIPH_SNVM               0x03u
+#define MSS_SYS_UIC_SOURCE_PERIPH_AUTHEN_SPIFLASH    0x06u
 
 /*   Permitted key modes for one way Pass-code service
  *   *NS -- Not Supported
  */
-#define KM_INIT_FACTORY 0x00u  /*NS*/
+#define KM_INIT_FACTORY  0x00u /*NS*/
 #define KM_ZERO_RECOVERY 0x01u /*NS*/
-#define KM_DEFAULT_KEY 0x02u
-#define KM_USER_KEY1 0x03u
-#define KM_USER_KEY2 0x04u
-#define KM_AUTH_CODE 0x06u /*NS*/
-#define KM_FACTORY_KEY 0x07u
-#define KM_FACTORY_EC 0x08u   /*NS*/
-#define KM_FACTORY_EC_E 0x09u /*NS*/
-#define KM_USER_EC 0x12u      /*NS*/
-#define KM_USER_EC_E 0x13u    /*NS*/
+#define KM_DEFAULT_KEY   0x02u
+#define KM_USER_KEY1     0x03u
+#define KM_USER_KEY2     0x04u
+#define KM_AUTH_CODE     0x06u /*NS*/
+#define KM_FACTORY_KEY   0x07u
+#define KM_FACTORY_EC    0x08u /*NS*/
+#define KM_FACTORY_EC_E  0x09u /*NS*/
+#define KM_USER_EC       0x12u /*NS*/
+#define KM_USER_EC_E     0x13u /*NS*/
 
 /*-------------------------------------------------------------------------*/ /**
    Callback function handler
@@ -1056,7 +1056,7 @@ void MSS_SYS_select_service_mode(
                        | 0      | Success        |                             |
                        | 1      | Error          | DSN could not be read       |
  */
-uint16_t MSS_SYS_get_serial_number(uint8_t *p_serial_number, uint16_t mb_offset);
+uint16_t MSS_SYS_get_serial_number(uint8_t* p_serial_number, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The function MSS_SYS_get_user_code() is used to execute "USERCODE" system
@@ -1094,7 +1094,7 @@ uint16_t MSS_SYS_get_serial_number(uint8_t *p_serial_number, uint16_t mb_offset)
                      |--------|------------------|
                      |     0  | Success          |
  */
-uint16_t MSS_SYS_get_user_code(uint8_t *p_user_code, uint16_t mb_offset);
+uint16_t MSS_SYS_get_user_code(uint8_t* p_user_code, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The function MSS_SYS_get_design_info() is used to execute "Get Design Info"
@@ -1141,7 +1141,7 @@ uint16_t MSS_SYS_get_user_code(uint8_t *p_user_code, uint16_t mb_offset);
                         |     0  | Success          |
 
  */
-uint16_t MSS_SYS_get_design_info(uint8_t *p_design_info, uint16_t mb_offset);
+uint16_t MSS_SYS_get_design_info(uint8_t* p_design_info, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The function MSS_SYS_get_device_certificate() is used to execute "Get Device
@@ -1178,7 +1178,7 @@ uint16_t MSS_SYS_get_design_info(uint8_t *p_design_info, uint16_t mb_offset);
       |   2      | Device mismatch   |Public key or FSN do not match device
       |   3      | System error      |PUF or storage failure
  */
-uint16_t MSS_SYS_get_device_certificate(uint8_t *p_device_certificate, uint16_t mb_offset);
+uint16_t MSS_SYS_get_device_certificate(uint8_t* p_device_certificate, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The function MSS_SYS_read_digest() is used to execute "Read Digest" system
@@ -1215,7 +1215,7 @@ uint16_t MSS_SYS_get_device_certificate(uint8_t *p_device_certificate, uint16_t 
                         |--------|------------------|
                         |     0  | Success          |
  */
-uint16_t MSS_SYS_read_digest(uint8_t *p_digest, uint16_t mb_offset);
+uint16_t MSS_SYS_read_digest(uint8_t* p_digest, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The function MSS_SYS_query_security() is used to execute "Query Security"
@@ -1252,7 +1252,7 @@ uint16_t MSS_SYS_read_digest(uint8_t *p_digest, uint16_t mb_offset);
                         |--------|------------------|
                         |     0  | Success          |
  */
-uint16_t MSS_SYS_query_security(uint8_t *p_security_locks, uint16_t mb_offset);
+uint16_t MSS_SYS_query_security(uint8_t* p_security_locks, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The function MSS_SYS_read_debug_info() is used to execute "Read Debug info"
@@ -1289,7 +1289,7 @@ uint16_t MSS_SYS_query_security(uint8_t *p_security_locks, uint16_t mb_offset);
                         |--------|------------------|
                         |     0  | Success          |
  */
-uint16_t MSS_SYS_read_debug_info(uint8_t *p_debug_info, uint16_t mb_offset);
+uint16_t MSS_SYS_read_debug_info(uint8_t* p_debug_info, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The function MSS_SYS_read_envm_parameter() is used to retrieve all parameters
@@ -1329,7 +1329,7 @@ uint16_t MSS_SYS_read_debug_info(uint8_t *p_debug_info, uint16_t mb_offset);
                      |   1    |   Digest Error |Page digest mismatches.         |
                      |        |                |Parameter values still returned.|
  */
-uint16_t MSS_SYS_read_envm_parameter(uint8_t *p_envm_param, uint16_t mb_offset);
+uint16_t MSS_SYS_read_envm_parameter(uint8_t* p_envm_param, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_execute_uic_script() function is used to execute UCI script
@@ -1645,7 +1645,7 @@ uint16_t MSS_SYS_authenticate_iap_image(uint32_t spi_idx);
                      |        |                 |
  */
 uint16_t MSS_SYS_puf_emulation_service(
-    uint8_t *p_challenge, uint8_t op_type, uint8_t *p_response, uint16_t mb_offset);
+    uint8_t* p_challenge, uint8_t op_type, uint8_t* p_response, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_digital_signature_service() function is used to generate P-384
@@ -1697,7 +1697,7 @@ uint16_t MSS_SYS_puf_emulation_service(
 
  */
 uint16_t MSS_SYS_digital_signature_service(
-    uint8_t *p_hash, uint8_t format, uint8_t *p_response, uint16_t mb_offset);
+    uint8_t* p_hash, uint8_t format, uint8_t* p_response, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_secure_nvm_write() function is used to provide write access/write the
@@ -1764,7 +1764,7 @@ uint16_t MSS_SYS_digital_signature_service(
                      |        |  or MSS was blocked (PolarFire SoC only)        |
  */
 uint16_t MSS_SYS_secure_nvm_write(
-    uint8_t format, uint8_t snvm_module, uint8_t *p_data, uint8_t *p_user_key, uint16_t mb_offset);
+    uint8_t format, uint8_t snvm_module, uint8_t* p_data, uint8_t* p_user_key, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_secure_nvm_read() function is used to read data present in sNVM
@@ -1830,7 +1830,7 @@ uint16_t MSS_SYS_secure_nvm_write(
                      |        |  or MSS was blocked (PolarFire SoC only)        |
  */
 uint16_t MSS_SYS_secure_nvm_read(
-    uint8_t snvm_module, uint8_t *p_user_key, uint8_t *p_admin, uint8_t *p_data, uint16_t data_len,
+    uint8_t snvm_module, uint8_t* p_user_key, uint8_t* p_admin, uint8_t* p_data, uint16_t data_len,
     uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
@@ -1858,7 +1858,7 @@ uint16_t MSS_SYS_secure_nvm_read(
                     |  1         |  Error fetching PUK                      |
                     |  2         |  Error generating seed                   |
  */
-uint16_t MSS_SYS_nonce_service(uint8_t *p_nonce, uint16_t mb_offset);
+uint16_t MSS_SYS_nonce_service(uint8_t* p_nonce, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_digest_check() function is used to Recalculates and compares
@@ -1946,7 +1946,7 @@ uint16_t MSS_SYS_nonce_service(uint8_t *p_nonce, uint16_t mb_offset);
                  |      1 or 0         |1 is returned if any of DIGESTERR bits  |
                  |                     |are set                                 |
  */
-uint16_t MSS_SYS_digest_check(uint32_t options, uint8_t *digesterr, uint16_t mb_offset);
+uint16_t MSS_SYS_digest_check(uint32_t options, uint8_t* digesterr, uint16_t mb_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_execute_iap() function is used to IAP service. The IAP service
@@ -2156,7 +2156,7 @@ uint16_t MSS_SYS_spi_copy(
                      |         |               | device security.              |
  */
 uint16_t MSS_SYS_debug_read_probe(
-    uint8_t ipseg_addr, uint8_t iprow_addr, uint8_t *prdata, uint16_t mb_offset,
+    uint8_t ipseg_addr, uint8_t iprow_addr, uint8_t* prdata, uint16_t mb_offset,
     uint8_t resp_offset);
 
 /*-------------------------------------------------------------------------*/ /**
@@ -2719,7 +2719,7 @@ MSS_SYS_debug_fabric_snapshot(uint32_t port_addr, uint8_t apb_fast_write, uint16
                    |         |            | generated.                          |
  */
 uint16_t MSS_SYS_otp_generate(
-    uint8_t keymode, uint8_t *n_user, uint8_t *n_fpga, uint16_t mb_offset, uint16_t resp_offset);
+    uint8_t keymode, uint8_t* n_user, uint8_t* n_fpga, uint16_t mb_offset, uint16_t resp_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_otp_match() function is the second part of the one-time
@@ -2770,7 +2770,7 @@ uint16_t MSS_SYS_otp_generate(
                      |  2   |   MISMATCHERR   |
  */
 uint16_t MSS_SYS_otp_match(
-    uint8_t *user_id, uint8_t *validator, uint8_t *otp, uint16_t mb_offset, uint16_t resp_offset);
+    uint8_t* user_id, uint8_t* validator, uint8_t* otp, uint16_t mb_offset, uint16_t resp_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_unlock_debug_passcode() function will Attempt to match
@@ -2820,7 +2820,7 @@ uint16_t MSS_SYS_otp_match(
    If any part of the service fails, then all unlocked passcodes are re-locked
    and the tamper event PASSCODE_FAIL is generated.
  */
-uint16_t MSS_SYS_unlock_debug_passcode(uint8_t *cmd_data, uint16_t mb_offset, uint16_t resp_offset);
+uint16_t MSS_SYS_unlock_debug_passcode(uint8_t* cmd_data, uint16_t mb_offset, uint16_t resp_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_one_way_passcode() function is used to provide a
@@ -2907,8 +2907,8 @@ uint16_t MSS_SYS_unlock_debug_passcode(uint8_t *cmd_data, uint16_t mb_offset, ui
    and the tamper event PASSCODE_FAIL is generated.
  */
 uint16_t MSS_SYS_one_way_passcode(
-    uint8_t *msg_id, uint8_t *validator, uint8_t keymode, uint8_t *dsn, uint8_t *hash,
-    uint8_t *plaintext_passcode, uint8_t *hwm, uint16_t mb_offset, uint16_t resp_offset);
+    uint8_t* msg_id, uint8_t* validator, uint8_t keymode, uint8_t* dsn, uint8_t* hash,
+    uint8_t* plaintext_passcode, uint8_t* hwm, uint16_t mb_offset, uint16_t resp_offset);
 
 /*-------------------------------------------------------------------------*/ /**
    The MSS_SYS_debug_terminate() function will terminate the debug
@@ -2979,16 +2979,16 @@ typedef struct {
 
 } SCBCTRL_TypeDef;
 
-#define MSS_SCBCTRL ((SCBCTRL_TypeDef *)(0x37020000UL))
+#define MSS_SCBCTRL ((SCBCTRL_TypeDef*)(0x37020000UL))
 
 /*2kB bytes long mailbox.*/
-#define MSS_SCBMAILBOX ((uint32_t *)(0x37020800UL))
+#define MSS_SCBMAILBOX ((uint32_t*)(0x37020800UL))
 
 /*SCB message register*/
-#define MSS_SCBMESSAGE ((uint32_t *)(0x20003190UL))
+#define MSS_SCBMESSAGE ((uint32_t*)(0x20003190UL))
 
 /*SCB message interrupt register*/
-#define MSS_SCBMESSAGE_INT ((uint32_t *)(0x2000318CUL))
+#define MSS_SCBMESSAGE_INT ((uint32_t*)(0x2000318CUL))
 
 #ifdef __cplusplus
 }

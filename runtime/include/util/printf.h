@@ -41,11 +41,11 @@ extern "C" {
 #endif
 
 /* Modified to expose strlen */
-static inline unsigned int
-_strlen(const char* str) {
-  const char* s;
-  for (s = str; *s; ++s);
-  return (unsigned int)(s - str);
+static inline unsigned int _strlen(const char* str) {
+    const char* s;
+    for (s = str; *s; ++s)
+        ;
+    return (unsigned int)(s - str);
 }
 
 /**
@@ -54,8 +54,7 @@ _strlen(const char* str) {
  * implementation somewhere
  * \param character Character to output
  */
-void
-_putchar(char ch);
+void _putchar(char ch);
 
 /**
  * Tiny printf implementation
@@ -64,8 +63,7 @@ _putchar(char ch);
  * \return The number of characters that are written into the array, not
  * counting the terminating null character
  */
-int
-printf(const char* format, ...);
+int printf(const char* format, ...);
 
 /**
  * Tiny sprintf implementation
@@ -77,8 +75,7 @@ printf(const char* format, ...);
  * \return The number of characters that are WRITTEN into the buffer, not
  * counting the terminating null character
  */
-int
-sprintf(char* buffer, const char* format, ...);
+int sprintf(char* buffer, const char* format, ...);
 
 /**
  * Tiny snprintf/vsnprintf implementation
@@ -90,10 +87,8 @@ sprintf(char* buffer, const char* format, ...);
  * counting the terminating null character If the formatted string is truncated
  * the buffer size (count) is returned
  */
-int
-snprintf(char* buffer, size_t count, const char* format, ...);
-int
-vsnprintf(char* buffer, size_t count, const char* format, va_list va);
+int snprintf(char* buffer, size_t count, const char* format, ...);
+int vsnprintf(char* buffer, size_t count, const char* format, va_list va);
 
 /**
  * printf with output function
@@ -106,12 +101,10 @@ vsnprintf(char* buffer, size_t count, const char* format, va_list va);
  * \return The number of characters that are sent to the output function, not
  * counting the terminating null character
  */
-int
-fctprintf(
-    void (*out)(char character, void* arg), void* arg, const char* format, ...);
+int fctprintf(void (*out)(char character, void* arg), void* arg, const char* format, ...);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // _PRINTF_H_
+#endif // _PRINTF_H_

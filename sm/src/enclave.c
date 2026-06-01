@@ -40,7 +40,7 @@ extern byte dev_public_key[PUBLIC_KEY_SIZE];
  * Expects that eid has already been valided, and it is OK to run this enclave
  */
 static inline void
-context_switch_to_enclave(struct sbi_trap_regs *regs, enclave_id eid, int load_parameters) {
+context_switch_to_enclave(struct sbi_trap_regs* regs, enclave_id eid, int load_parameters) {
     /* save host context */
     swap_prev_state(&enclaves[eid].threads[0], regs, 1);
     swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
@@ -96,13 +96,13 @@ context_switch_to_enclave(struct sbi_trap_regs *regs, enclave_id eid, int load_p
 }
 
 static inline void
-context_switch_to_host(struct sbi_trap_regs *regs, enclave_id eid, int return_on_resume) {
+context_switch_to_host(struct sbi_trap_regs* regs, enclave_id eid, int return_on_resume) {
 
     // set PMP
     int memid;
     for (memid = 0; memid < ENCLAVE_REGIONS_MAX; memid++) {
         if (enclaves[eid].regions[memid].type == REGION_ADM) {
-            AdmProtect default_perm = enclaves[eid].adm_default_protection;
+            AdmProtect default_perm  = enclaves[eid].adm_default_protection;
             AdmShareTypes share_type = enclaves[eid].adm_state_info.share;
             if (default_perm == DEFAULT_READ) {
                 if (share_type == ADM_SHARE_RW) {
@@ -216,12 +216,12 @@ static unsigned long clean_enclave_memory(uintptr_t utbase, uintptr_t utsize) {
 
     // Zero out the untrusted memory region, since it may be in
     // indeterminate state.
-    sbi_memset((void *)utbase, 0, utsize);
+    sbi_memset((void*)utbase, 0, utsize);
 
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-static unsigned long encl_alloc_eid(enclave_id *_eid) {
+static unsigned long encl_alloc_eid(enclave_id* _eid) {
     enclave_id eid;
 
     spin_lock(&encl_lock);
@@ -282,7 +282,7 @@ uintptr_t get_enclave_region_base(enclave_id eid, int memid) {
  * Does NOT do verification of dest, assumes caller knows what that is.
  * Dest should be inside the SM memory.
  */
-unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create *dest) {
+unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest) {
 
     int region_overlap = copy_to_sm(dest, src, sizeof(struct keystone_sbi_create));
 
@@ -294,7 +294,7 @@ unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create
 
 /* copies data from enclave, source must be inside EPM */
 static unsigned long
-copy_enclave_data(struct enclave *enclave, void *dest, uintptr_t source, size_t size) {
+copy_enclave_data(struct enclave* enclave, void* dest, uintptr_t source, size_t size) {
 
     int illegal = copy_to_sm(dest, source, size);
 
@@ -306,7 +306,7 @@ copy_enclave_data(struct enclave *enclave, void *dest, uintptr_t source, size_t 
 
 /* copies data into enclave, destination must be inside EPM */
 static unsigned long
-copy_enclave_report(struct enclave *enclave, uintptr_t dest, struct report *source) {
+copy_enclave_report(struct enclave* enclave, uintptr_t dest, struct report* source) {
 
     int illegal = copy_from_sm(dest, source, sizeof(struct report));
 
@@ -316,7 +316,7 @@ copy_enclave_report(struct enclave *enclave, uintptr_t dest, struct report *sour
         return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-static int is_create_args_valid(struct keystone_sbi_create *args) {
+static int is_create_args_valid(struct keystone_sbi_create* args) {
     uintptr_t epm_start, epm_end;
 
     /* printm("[create args info]: \r\n\tepm_addr: %llx\r\n\tepmsize:
@@ -345,7 +345,7 @@ static int is_create_args_valid(struct keystone_sbi_create *args) {
     }
 
     epm_start = args->epm_region.paddr;
-    epm_end = args->epm_region.paddr + args->epm_region.size;
+    epm_end   = args->epm_region.paddr + args->epm_region.size;
 
     // check if physical addresses are in the range
     if (args->runtime_paddr < epm_start || args->runtime_paddr >= epm_end)
@@ -377,14 +377,14 @@ static int is_create_args_valid(struct keystone_sbi_create *args) {
  *
  * This may fail if: it cannot allocate PMP regions, EIDs, etc
  */
-unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create create_args) {
+unsigned long create_enclave(unsigned long* eidptr, struct keystone_sbi_create create_args) {
     /* EPM, ADM and UTM parameters */
-    uintptr_t base = create_args.epm_region.paddr;
-    size_t size = create_args.epm_region.size;
-    uintptr_t utbase = create_args.utm_region.paddr;
-    size_t utsize = create_args.utm_region.size;
-    uintptr_t admbase = create_args.adm_region.paddr;
-    size_t admsize = create_args.adm_region.size;
+    uintptr_t base      = create_args.epm_region.paddr;
+    size_t size         = create_args.epm_region.size;
+    uintptr_t utbase    = create_args.utm_region.paddr;
+    size_t utsize       = create_args.utm_region.size;
+    uintptr_t admbase   = create_args.adm_region.paddr;
+    size_t admsize      = create_args.adm_region.size;
     uint8_t adm_enabled = (admbase != 0 && admsize != 0);
 
     enclave_id eid;
@@ -398,14 +398,14 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     /* set va params */
     struct runtime_va_params_t params = create_args.params;
     struct runtime_pa_params pa_params;
-    pa_params.dram_base = base;
-    pa_params.dram_size = size;
-    pa_params.runtime_base = create_args.runtime_paddr;
-    pa_params.user_base = create_args.user_paddr;
-    pa_params.free_base = create_args.free_paddr;
-    pa_params.untrusted_ptr = utbase;
-    pa_params.untrusted_size = utsize;
-    pa_params.additional_ptr = admbase;
+    pa_params.dram_base       = base;
+    pa_params.dram_size       = size;
+    pa_params.runtime_base    = create_args.runtime_paddr;
+    pa_params.user_base       = create_args.user_paddr;
+    pa_params.free_base       = create_args.free_paddr;
+    pa_params.untrusted_ptr   = utbase;
+    pa_params.untrusted_size  = utsize;
+    pa_params.additional_ptr  = admbase;
     pa_params.additional_size = admsize;
 
     // allocate eid
@@ -452,12 +452,12 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     enclaves[eid].eid = eid;
 
     enclaves[eid].regions[0].pmp_rid = region;
-    enclaves[eid].regions[0].type = REGION_EPM;
+    enclaves[eid].regions[0].type    = REGION_EPM;
     enclaves[eid].regions[1].pmp_rid = shared_region;
-    enclaves[eid].regions[1].type = REGION_UTM;
+    enclaves[eid].regions[1].type    = REGION_UTM;
     if (adm_enabled) {
-        enclaves[eid].regions[2].pmp_rid = adm_region;
-        enclaves[eid].regions[2].type = REGION_ADM;
+        enclaves[eid].regions[2].pmp_rid     = adm_region;
+        enclaves[eid].regions[2].type        = REGION_ADM;
         enclaves[eid].adm_default_protection = create_args.adm_protection;
     }
 #if __riscv_xlen == 32
@@ -465,8 +465,8 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
 #else
     enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | (SATP_MODE_SV39 << HGATP_MODE_SHIFT));
 #endif
-    enclaves[eid].n_thread = 0;
-    enclaves[eid].params = params;
+    enclaves[eid].n_thread  = 0;
+    enclaves[eid].params    = params;
     enclaves[eid].pa_params = pa_params;
 
     /* Init enclave state (regs etc) */
@@ -549,7 +549,7 @@ unsigned long destroy_enclave(enclave_id eid) {
     // 1. clear all the data in the enclave pages
     // requires no lock (single runner)
     int i;
-    void *base;
+    void* base;
     size_t size;
     region_id rid;
     for (i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
@@ -557,10 +557,10 @@ unsigned long destroy_enclave(enclave_id eid) {
             enclaves[eid].regions[i].type == REGION_UTM)
             continue;
         // 1.a Clear all pages
-        rid = enclaves[eid].regions[i].pmp_rid;
-        base = (void *)pmp_region_get_addr(rid);
+        rid  = enclaves[eid].regions[i].pmp_rid;
+        base = (void*)pmp_region_get_addr(rid);
         size = (size_t)pmp_region_get_size(rid);
-        sbi_memset((void *)base, 0, size);
+        sbi_memset((void*)base, 0, size);
 
         // 1.b free pmp region
         pmp_unset_global(rid);
@@ -573,15 +573,15 @@ unsigned long destroy_enclave(enclave_id eid) {
         pmp_region_free_atomic(enclaves[eid].regions[rid].pmp_rid);
 
     enclaves[eid].encl_satp = 0;
-    enclaves[eid].n_thread = 0;
-    enclaves[eid].params = (struct runtime_va_params_t){0};
+    enclaves[eid].n_thread  = 0;
+    enclaves[eid].params    = (struct runtime_va_params_t){0};
     enclaves[eid].pa_params = (struct runtime_pa_params){0};
     for (i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
         enclaves[eid].regions[i].type = REGION_INVALID;
     }
 
     enclaves[eid].adm_default_protection = DEFAULT_NOPERM;
-    enclaves[eid].adm_state_info.share = ADM_SHARE_NONE;
+    enclaves[eid].adm_state_info.share   = ADM_SHARE_NONE;
     for (i = 0; i < ADM_SLOT_MAX; i++)
         enclaves[eid].adm_state_info.type_info[i] = (AdmTypeInfo){ADM_UID_UNUSED, TYPE_NONE, 0};
 
@@ -591,7 +591,7 @@ unsigned long destroy_enclave(enclave_id eid) {
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
+unsigned long run_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
     int runable;
 
     spin_lock(&encl_lock);
@@ -608,13 +608,13 @@ unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
     }
 
     /* Validate ADM */
-    region_id adm_memid = get_enclave_region_index(eid, REGION_ADM);
+    region_id adm_memid      = get_enclave_region_index(eid, REGION_ADM);
     AdmShareTypes share_type = enclaves[eid].adm_state_info.share;
     if (adm_memid >= 0) {
         if (share_type == ADM_SHARE_RW) { // ADM enabled and validation enabled
             int ret;
             uintptr_t adm_start = get_enclave_region_base(eid, adm_memid);
-            uintptr_t adm_size = get_enclave_region_size(eid, adm_memid);
+            uintptr_t adm_size  = get_enclave_region_size(eid, adm_memid);
 
             ret = validate_adm_regions(adm_start, adm_size, enclaves[eid].adm_state_info.type_info);
             if (ret) {
@@ -638,7 +638,7 @@ unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-unsigned long exit_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
+unsigned long exit_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
     int exitable;
 
     spin_lock(&encl_lock);
@@ -658,7 +658,7 @@ unsigned long exit_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid) {
+unsigned long stop_enclave(struct sbi_trap_regs* regs, uint64_t request, enclave_id eid) {
     int stoppable;
     AdmProtect default_perm;
 
@@ -696,7 +696,7 @@ unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave
 }
 
 unsigned long stop_enclave_with_share(
-    struct sbi_trap_regs *regs, enclave_id eid, struct adm_type_info *type_info,
+    struct sbi_trap_regs* regs, enclave_id eid, struct adm_type_info* type_info,
     unsigned long count, unsigned long share_type) {
     int stoppable;
 
@@ -739,7 +739,7 @@ unsigned long stop_enclave_with_share(
     return SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST;
 }
 
-unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
+unsigned long resume_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
     int resumable;
 
     spin_lock(&encl_lock);
@@ -759,8 +759,8 @@ unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
     spin_unlock(&encl_lock);
 
     /* Validate ADM */
-    region_id adm_memid = get_enclave_region_index(eid, REGION_ADM);
-    AdmProtect default_perm = enclaves[eid].adm_default_protection;
+    region_id adm_memid      = get_enclave_region_index(eid, REGION_ADM);
+    AdmProtect default_perm  = enclaves[eid].adm_default_protection;
     AdmShareTypes share_type = enclaves[eid].adm_state_info.share;
     if (adm_memid >= 0) {
         // restore default permission
@@ -779,7 +779,7 @@ unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid) {
         if (share_type == ADM_SHARE_RW) {
             int ret;
             uintptr_t adm_start = get_enclave_region_base(eid, adm_memid);
-            uintptr_t adm_size = get_enclave_region_size(eid, adm_memid);
+            uintptr_t adm_size  = get_enclave_region_size(eid, adm_memid);
             ret = validate_adm_regions(adm_start, adm_size, enclaves[eid].adm_state_info.type_info);
             if (ret) {
                 // validation failed
@@ -820,7 +820,7 @@ unsigned long attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
     }
 
     /* copy data to be signed */
-    ret = copy_enclave_data(&enclaves[eid], report.enclave.data, data, size);
+    ret                     = copy_enclave_data(&enclaves[eid], report.enclave.data, data, size);
     report.enclave.data_len = size;
 
     if (ret) {
@@ -859,18 +859,18 @@ err_unlock:
 
 unsigned long
 get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid) {
-    struct sealing_key *key_struct = (struct sealing_key *)sealing_key;
+    struct sealing_key* key_struct = (struct sealing_key*)sealing_key;
     int ret;
 
     /* derive key */
     ret = sm_derive_sealing_key(
-        (unsigned char *)key_struct->key, (const unsigned char *)key_ident, key_ident_size,
-        (const unsigned char *)enclaves[eid].hash);
+        (unsigned char*)key_struct->key, (const unsigned char*)key_ident, key_ident_size,
+        (const unsigned char*)enclaves[eid].hash);
     if (ret)
         return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
 
     /* sign derived key */
-    sm_sign((void *)key_struct->signature, (void *)key_struct->key, SEALING_KEY_SIZE);
+    sm_sign((void*)key_struct->signature, (void*)key_struct->key, SEALING_KEY_SIZE);
 
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }

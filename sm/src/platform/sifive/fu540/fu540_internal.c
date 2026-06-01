@@ -36,14 +36,14 @@ unsigned long scratch_init() {
        Zero Device that total the size of the allocated ways, they don't
        really matter */
     uintptr_t scratch_start = L2_SCRATCH_START;
-    uintptr_t scratch_stop = L2_SCRATCH_START + (8 * L2_WAY_SIZE);
+    uintptr_t scratch_stop  = L2_SCRATCH_START + (8 * L2_WAY_SIZE);
     waymask_t tmp_mask;
     uintptr_t addr;
 
     addr = scratch_start;
     /* We will be directly setting the master d$ mask to avoid any cache
        pollution issues */
-    waymask_t *master_mask = WM_REG_ADDR(core * 2);
+    waymask_t* master_mask = WM_REG_ADDR(core * 2);
     /* Go through the mask one way at a time to control the allocations */
     for (tmp_mask = 0x80; tmp_mask <= scratchpad_allocated_ways; tmp_mask = tmp_mask << 1) {
         uintptr_t way_end = addr + L2_WAY_SIZE;
@@ -51,7 +51,7 @@ unsigned long scratch_init() {
         *master_mask = tmp_mask;
         /* Write a known value to every L2_LINE_SIZE offset */
         for (; addr < way_end; addr += L2_LINE_SIZE) {
-            *(uintptr_t *)addr = 64;
+            *(uintptr_t*)addr = 64;
         }
         /* Disable as soon as possible */
         *master_mask = invert_mask;
@@ -64,7 +64,7 @@ unsigned long scratch_init() {
     /* If there was a mistake, the scratchpad will never be safe to use
        again... */
     for (addr = scratch_start; addr < scratch_stop; addr += L2_LINE_SIZE) {
-        if (*(uintptr_t *)addr != 64) {
+        if (*(uintptr_t*)addr != 64) {
             sbi_printf("FATAL: Found a bad line %lx\r\n", addr);
             return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
         }
@@ -101,14 +101,14 @@ unsigned long platform_init_global() {
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-void platform_init_enclave(struct enclave *enclave) {
+void platform_init_enclave(struct enclave* enclave) {
     enclave->ped.num_ways = 0; // DISABLE waymasking
     // ped->num_ways = WM_NUM_WAYS/2;
-    enclave->ped.saved_mask = 0;
+    enclave->ped.saved_mask  = 0;
     enclave->ped.use_scratch = 0;
 }
 
-unsigned long platform_create_enclave(struct enclave *enclave) {
+unsigned long platform_create_enclave(struct enclave* enclave) {
     enclave->ped.use_scratch = 0;
     if (enclave->ped.use_scratch) {
 
@@ -118,26 +118,26 @@ unsigned long platform_create_enclave(struct enclave *enclave) {
 
         /* Swap regions */
         int old_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
-        int new_idx = get_enclave_region_index(enclave->eid, REGION_INVALID);
+        int new_idx     = get_enclave_region_index(enclave->eid, REGION_INVALID);
         if (old_epm_idx < 0 || new_idx < 0) {
             return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
         }
 
-        enclave->regions[new_idx].pmp_rid = scratch_rid;
-        enclave->regions[new_idx].type = REGION_EPM;
+        enclave->regions[new_idx].pmp_rid  = scratch_rid;
+        enclave->regions[new_idx].type     = REGION_EPM;
         enclave->regions[old_epm_idx].type = REGION_OTHER;
 
         /* Copy the enclave over */
-        uintptr_t old_epm_start = pmp_region_get_addr(enclave->regions[old_epm_idx].pmp_rid);
+        uintptr_t old_epm_start     = pmp_region_get_addr(enclave->regions[old_epm_idx].pmp_rid);
         uintptr_t scratch_epm_start = pmp_region_get_addr(scratch_rid);
-        size_t size = enclave->pa_params.free_base - old_epm_start;
-        size_t scratch_size = 8 * L2_WAY_SIZE;
+        size_t size                 = enclave->pa_params.free_base - old_epm_start;
+        size_t scratch_size         = 8 * L2_WAY_SIZE;
 
         if (size > scratch_size) {
             sbi_printf("FATAL: Enclave too big for scratchpad!\r\n");
             return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
         }
-        memcpy((unsigned long *)scratch_epm_start, (unsigned long *)old_epm_start, size);
+        memcpy((unsigned long*)scratch_epm_start, (unsigned long*)old_epm_start, size);
         sbi_printf("Performing copy from %lx to %lx\r\n", old_epm_start, scratch_epm_start);
         /* Change pa params to the new region */
         enclave->pa_params.dram_base = scratch_epm_start;
@@ -162,7 +162,7 @@ unsigned long platform_create_enclave(struct enclave *enclave) {
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-void platform_destroy_enclave(struct enclave *enclave) {
+void platform_destroy_enclave(struct enclave* enclave) {
     if (enclave->ped.use_scratch) {
         int scratch_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
         /* Clean out the region ourselves */
@@ -174,7 +174,7 @@ void platform_destroy_enclave(struct enclave *enclave) {
         uintptr_t scratch_stop =
             scratch_start + pmp_region_get_size(enclave->regions[scratch_epm_idx].pmp_rid);
         for (addr = scratch_start; addr < scratch_stop; addr += sizeof(uintptr_t)) {
-            *(uintptr_t *)addr = 0;
+            *(uintptr_t*)addr = 0;
         }
 
         /* Fix the enclave region info to no longer know about
@@ -188,7 +188,7 @@ void platform_destroy_enclave(struct enclave *enclave) {
     enclave->ped.use_scratch = 0;
 }
 
-void platform_switch_to_enclave(struct enclave *enclave) {
+void platform_switch_to_enclave(struct enclave* enclave) {
 
     if (enclave->ped.num_ways > 0) {
         // Each hart gets special access to some
@@ -212,7 +212,7 @@ void platform_switch_to_enclave(struct enclave *enclave) {
     }
 }
 
-void platform_switch_from_enclave(struct enclave *enclave) {
+void platform_switch_from_enclave(struct enclave* enclave) {
     if (enclave->ped.num_ways > 0) {
         /* Free all our ways */
         waymask_free_ways(enclave->ped.saved_mask);

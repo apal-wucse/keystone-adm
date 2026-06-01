@@ -28,13 +28,13 @@ typedef uintptr_t paddr_t;
 
 extern struct miscdevice keystone_dev;
 
-long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg);
-int keystone_release(struct inode *inode, struct file *file);
-int keystone_mmap(struct file *filp, struct vm_area_struct *vma);
+long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
+int keystone_release(struct inode* inode, struct file* file);
+int keystone_mmap(struct file* filp, struct vm_area_struct* vma);
 
 /* enclave private memory */
 struct epm {
-    pte_t *root_page_table;
+    pte_t* root_page_table;
     vaddr_t alloc_ptr;
     vaddr_t ptr;
     size_t alloc_size;
@@ -46,8 +46,8 @@ struct epm {
 };
 
 struct utm {
-    pte_t *root_page_table;
-    void *ptr;
+    pte_t* root_page_table;
+    void* ptr;
     size_t size;
     unsigned long order;
     bool is_cma;
@@ -66,50 +66,50 @@ struct adm {
 struct enclave {
     unsigned long eid;
     int close_on_pexit;
-    struct utm *utm;
-    struct epm *epm;
-    struct adm *adm;
+    struct utm* utm;
+    struct epm* epm;
+    struct adm* adm;
     bool adm_enabled;
     __u8 map_target;
 };
 
 // global debug functions
-void debug_dump(char *ptr, unsigned long size);
+void debug_dump(char* ptr, unsigned long size);
 
 // runtime/app loader
 int keystone_rtld_init_runtime(
-    struct enclave *enclave, void *__user rt_ptr, size_t rt_sz, unsigned long rt_stack_sz,
-    unsigned long *rt_offset);
+    struct enclave* enclave, void* __user rt_ptr, size_t rt_sz, unsigned long rt_stack_sz,
+    unsigned long* rt_offset);
 
 int keystone_rtld_init_app(
-    struct enclave *enclave, void *__user app_ptr, size_t app_sz, size_t app_stack_sz,
+    struct enclave* enclave, void* __user app_ptr, size_t app_sz, size_t app_stack_sz,
     unsigned long stack_offset);
 
 // untrusted memory mapper
-int keystone_rtld_init_untrusted(
-    struct enclave *enclave, void *untrusted_ptr, size_t untrusted_size);
+int
+keystone_rtld_init_untrusted(struct enclave* enclave, void* untrusted_ptr, size_t untrusted_size);
 
-struct enclave *get_enclave_by_id(unsigned int ueid);
-struct enclave *create_enclave(unsigned long min_pages);
-int destroy_enclave(struct enclave *enclave);
+struct enclave* get_enclave_by_id(unsigned int ueid);
+struct enclave* create_enclave(unsigned long min_pages);
+int destroy_enclave(struct enclave* enclave);
 
-unsigned int enclave_idr_alloc(struct enclave *enclave);
-struct enclave *enclave_idr_remove(unsigned int ueid);
-struct enclave *get_enclave_by_id(unsigned int ueid);
+unsigned int enclave_idr_alloc(struct enclave* enclave);
+struct enclave* enclave_idr_remove(unsigned int ueid);
+struct enclave* get_enclave_by_id(unsigned int ueid);
 
-static inline uintptr_t epm_satp(struct epm *epm) {
+static inline uintptr_t epm_satp(struct epm* epm) {
     return ((uintptr_t)epm->root_page_table >> RISCV_PGSHIFT | SATP_MODE_CHOICE);
 }
 
-int epm_destroy(struct epm *epm);
-int epm_init(struct epm *epm, unsigned int count);
-int utm_destroy(struct utm *utm);
-int utm_init(struct utm *utm, size_t untrusted_size);
-int adm_destroy(struct adm *adm);
-int adm_init(struct adm *adm, size_t adm_size, __u8 protection);
-paddr_t epm_va_to_pa(struct epm *epm, vaddr_t addr);
+int epm_destroy(struct epm* epm);
+int epm_init(struct epm* epm, unsigned int count);
+int utm_destroy(struct utm* utm);
+int utm_init(struct utm* utm, size_t untrusted_size);
+int adm_destroy(struct adm* adm);
+int adm_init(struct adm* adm, size_t adm_size, __u8 protection);
+paddr_t epm_va_to_pa(struct epm* epm, vaddr_t addr);
 
 #define keystone_info(fmt, ...) pr_info("keystone_enclave: " fmt, ##__VA_ARGS__)
-#define keystone_err(fmt, ...) pr_err("keystone_enclave: " fmt, ##__VA_ARGS__)
+#define keystone_err(fmt, ...)  pr_err("keystone_enclave: " fmt, ##__VA_ARGS__)
 #define keystone_warn(fmt, ...) pr_warn("keystone_enclave: " fmt, ##__VA_ARGS__)
 #endif

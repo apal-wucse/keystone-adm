@@ -8,7 +8,7 @@
 
 #include <linux/types.h>
 
-#define ADM_SLOT_MAX 16
+#define ADM_SLOT_MAX     16
 #define DATA_ALIGN_BYTES 8
 
 typedef struct adm_header {

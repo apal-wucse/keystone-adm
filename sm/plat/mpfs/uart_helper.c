@@ -20,8 +20,8 @@
 #include "hss_clock.h"
 #include "uart_helper.h"
 
-static inline mss_uart_instance_t *get_uart_instance(int hartid) {
-    mss_uart_instance_t *pUart;
+static inline mss_uart_instance_t* get_uart_instance(int hartid) {
+    mss_uart_instance_t* pUart;
 
     switch (hartid) {
     default:
@@ -47,11 +47,11 @@ static inline mss_uart_instance_t *get_uart_instance(int hartid) {
     return pUart;
 }
 
-int uart_putstring(int hartid, const char *p) {
+int uart_putstring(int hartid, const char* p) {
     const uint32_t len = (uint32_t)strlen(p);
 
-    mss_uart_instance_t *pUart = get_uart_instance(hartid);
-    MSS_UART_polled_tx_string(pUart, (const uint8_t *)p);
+    mss_uart_instance_t* pUart = get_uart_instance(hartid);
+    MSS_UART_polled_tx_string(pUart, (const uint8_t*)p);
     // TODO: if hartId is zero (i.e., E51), replace this with non-blocking
     // queue implementation, with HSS_UART state machine consuming from queues...
     return len;
@@ -62,14 +62,14 @@ void uart_putc(int hartid, const char ch) {
     string[0] = (uint8_t)ch;
     string[1] = 0u;
 
-    mss_uart_instance_t *pUart = get_uart_instance(hartid);
-    MSS_UART_polled_tx_string(pUart, (const uint8_t *)string);
+    mss_uart_instance_t* pUart = get_uart_instance(hartid);
+    MSS_UART_polled_tx_string(pUart, (const uint8_t*)string);
 }
 
 #define HSS_UART_HELPER_MAX_GETLINE 80
-ssize_t uart_getline(char **pBuffer, size_t *pBufLen) {
+ssize_t uart_getline(char** pBuffer, size_t* pBufLen) {
     ssize_t result = 0;
-    bool finished = false;
+    bool finished  = false;
     static char myBuffer[HSS_UART_HELPER_MAX_GETLINE]; // static to be stack friendly
     const size_t bufferLen = ARRAY_SIZE(myBuffer);
 
@@ -94,7 +94,7 @@ ssize_t uart_getline(char **pBuffer, size_t *pBufLen) {
         case 0x7Fu: // delete
             if (result) {
                 result--;
-                MSS_UART_polled_tx(&g_mss_uart0_lo, (uint8_t const *)"\033[D \033[D", 7u);
+                MSS_UART_polled_tx(&g_mss_uart0_lo, (uint8_t const*)"\033[D \033[D", 7u);
                 myBuffer[result] = 0;
             }
             break;
@@ -102,28 +102,28 @@ ssize_t uart_getline(char **pBuffer, size_t *pBufLen) {
         case 0x08u: // backspace - ^H
             if (result) {
                 result--;
-                MSS_UART_polled_tx(&g_mss_uart0_lo, (uint8_t const *)" \033[D", 4u);
+                MSS_UART_polled_tx(&g_mss_uart0_lo, (uint8_t const*)" \033[D", 4u);
                 myBuffer[result] = 0;
             }
             break;
 
         case 0x03u: // intr - ^C
-            result = -1;
+            result      = -1;
             myBuffer[0] = 0;
-            finished = true;
+            finished    = true;
             break;
 
         case 0x1Bu: // ESC
-            result = -1;
+            result      = -1;
             myBuffer[0] = 0;
-            finished = true;
+            finished    = true;
             break;
 
         case 0x04u: // ^D
             if (result == 0) {
-                result = -1;
+                result      = -1;
                 myBuffer[0] = 0;
-                finished = true;
+                finished    = true;
             }
             break;
 
@@ -138,7 +138,7 @@ ssize_t uart_getline(char **pBuffer, size_t *pBufLen) {
     }
 
     const char crlf[] = CRLF;
-    MSS_UART_polled_tx_string(&g_mss_uart0_lo, (const uint8_t *)crlf);
+    MSS_UART_polled_tx_string(&g_mss_uart0_lo, (const uint8_t*)crlf);
 
     if (result > 0) {
         *pBuffer = myBuffer;
@@ -151,11 +151,11 @@ ssize_t uart_getline(char **pBuffer, size_t *pBufLen) {
     return result;
 }
 
-bool uart_getchar(uint8_t *pbuf, int32_t timeout_sec, bool do_sec_tick) {
+bool uart_getchar(uint8_t* pbuf, int32_t timeout_sec, bool do_sec_tick) {
     bool result = false;
-    bool done = false;
+    bool done   = false;
     uint8_t rx_buff[1];
-    HSSTicks_t start_time = 0u;
+    HSSTicks_t start_time    = 0u;
     HSSTicks_t last_sec_time = 0u;
 
     // if (timeout_sec > 0) {
@@ -170,7 +170,7 @@ bool uart_getchar(uint8_t *pbuf, int32_t timeout_sec, bool do_sec_tick) {
         if (0u != received) {
             done = true;
             if (MSS_UART_NO_ERROR == MSS_UART_get_rx_status(&g_mss_uart0_lo)) {
-                *pbuf = rx_buff[0];
+                *pbuf  = rx_buff[0];
                 result = true;
                 break;
             } else {

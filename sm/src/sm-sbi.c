@@ -14,7 +14,7 @@
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>
 
-unsigned long sbi_sm_create_enclave(unsigned long *eid, uintptr_t create_args) {
+unsigned long sbi_sm_create_enclave(unsigned long* eid, uintptr_t create_args) {
     struct keystone_sbi_create create_args_local;
     unsigned long ret;
 
@@ -33,14 +33,14 @@ unsigned long sbi_sm_destroy_enclave(unsigned long eid) {
     return ret;
 }
 
-unsigned long sbi_sm_run_enclave(struct sbi_trap_regs *regs, unsigned long eid) {
+unsigned long sbi_sm_run_enclave(struct sbi_trap_regs* regs, unsigned long eid) {
     regs->a0 = run_enclave(regs, (unsigned int)eid);
     regs->mepc += 4;
     sbi_trap_exit(regs);
     return 0;
 }
 
-unsigned long sbi_sm_resume_enclave(struct sbi_trap_regs *regs, unsigned long eid) {
+unsigned long sbi_sm_resume_enclave(struct sbi_trap_regs* regs, unsigned long eid) {
     unsigned long ret;
     ret = resume_enclave(regs, (unsigned int)eid);
     if (!regs->zero)
@@ -51,7 +51,7 @@ unsigned long sbi_sm_resume_enclave(struct sbi_trap_regs *regs, unsigned long ei
     return 0;
 }
 
-unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retval) {
+unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs* regs, unsigned long retval) {
     regs->a0 = exit_enclave(regs, cpu_get_enclave_id());
     regs->a1 = retval;
     regs->mepc += 4;
@@ -59,7 +59,7 @@ unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retv
     return 0;
 }
 
-unsigned long sbi_sm_stop_enclave(struct sbi_trap_regs *regs, unsigned long request) {
+unsigned long sbi_sm_stop_enclave(struct sbi_trap_regs* regs, unsigned long request) {
     regs->a0 = stop_enclave(regs, request, cpu_get_enclave_id());
     regs->mepc += 4;
     sbi_trap_exit(regs);
@@ -67,7 +67,7 @@ unsigned long sbi_sm_stop_enclave(struct sbi_trap_regs *regs, unsigned long requ
 }
 
 unsigned long sbi_sm_stop_enclave_with_share(
-    struct sbi_trap_regs *regs, uintptr_t type_info, unsigned long count,
+    struct sbi_trap_regs* regs, uintptr_t type_info, unsigned long count,
     unsigned long share_type) {
     struct adm_type_info type_info_local[ADM_SLOT_MAX];
     unsigned long ret;

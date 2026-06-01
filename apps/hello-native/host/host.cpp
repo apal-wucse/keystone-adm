@@ -15,9 +15,7 @@ void print_string_wrapper(void* buffer);
  * print_string_wrapper) and by registering that wrapper with the
  * enclave object (below, main).
  ***/
-unsigned long print_string(char* str) {
-    return printf("Enclave said: \"%s\"\n", str);
-}
+unsigned long print_string(char* str) { return printf("Enclave said: \"%s\"\n", str); }
 
 int main(int argc, char** argv) {
     Keystone::Enclave enclave;
@@ -34,8 +32,7 @@ int main(int argc, char** argv) {
        enclave. */
     register_call(OCALL_PRINT_STRING, print_string_wrapper);
 
-    edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(),
-                             enclave.getSharedBufferSize());
+    edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
 
     enclave.run();
 
@@ -63,8 +60,7 @@ void print_string_wrapper(void* buffer) {
     /* Setup return data from the ocall function */
     uintptr_t data_section = edge_call_data_ptr();
     memcpy((void*)data_section, &ret_val, sizeof(unsigned long));
-    if (edge_call_setup_ret(edge_call, (void*)data_section,
-                            sizeof(unsigned long))) {
+    if (edge_call_setup_ret(edge_call, (void*)data_section, sizeof(unsigned long))) {
         edge_call->return_data.call_status = CALL_STATUS_BAD_PTR;
     } else {
         edge_call->return_data.call_status = CALL_STATUS_OK;

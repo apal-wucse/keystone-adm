@@ -8,28 +8,28 @@
 namespace Keystone {
 
 class AdditionalDataMemory {
- private:
-  AdditionalData additionalData;
-  uintptr_t adm;
-  uintptr_t admSize;
-  uintptr_t addrInEnclave;
-  bool memReady;
-  bool finalized;
+  private:
+    AdditionalData additionalData;
+    uintptr_t adm;
+    uintptr_t admSize;
+    uintptr_t addrInEnclave;
+    bool memReady;
+    bool finalized;
 
-  bool validateMemory();
+    bool validateMemory();
 
-  /* Can use after finalize */
-  AdmHeader* getHdr();
-  AdmRegionHeader* getRegionHdr(uintptr_t uid);
+    /* Can use after finalize */
+    AdmHeader* getHdr();
+    AdmRegionHeader* getRegionHdr(uintptr_t uid);
 
- public:
-  AdditionalDataMemory();
-  ~AdditionalDataMemory();
-  Error setupMemory(uintptr_t ptr, uintptr_t size, uintptr_t baseAddr);
-  Error setupData(AdditionalData& additionalData);
-  Error finalize();
+  public:
+    AdditionalDataMemory();
+    ~AdditionalDataMemory();
+    Error setupMemory(uintptr_t ptr, uintptr_t size, uintptr_t baseAddr);
+    Error setupData(AdditionalData& additionalData);
+    Error finalize();
 
-  /* Can use after finalize */
-  DataVec getRegion(uintptr_t uid);
+    /* Can use after finalize */
+    DataVec getRegion(uintptr_t uid);
 };
-}  // namespace Keystone
+} // namespace Keystone

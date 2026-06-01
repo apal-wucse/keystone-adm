@@ -23,7 +23,7 @@ extern "C" {
 /*******************************************************************************
  * Null buffer constant definition
  */
-#define NULL_BUFFER ((uint8_t *)0)
+#define NULL_BUFFER ((uint8_t*)0)
 
 /*-------------------------------------------------------------------------*/ /**
    System service response offset
@@ -32,20 +32,20 @@ extern "C" {
    the service response is written by the system controller after service
    execution.
  */
-#define MSS_SYS_COMMON_RET_OFFSET 0u
-#define MSS_SYS_DIGITAL_SIG_RET_OFFSET 48u
+#define MSS_SYS_COMMON_RET_OFFSET          0u
+#define MSS_SYS_DIGITAL_SIG_RET_OFFSET     48u
 #define MSS_SYS_SECURE_NVM_READ_RET_OFFSET 16u
-#define MSS_SYS_PUF_EMULATION_RET_OFFSET 20u
-#define MSS_SYS_DIGEST_CHECK_RET_OFFSET 4u
-#define MSS_SYS_GENERATE_OTP_RET_OFFSET 20u
+#define MSS_SYS_PUF_EMULATION_RET_OFFSET   20u
+#define MSS_SYS_DIGEST_CHECK_RET_OFFSET    4u
+#define MSS_SYS_GENERATE_OTP_RET_OFFSET    20u
 
 /*******************************************************************************
  * Global variables declarations
  */
 volatile uint8_t g_message_received = 0u;
-uint8_t g_service_mode = 0u;
+uint8_t g_service_mode              = 0u;
 
-uint8_t *gp_int_service_response;
+uint8_t* gp_int_service_response;
 uint16_t g_int_service_response_size;
 uint16_t g_int_service_response_offset;
 
@@ -60,15 +60,15 @@ mss_sys_service_handler_t mss_sys_interrupt_handler;
  * Local function declarations.
  */
 static uint16_t execute_ss_polling_mode(
-    uint8_t cmd_opcode, uint8_t *cmd_data, uint16_t cmd_data_size, uint8_t *p_response,
+    uint8_t cmd_opcode, uint8_t* cmd_data, uint16_t cmd_data_size, uint8_t* p_response,
     uint16_t response_size, uint16_t mb_offset, uint16_t response_offset);
 
 static uint16_t execute_ss_interrupt_mode(
-    uint8_t cmd_opcode, uint8_t *cmd_data, uint16_t cmd_data_size, uint8_t *p_response,
+    uint8_t cmd_opcode, uint8_t* cmd_data, uint16_t cmd_data_size, uint8_t* p_response,
     uint16_t response_size, uint16_t mb_offset, uint16_t response_offset);
 
 static uint16_t request_system_service(
-    uint8_t cmd_opcode, uint8_t *cmd_data, uint16_t cmd_data_size, uint8_t *p_response,
+    uint8_t cmd_opcode, uint8_t* cmd_data, uint16_t cmd_data_size, uint8_t* p_response,
     uint16_t response_size, uint16_t mb_offset, uint16_t response_offset);
 
 /*-----------------------------------------------------------------------------
@@ -85,7 +85,7 @@ static uint16_t request_system_service(
                                                                                */
 void MSS_SYS_select_service_mode(
     uint8_t sys_service_mode, mss_sys_service_handler_t mss_sys_service_interrupt_handler) {
-    g_service_mode = sys_service_mode;
+    g_service_mode            = sys_service_mode;
     mss_sys_interrupt_handler = mss_sys_service_interrupt_handler;
 }
 
@@ -97,7 +97,7 @@ void MSS_SYS_select_service_mode(
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_get_serial_number(uint8_t *p_serial_number, uint16_t mb_offset) {
+uint16_t MSS_SYS_get_serial_number(uint8_t* p_serial_number, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
@@ -123,7 +123,7 @@ uint16_t MSS_SYS_get_serial_number(uint8_t *p_serial_number, uint16_t mb_offset)
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_get_user_code(uint8_t *p_user_code, uint16_t mb_offset) {
+uint16_t MSS_SYS_get_user_code(uint8_t* p_user_code, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
@@ -147,7 +147,7 @@ uint16_t MSS_SYS_get_user_code(uint8_t *p_user_code, uint16_t mb_offset) {
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_get_design_info(uint8_t *p_design_info, uint16_t mb_offset) {
+uint16_t MSS_SYS_get_design_info(uint8_t* p_design_info, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
@@ -173,7 +173,7 @@ uint16_t MSS_SYS_get_design_info(uint8_t *p_design_info, uint16_t mb_offset) {
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_get_device_certificate(uint8_t *p_device_certificate, uint16_t mb_offset) {
+uint16_t MSS_SYS_get_device_certificate(uint8_t* p_device_certificate, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
@@ -199,7 +199,7 @@ uint16_t MSS_SYS_get_device_certificate(uint8_t *p_device_certificate, uint16_t 
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_read_digest(uint8_t *p_digest, uint16_t mb_offset) {
+uint16_t MSS_SYS_read_digest(uint8_t* p_digest, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
@@ -223,9 +223,9 @@ uint16_t MSS_SYS_read_digest(uint8_t *p_digest, uint16_t mb_offset) {
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_query_security(uint8_t *p_security_locks, uint16_t mb_offset) {
+uint16_t MSS_SYS_query_security(uint8_t* p_security_locks, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
-    uint8_t idx = 0;
+    uint8_t idx     = 0;
     uint8_t buf[36] = {0};
 
     /*Actual QUERY_SECURITY_RESP_LEN is 9 but CoreSysService_PF IP needs number
@@ -255,7 +255,7 @@ uint16_t MSS_SYS_query_security(uint8_t *p_security_locks, uint16_t mb_offset) {
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_read_debug_info(uint8_t *p_debug_info, uint16_t mb_offset) {
+uint16_t MSS_SYS_read_debug_info(uint8_t* p_debug_info, uint16_t mb_offset) {
 
     uint16_t status = MSS_SYS_PARAM_ERR;
 
@@ -283,7 +283,7 @@ uint16_t MSS_SYS_read_debug_info(uint8_t *p_debug_info, uint16_t mb_offset) {
                                                                               * function.
                                                                               */
 
-uint16_t MSS_SYS_read_envm_parameter(uint8_t *p_envm_param, uint16_t mb_offset) {
+uint16_t MSS_SYS_read_envm_parameter(uint8_t* p_envm_param, uint16_t mb_offset) {
 
     uint16_t status = MSS_SYS_PARAM_ERR;
 
@@ -311,10 +311,10 @@ uint16_t MSS_SYS_read_envm_parameter(uint8_t *p_envm_param, uint16_t mb_offset) 
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_puf_emulation_service(
-    uint8_t *p_challenge, uint8_t op_type, uint8_t *p_response, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint8_t* p_challenge, uint8_t op_type, uint8_t* p_response, uint16_t mb_offset) {
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[20] = {0x00};
-    uint8_t index = 0u;
+    uint8_t index         = 0u;
 
     /* Frame the data required for mailbox */
     mb_format[index] = op_type;
@@ -349,7 +349,7 @@ uint16_t MSS_SYS_puf_emulation_service(
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_digital_signature_service(
-    uint8_t *p_hash, uint8_t format, uint8_t *p_response, uint16_t mb_offset) {
+    uint8_t* p_hash, uint8_t format, uint8_t* p_response, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
     if (format == MSS_SYS_DIGITAL_SIGNATURE_RAW_FORMAT_REQUEST_CMD) {
@@ -396,11 +396,11 @@ uint16_t MSS_SYS_digital_signature_service(
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_secure_nvm_write(
-    uint8_t format, uint8_t snvm_module, uint8_t *p_data, uint8_t *p_user_key, uint16_t mb_offset) {
+    uint8_t format, uint8_t snvm_module, uint8_t* p_data, uint8_t* p_user_key, uint16_t mb_offset) {
     uint8_t frame[256] = {0x00};
-    uint8_t *p_frame = &frame[0];
-    uint16_t index = 0;
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint8_t* p_frame   = &frame[0];
+    uint16_t index     = 0;
+    uint16_t status    = MSS_SYS_PARAM_ERR;
 
     ASSERT(!(NULL_BUFFER == p_data));
     ASSERT(!(NULL_BUFFER == p_user_key));
@@ -463,13 +463,13 @@ uint16_t MSS_SYS_secure_nvm_write(
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_secure_nvm_read(
-    uint8_t snvm_module, uint8_t *p_user_key, uint8_t *p_admin, uint8_t *p_data, uint16_t data_len,
+    uint8_t snvm_module, uint8_t* p_user_key, uint8_t* p_admin, uint8_t* p_data, uint16_t data_len,
     uint16_t mb_offset) {
     /* Frame the message. */
-    uint8_t frame[16] = {0x00u};
-    uint8_t *p_frame = &frame[0];
-    uint16_t index = 0u;
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint8_t frame[16]     = {0x00u};
+    uint8_t* p_frame      = &frame[0];
+    uint16_t index        = 0u;
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t response[256] = {0x00};
 
     ASSERT(!(NULL_BUFFER == p_data));
@@ -528,7 +528,7 @@ uint16_t MSS_SYS_secure_nvm_read(
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_nonce_service(uint8_t *p_nonce, uint16_t mb_offset) {
+uint16_t MSS_SYS_nonce_service(uint8_t* p_nonce, uint16_t mb_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
@@ -573,8 +573,8 @@ MSS_SYS_execute_uic_script(uint8_t src_periph_type, uint32_t periph_address, uin
         return status;
     }
 
-    *(uint32_t *)input_data = l_periph_addr;
-    input_data[4] = src_periph_type;
+    *(uint32_t*)input_data = l_periph_addr;
+    input_data[4]          = src_periph_type;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -600,17 +600,17 @@ MSS_SYS_execute_uic_script(uint8_t src_periph_type, uint32_t periph_address, uin
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_authenticate_uic_bitstream(uint32_t spi_flash_address, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status              = MSS_SYS_PARAM_ERR;
     uint32_t l_spi_flash_address = spi_flash_address;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
-            (uint8_t)MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_CMD, (uint8_t *)&l_spi_flash_address,
+            (uint8_t)MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_CMD, (uint8_t*)&l_spi_flash_address,
             (uint16_t)MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_DATA_LEN, NULL_BUFFER,
             MSS_SYS_NO_RESPONSE_LEN, mb_offset, MSS_SYS_COMMON_RET_OFFSET);
     } else {
         status = execute_ss_polling_mode(
-            (uint8_t)MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_CMD, (uint8_t *)&l_spi_flash_address,
+            (uint8_t)MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_CMD, (uint8_t*)&l_spi_flash_address,
             (uint16_t)MSS_SYS_UIC_BITSTREAM_AUTHENTICATE_DATA_LEN, NULL_BUFFER,
             MSS_SYS_NO_RESPONSE_LEN, mb_offset, MSS_SYS_COMMON_RET_OFFSET);
     }
@@ -627,17 +627,17 @@ uint16_t MSS_SYS_authenticate_uic_bitstream(uint32_t spi_flash_address, uint16_t
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_authenticate_bitstream(uint32_t spi_flash_address, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status              = MSS_SYS_PARAM_ERR;
     uint32_t l_spi_flash_address = spi_flash_address;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
-            (uint8_t)MSS_SYS_BITSTREAM_AUTHENTICATE_CMD, (uint8_t *)&l_spi_flash_address,
+            (uint8_t)MSS_SYS_BITSTREAM_AUTHENTICATE_CMD, (uint8_t*)&l_spi_flash_address,
             (uint16_t)MSS_SYS_BITSTREAM_AUTHENTICATE_DATA_LEN, NULL_BUFFER, MSS_SYS_NO_RESPONSE_LEN,
             mb_offset, MSS_SYS_COMMON_RET_OFFSET);
     } else {
         status = execute_ss_polling_mode(
-            (uint8_t)MSS_SYS_BITSTREAM_AUTHENTICATE_CMD, (uint8_t *)&l_spi_flash_address,
+            (uint8_t)MSS_SYS_BITSTREAM_AUTHENTICATE_CMD, (uint8_t*)&l_spi_flash_address,
             (uint16_t)MSS_SYS_BITSTREAM_AUTHENTICATE_DATA_LEN, NULL_BUFFER, MSS_SYS_NO_RESPONSE_LEN,
             mb_offset, MSS_SYS_COMMON_RET_OFFSET);
     }
@@ -679,18 +679,18 @@ uint16_t MSS_SYS_authenticate_iap_image(uint32_t spi_idx) {
                                                                                * to use this
                                                                                * function.
                                                                                */
-uint16_t MSS_SYS_digest_check(uint32_t options, uint8_t *digesterr, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+uint16_t MSS_SYS_digest_check(uint32_t options, uint8_t* digesterr, uint16_t mb_offset) {
+    uint16_t status    = MSS_SYS_PARAM_ERR;
     uint32_t l_options = options;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
-            (uint8_t)MSS_SYS_DIGEST_CHECK_CMD, (uint8_t *)&l_options,
+            (uint8_t)MSS_SYS_DIGEST_CHECK_CMD, (uint8_t*)&l_options,
             (uint16_t)MSS_SYS_DIGEST_CHECK_DATA_LEN, digesterr,
             (uint16_t)MSS_SYS_DIGEST_CHECK_SERVICE_RESP_LEN, mb_offset, MSS_SYS_COMMON_RET_OFFSET);
     } else {
         status = execute_ss_polling_mode(
-            (uint8_t)MSS_SYS_DIGEST_CHECK_CMD, (uint8_t *)&l_options,
+            (uint8_t)MSS_SYS_DIGEST_CHECK_CMD, (uint8_t*)&l_options,
             (uint16_t)MSS_SYS_DIGEST_CHECK_DATA_LEN, digesterr,
             (uint16_t)MSS_SYS_DIGEST_CHECK_SERVICE_RESP_LEN, mb_offset, MSS_SYS_COMMON_RET_OFFSET);
     }
@@ -707,7 +707,7 @@ uint16_t MSS_SYS_digest_check(uint32_t options, uint8_t *digesterr, uint16_t mb_
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_execute_iap(uint8_t iap_cmd, uint32_t spiaddr) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status    = MSS_SYS_PARAM_ERR;
     uint32_t l_spiaddr = spiaddr;
 
     if ((MSS_SYS_IAP_PROGRAM_BY_SPIIDX_CMD == iap_cmd) ||
@@ -717,11 +717,11 @@ uint16_t MSS_SYS_execute_iap(uint8_t iap_cmd, uint32_t spiaddr) {
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
-            (uint8_t)iap_cmd, (uint8_t *)&l_spiaddr, MSS_SYS_IAP_SERVICE_DATA_LEN, NULL_BUFFER,
+            (uint8_t)iap_cmd, (uint8_t*)&l_spiaddr, MSS_SYS_IAP_SERVICE_DATA_LEN, NULL_BUFFER,
             MSS_SYS_NO_RESPONSE_LEN, (uint16_t)spiaddr, MSS_SYS_COMMON_RET_OFFSET);
     } else {
         status = execute_ss_polling_mode(
-            (uint8_t)iap_cmd, (uint8_t *)&l_spiaddr, MSS_SYS_IAP_SERVICE_DATA_LEN, NULL_BUFFER,
+            (uint8_t)iap_cmd, (uint8_t*)&l_spiaddr, MSS_SYS_IAP_SERVICE_DATA_LEN, NULL_BUFFER,
             MSS_SYS_NO_RESPONSE_LEN, (uint16_t)spiaddr, MSS_SYS_COMMON_RET_OFFSET);
     }
 
@@ -742,10 +742,10 @@ uint16_t MSS_SYS_spi_copy(
     uint16_t status = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[17];
 
-    *(uint64_t *)mb_format = mss_dest_addr;
-    *(uint32_t *)(mb_format + 8u) = mss_spi_flash;
-    *(uint32_t *)(mb_format + 12u) = n_bytes;
-    mb_format[16] = options;
+    *(uint64_t*)mb_format         = mss_dest_addr;
+    *(uint32_t*)(mb_format + 8u)  = mss_spi_flash;
+    *(uint32_t*)(mb_format + 12u) = n_bytes;
+    mb_format[16]                 = options;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -769,7 +769,7 @@ uint16_t MSS_SYS_spi_copy(
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_debug_read_probe(
-    uint8_t ipseg_addr, uint8_t iprow_addr, uint8_t *prdata, uint16_t mb_offset,
+    uint8_t ipseg_addr, uint8_t iprow_addr, uint8_t* prdata, uint16_t mb_offset,
     uint8_t resp_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[2];
@@ -781,7 +781,7 @@ uint16_t MSS_SYS_debug_read_probe(
 
     service_data = service_data + ipseg_addr;
 
-    *(uint16_t *)mb_format = service_data;
+    *(uint16_t*)mb_format = service_data;
 
     l_resp_offset = (4u + (4u * l_resp_offset));
 
@@ -811,7 +811,7 @@ uint16_t MSS_SYS_debug_read_probe(
 uint16_t MSS_SYS_debug_write_probe(
     uint8_t prb_addr, uint8_t ipseg_addr, uint8_t iprow_addr, uint32_t pwmask, uint32_t pwdata,
     uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[12] = {0};
 
     /* Local variable to store the combination of iprow_addr, ipseg_addr and
@@ -822,14 +822,14 @@ uint16_t MSS_SYS_debug_write_probe(
     service_data = service_data << 12u;
 
     uint16_t temp = ipseg_addr;
-    temp = temp << 6u;
+    temp          = temp << 6u;
     temp += prb_addr;
 
     service_data = service_data + temp;
 
-    *(uint32_t *)mb_format = service_data;
-    *(uint32_t *)(mb_format + 4u) = pwmask;
-    *(uint32_t *)(mb_format + 8u) = pwdata;
+    *(uint32_t*)mb_format        = service_data;
+    *(uint32_t*)(mb_format + 4u) = pwmask;
+    *(uint32_t*)(mb_format + 8u) = pwdata;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -857,12 +857,12 @@ uint16_t MSS_SYS_debug_write_probe(
 uint16_t MSS_SYS_debug_live_probe(
     uint8_t x_addr, uint8_t y_addr, uint8_t ipseg_addr, uint8_t iprow_addr, uint8_t clear,
     uint8_t ioen, uint16_t mb_offset, uint8_t service_cmd) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
-    uint8_t mb_format[6] = {0};
+    uint16_t status       = MSS_SYS_PARAM_ERR;
+    uint8_t mb_format[6]  = {0};
     uint32_t service_data = 0u;
 
     uint16_t channel_addr = 0u;
-    uint16_t probe_addr = 0u;
+    uint16_t probe_addr   = 0u;
 
     channel_addr = y_addr;
     channel_addr = (channel_addr << 5u) + x_addr;
@@ -873,9 +873,9 @@ uint16_t MSS_SYS_debug_live_probe(
     service_data = probe_addr;
     service_data = (service_data << 11u) + channel_addr;
 
-    *(uint32_t *)mb_format = service_data;
-    mb_format[4] = clear;
-    mb_format[5] = ioen;
+    *(uint32_t*)mb_format = service_data;
+    mb_format[4]          = clear;
+    mb_format[5]          = ioen;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -901,20 +901,20 @@ uint16_t MSS_SYS_debug_live_probe(
 uint16_t MSS_SYS_debug_select_mem(
     uint8_t ipblk_addr, uint8_t ipseg_addr, uint8_t iprow_addr, uint8_t memtype,
     uint8_t memlock_mode, uint16_t timeout, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
-    uint8_t mb_format[6] = {0};
+    uint16_t status       = MSS_SYS_PARAM_ERR;
+    uint8_t mb_format[6]  = {0};
     uint16_t service_data = 0u;
 
     service_data = iprow_addr;
 
     uint16_t temp = ipseg_addr;
-    temp = ((temp << 3u) + ipblk_addr);
-    service_data = ((temp << 9u) + temp);
+    temp          = ((temp << 3u) + ipblk_addr);
+    service_data  = ((temp << 9u) + temp);
 
-    *(uint16_t *)mb_format = service_data;
-    mb_format[2] = memtype;
-    mb_format[3] = memlock_mode;
-    *(uint16_t *)(mb_format + 4u) = timeout;
+    *(uint16_t*)mb_format        = service_data;
+    mb_format[2]                 = memtype;
+    mb_format[3]                 = memlock_mode;
+    *(uint16_t*)(mb_format + 4u) = timeout;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -939,12 +939,12 @@ uint16_t MSS_SYS_debug_select_mem(
                                                                                */
 uint16_t
 MSS_SYS_debug_read_mem(uint16_t mem_addr, uint16_t n_words, uint64_t mss_addr, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[16] = {0};
 
-    *(uint16_t *)(mb_format) = mem_addr;
-    *(uint16_t *)(mb_format + 2u) = n_words;
-    *(uint64_t *)(mb_format + 8u) = mss_addr;
+    *(uint16_t*)(mb_format)      = mem_addr;
+    *(uint16_t*)(mb_format + 2u) = n_words;
+    *(uint64_t*)(mb_format + 8u) = mss_addr;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -971,12 +971,12 @@ MSS_SYS_debug_read_mem(uint16_t mem_addr, uint16_t n_words, uint64_t mss_addr, u
                                                                                */
 uint16_t MSS_SYS_debug_write_mem(
     uint16_t mem_addr, uint16_t n_words, uint64_t mss_addr, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[16] = {0};
 
-    *(uint16_t *)(mb_format) = mem_addr;
-    *(uint16_t *)(mb_format + 2u) = n_words;
-    *(uint64_t *)(mb_format + 8u) = mss_addr;
+    *(uint16_t*)(mb_format)      = mem_addr;
+    *(uint16_t*)(mb_format + 2u) = n_words;
+    *(uint64_t*)(mb_format + 8u) = mss_addr;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -1004,13 +1004,13 @@ uint16_t MSS_SYS_debug_write_mem(
 uint16_t MSS_SYS_debug_read_apb(
     uint32_t apb_addr, uint8_t apb_wsize, uint16_t max_bytes, uint64_t mss_addr,
     uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[24] = {0};
 
-    *(uint32_t *)mb_format = apb_addr;
-    mb_format[5] = apb_wsize;
-    *(uint16_t *)(mb_format + 8u) = max_bytes;
-    *(uint64_t *)(mb_format + 16u) = mss_addr;
+    *(uint32_t*)mb_format         = apb_addr;
+    mb_format[5]                  = apb_wsize;
+    *(uint16_t*)(mb_format + 8u)  = max_bytes;
+    *(uint64_t*)(mb_format + 16u) = mss_addr;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -1036,13 +1036,13 @@ uint16_t MSS_SYS_debug_read_apb(
 uint16_t MSS_SYS_debug_write_apb(
     uint32_t apb_addr, uint8_t apb_wsize, uint16_t max_bytes, uint64_t mss_addr,
     uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[24] = {0};
 
-    *(uint32_t *)mb_format = apb_addr;
-    mb_format[5] = apb_wsize;
-    *(uint16_t *)(mb_format + 8u) = max_bytes;
-    *(uint64_t *)(mb_format + 16u) = mss_addr;
+    *(uint32_t*)mb_format         = apb_addr;
+    mb_format[5]                  = apb_wsize;
+    *(uint16_t*)(mb_format + 8u)  = max_bytes;
+    *(uint64_t*)(mb_format + 16u) = mss_addr;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -1067,11 +1067,11 @@ uint16_t MSS_SYS_debug_write_apb(
                                                                                */
 uint16_t
 MSS_SYS_debug_fabric_snapshot(uint32_t port_addr, uint8_t apb_fast_write, uint16_t mb_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status      = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[5] = {0};
 
-    *(uint32_t *)mb_format = port_addr;
-    mb_format[4] = apb_fast_write;
+    *(uint32_t*)mb_format = port_addr;
+    mb_format[4]          = apb_fast_write;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode) {
         status = execute_ss_interrupt_mode(
@@ -1097,10 +1097,10 @@ MSS_SYS_debug_fabric_snapshot(uint32_t port_addr, uint8_t apb_fast_write, uint16
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_otp_generate(
-    uint8_t keymode, uint8_t *n_user, uint8_t *n_fpga, uint16_t mb_offset, uint16_t resp_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint8_t keymode, uint8_t* n_user, uint8_t* n_fpga, uint16_t mb_offset, uint16_t resp_offset) {
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[20] = {0};
-    uint8_t index = 0u;
+    uint8_t index         = 0u;
 
     mb_format[index] = keymode;
 
@@ -1130,10 +1130,10 @@ uint16_t MSS_SYS_otp_generate(
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_otp_match(
-    uint8_t *user_id, uint8_t *validator, uint8_t *otp, uint16_t mb_offset, uint16_t resp_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint8_t* user_id, uint8_t* validator, uint8_t* otp, uint16_t mb_offset, uint16_t resp_offset) {
+    uint16_t status       = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[80] = {0};
-    uint8_t index = 0u;
+    uint8_t index         = 0u;
 
     for (index = 0u; index < 80u; index++) {
         if (index < 16u) {
@@ -1169,7 +1169,7 @@ uint16_t MSS_SYS_otp_match(
                                                                                * function.
                                                                                */
 uint16_t
-MSS_SYS_unlock_debug_passcode(uint8_t *cmd_data, uint16_t mb_offset, uint16_t resp_offset) {
+MSS_SYS_unlock_debug_passcode(uint8_t* cmd_data, uint16_t mb_offset, uint16_t resp_offset) {
     uint16_t status = MSS_SYS_PARAM_ERR;
     // uint8_t mb_format[32] = {0};
     // uint8_t index = 0u;
@@ -1203,11 +1203,11 @@ MSS_SYS_unlock_debug_passcode(uint8_t *cmd_data, uint16_t mb_offset, uint16_t re
                                                                                * function.
                                                                                */
 uint16_t MSS_SYS_one_way_passcode(
-    uint8_t *msg_id, uint8_t *validator, uint8_t keymode, uint8_t *dsn, uint8_t *hash,
-    uint8_t *plaintext_passcode, uint8_t *hwm, uint16_t mb_offset, uint16_t resp_offset) {
-    uint16_t status = MSS_SYS_PARAM_ERR;
+    uint8_t* msg_id, uint8_t* validator, uint8_t keymode, uint8_t* dsn, uint8_t* hash,
+    uint8_t* plaintext_passcode, uint8_t* hwm, uint16_t mb_offset, uint16_t resp_offset) {
+    uint16_t status        = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[480] = {0};
-    uint16_t index = 0;
+    uint16_t index         = 0;
     for (index = 0u; index < 480u; index++) {
         if (index < 16u) {
             mb_format[index] = msg_id[index];
@@ -1292,7 +1292,7 @@ uint16_t MSS_SYS_read_response(void) {
 
             for (idx = g_int_service_response_offset; idx < response_limit; idx++) {
                 gp_int_service_response[idx - g_int_service_response_offset] =
-                    *((uint8_t *)MSS_SCBMAILBOX + idx);
+                    *((uint8_t*)MSS_SCBMAILBOX + idx);
             }
         }
 
@@ -1316,17 +1316,17 @@ uint16_t MSS_SYS_read_response(void) {
  *
  */
 static uint16_t request_system_service(
-    uint8_t cmd_opcode, uint8_t *cmd_data, uint16_t cmd_data_size, uint8_t *p_response,
+    uint8_t cmd_opcode, uint8_t* cmd_data, uint16_t cmd_data_size, uint8_t* p_response,
     uint16_t response_size, uint16_t mb_offset, uint16_t response_offset
 
 ) {
     uint32_t idx;
     uint16_t ss_command = 0u;
-    uint32_t *word_buf;
-    uint8_t *byte_buf;
+    uint32_t* word_buf;
+    uint8_t* byte_buf;
     uint8_t byte_off;
     uint8_t byte_index;
-    uint32_t *mailbox_reg;
+    uint32_t* mailbox_reg;
     uint32_t mailbox_val = 0u;
 
     if (MSS_SCBCTRL->SERVICES_SR & SCBCTRL_SERVICESSR_BUSY_MASK) {
@@ -1339,13 +1339,13 @@ static uint16_t request_system_service(
     *MSS_SCBMESSAGE_INT = 0x0u; /*clear message_int reg*/
 
     if (g_service_mode == MSS_SYS_SERVICE_INTERRUPT_MODE) {
-        gp_int_service_response = (uint8_t *)p_response;
+        gp_int_service_response       = (uint8_t*)p_response;
         g_int_service_response_offset = response_offset;
-        g_int_service_response_size = response_size;
+        g_int_service_response_size   = response_size;
     }
 
     if (cmd_data_size > 0u) {
-        word_buf = (uint32_t *)cmd_data;
+        word_buf = (uint32_t*)cmd_data;
 
         /* Write the user data into mail box. */
         for (idx = 0u; idx < (cmd_data_size / 4u); idx++) {
@@ -1354,7 +1354,7 @@ static uint16_t request_system_service(
 
         if ((cmd_data_size % 4u) > 0u) {
             byte_off = (((cmd_data_size / 4u) * 4u));
-            byte_buf = (uint8_t *)(cmd_data + byte_off);
+            byte_buf = (uint8_t*)(cmd_data + byte_off);
 
             mailbox_reg = (MSS_SCBMAILBOX + idx);
             mailbox_val = *mailbox_reg;
@@ -1396,7 +1396,7 @@ static uint16_t request_system_service(
  * only after interrupt occurs.
  */
 static uint16_t execute_ss_interrupt_mode(
-    uint8_t cmd_opcode, uint8_t *cmd_data, uint16_t cmd_data_size, uint8_t *p_response,
+    uint8_t cmd_opcode, uint8_t* cmd_data, uint16_t cmd_data_size, uint8_t* p_response,
     uint16_t response_size, uint16_t mb_offset, uint16_t response_offset) {
 
     uint16_t status;
@@ -1414,12 +1414,12 @@ static uint16_t execute_ss_interrupt_mode(
  * mailbox contents and store it in p_response buffer.
  */
 static uint16_t execute_ss_polling_mode(
-    uint8_t cmd_opcode, uint8_t *cmd_data, uint16_t cmd_data_size, uint8_t *p_response,
+    uint8_t cmd_opcode, uint8_t* cmd_data, uint16_t cmd_data_size, uint8_t* p_response,
     uint16_t response_size, uint16_t mb_offset, uint16_t response_offset) {
     uint32_t idx;
-    uint16_t status = 0u;
+    uint16_t status         = 0u;
     uint16_t response_limit = 0u;
-    uint8_t *response_buf;
+    uint8_t* response_buf;
 
     status = request_system_service(
         cmd_opcode, cmd_data, cmd_data_size, p_response, response_size, mb_offset, response_offset);
@@ -1443,10 +1443,10 @@ static uint16_t execute_ss_polling_mode(
 
         if (response_size > 0u) {
             response_limit = response_size + response_offset;
-            response_buf = (uint8_t *)p_response;
+            response_buf   = (uint8_t*)p_response;
 
             for (idx = response_offset; idx < response_limit; idx++) {
-                response_buf[idx - response_offset] = *((uint8_t *)MSS_SCBMAILBOX + idx);
+                response_buf[idx - response_offset] = *((uint8_t*)MSS_SCBMAILBOX + idx);
             }
         }
 
@@ -1477,9 +1477,9 @@ uint8_t g5c_message_plic_IRQHandler(void) {
     g_message_interrupt_counter++;
 
     volatile uint32_t reg = *MSS_SCBMESSAGE; /*read message reg.*/
-    reg = *MSS_SCBMESSAGE_INT;
-    *MSS_SCBMESSAGE_INT = 0x0u; /*clear message_int reg*/
-    reg = *MSS_SCBMESSAGE_INT;
+    reg                   = *MSS_SCBMESSAGE_INT;
+    *MSS_SCBMESSAGE_INT   = 0x0u; /*clear message_int reg*/
+    reg                   = *MSS_SCBMESSAGE_INT;
     (void)reg; // reference to avoid compiler warning
 
     mss_sys_interrupt_handler();

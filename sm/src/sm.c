@@ -48,7 +48,7 @@ int osm_pmp_set(uint8_t perm) {
 
 int smm_init() {
     int region = -1;
-    int ret = pmp_region_init_atomic(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region, 0);
+    int ret    = pmp_region_init_atomic(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region, 0);
     if (ret)
         return -1;
 
@@ -57,20 +57,20 @@ int smm_init() {
 
 int osm_init() {
     int region = -1;
-    int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
+    int ret    = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
     if (ret)
         return -1;
 
     return region;
 }
 
-void sm_sign(void *signature, const void *data, size_t len) {
+void sm_sign(void* signature, const void* data, size_t len) {
     sign(signature, data, len, sm_public_key, sm_private_key);
 }
 
 int sm_derive_sealing_key(
-    unsigned char *key, const unsigned char *key_ident, size_t key_ident_size,
-    const unsigned char *enclave_hash) {
+    unsigned char* key, const unsigned char* key_ident, size_t key_ident_size,
+    const unsigned char* enclave_hash) {
     unsigned char info[MDSIZE + key_ident_size];
 
     sbi_memcpy(info, enclave_hash, MDSIZE);
@@ -81,7 +81,7 @@ int sm_derive_sealing_key(
      * available to generate the salt.
      */
     return kdf(
-        NULL, 0, (const unsigned char *)sm_private_key, PRIVATE_KEY_SIZE, info,
+        NULL, 0, (const unsigned char*)sm_private_key, PRIVATE_KEY_SIZE, info,
         MDSIZE + key_ident_size, key, SEALING_KEY_SIZE);
 }
 

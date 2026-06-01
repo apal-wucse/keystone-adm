@@ -12,9 +12,9 @@
 #include <stdint.h>
 
 struct elf {
-  void* elfFile;
-  size_t elfSize;
-  unsigned char elfClass; /* 32-bit or 64-bit */
+    void* elfFile;
+    size_t elfSize;
+    unsigned char elfClass; /* 32-bit or 64-bit */
 };
 typedef struct elf elf_t;
 
@@ -34,8 +34,7 @@ typedef enum elf_addr_type elf_addr_type_t;
  *
  * \return 0 on success, otherwise < 0
  */
-int
-elf_newFile(void* file, size_t size, elf_t* res);
+int elf_newFile(void* file, size_t size, elf_t* res);
 
 /**
  * Initialises and elf_t structure and checks that the ELF file is valid.
@@ -54,9 +53,7 @@ elf_newFile(void* file, size_t size, elf_t* res);
  *
  * \return 0 on success, otherwise < 0
  */
-int
-elf_newFile_maybe_unsafe(
-    void* file, size_t size, bool check_pht, bool check_st, elf_t* res);
+int elf_newFile_maybe_unsafe(void* file, size_t size, bool check_pht, bool check_st, elf_t* res);
 
 /**
  * Checks that file starts with the ELF magic number.
@@ -66,8 +63,7 @@ elf_newFile_maybe_unsafe(
  *
  * \return 0 on success, otherwise < 0
  */
-int
-elf_check_magic(char* file);
+int elf_check_magic(char* file);
 
 /**
  * Checks that elfFile points to an ELF file with a valid ELF header.
@@ -76,8 +72,7 @@ elf_check_magic(char* file);
  *
  * \return 0 on success, otherwise < 0
  */
-int
-elf_checkFile(elf_t* elfFile);
+int elf_checkFile(elf_t* elfFile);
 
 /**
  * Checks that elfFile points to an ELF file with a valid program header table.
@@ -86,8 +81,7 @@ elf_checkFile(elf_t* elfFile);
  *
  * \return 0 on success, otherwise < 0
  */
-int
-elf_checkProgramHeaderTable(elf_t* elfFile);
+int elf_checkProgramHeaderTable(elf_t* elfFile);
 
 /**
  * Checks that elfFile points to an ELF file with a valid section table.
@@ -96,8 +90,7 @@ elf_checkProgramHeaderTable(elf_t* elfFile);
  *
  * \return 0 on success, otherwise < 0
  */
-int
-elf_checkSectionTable(elf_t* elfFile);
+int elf_checkSectionTable(elf_t* elfFile);
 
 /**
  * Find the entry point of an ELF file.
@@ -106,8 +99,7 @@ elf_checkSectionTable(elf_t* elfFile);
  *
  * \return The entry point address.
  */
-uintptr_t
-elf_getEntryPoint(elf_t* elfFile);
+uintptr_t elf_getEntryPoint(elf_t* elfFile);
 
 /**
  * Determine number of program headers in an ELF file.
@@ -116,8 +108,7 @@ elf_getEntryPoint(elf_t* elfFile);
  *
  * \return Number of program headers in the ELF file.
  */
-size_t
-elf_getNumProgramHeaders(elf_t* elfFile);
+size_t elf_getNumProgramHeaders(elf_t* elfFile);
 
 /**
  * Determine number of sections in an ELF file.
@@ -126,8 +117,7 @@ elf_getNumProgramHeaders(elf_t* elfFile);
  *
  * \return Number of sections in the ELF file.
  */
-size_t
-elf_getNumSections(elf_t* elfFile);
+size_t elf_getNumSections(elf_t* elfFile);
 
 /**
  * Get the index of the section header string table of an ELF file.
@@ -136,8 +126,7 @@ elf_getNumSections(elf_t* elfFile);
  *
  * \return The index of the section header string table.
  */
-size_t
-elf_getSectionStringTableIndex(elf_t* elf);
+size_t elf_getSectionStringTableIndex(elf_t* elf);
 
 /**
  * Get a string table section of an ELF file.
@@ -147,8 +136,7 @@ elf_getSectionStringTableIndex(elf_t* elf);
  *
  * \return The string table, or NULL if the section is not a string table.
  */
-const char*
-elf_getStringTable(elf_t* elfFile, size_t string_segment);
+const char* elf_getStringTable(elf_t* elfFile, size_t string_segment);
 
 /**
  * Get the string table for section header names.
@@ -157,8 +145,7 @@ elf_getStringTable(elf_t* elfFile, size_t string_segment);
  *
  * \return The string table, or NULL if there is no table.
  */
-const char*
-elf_getSectionStringTable(elf_t* elfFile);
+const char* elf_getSectionStringTable(elf_t* elfFile);
 
 /* Section header functions */
 /**
@@ -169,8 +156,7 @@ elf_getSectionStringTable(elf_t* elfFile);
  *
  * \return The section, or NULL if there is no section.
  */
-void*
-elf_getSection(elf_t* elfFile, size_t i);
+void* elf_getSection(elf_t* elfFile, size_t i);
 
 /**
  * Get the section of an ELF file with a given name.
@@ -181,8 +167,7 @@ elf_getSection(elf_t* elfFile, size_t i);
  *
  * \return The section, or NULL if there is no section.
  */
-void*
-elf_getSectionNamed(elf_t* elfFile, const char* str, size_t* i);
+void* elf_getSectionNamed(elf_t* elfFile, const char* str, size_t* i);
 
 /**
  * Return the name of a given section.
@@ -192,8 +177,7 @@ elf_getSectionNamed(elf_t* elfFile, const char* str, size_t* i);
  *
  * \return The name of a given section.
  */
-const char*
-elf_getSectionName(elf_t* elfFile, size_t i);
+const char* elf_getSectionName(elf_t* elfFile, size_t i);
 
 /**
  * Return the offset to the name of a given section in the section header
@@ -205,8 +189,7 @@ elf_getSectionName(elf_t* elfFile, size_t i);
  * \return The offset to the name of a given section in the section header
  * string table.
  */
-size_t
-elf_getSectionNameOffset(elf_t* elfFile, size_t i);
+size_t elf_getSectionNameOffset(elf_t* elfFile, size_t i);
 
 /**
  * Return the type of a given section
@@ -216,8 +199,7 @@ elf_getSectionNameOffset(elf_t* elfFile, size_t i);
  *
  * \return The type of a given section.
  */
-uint32_t
-elf_getSectionType(elf_t* elfFile, size_t i);
+uint32_t elf_getSectionType(elf_t* elfFile, size_t i);
 
 /**
  * Return the flags of a given section
@@ -227,8 +209,7 @@ elf_getSectionType(elf_t* elfFile, size_t i);
  *
  * \return The flags of a given section.
  */
-size_t
-elf_getSectionFlags(elf_t* elfFile, size_t i);
+size_t elf_getSectionFlags(elf_t* elfFile, size_t i);
 
 /**
  * Return the address of a given section
@@ -238,8 +219,7 @@ elf_getSectionFlags(elf_t* elfFile, size_t i);
  *
  * \return The address of a given section.
  */
-uintptr_t
-elf_getSectionAddr(elf_t* elfFile, size_t i);
+uintptr_t elf_getSectionAddr(elf_t* elfFile, size_t i);
 
 /**
  * Return the offset of a given section
@@ -249,8 +229,7 @@ elf_getSectionAddr(elf_t* elfFile, size_t i);
  *
  * \return The offset of a given section.
  */
-size_t
-elf_getSectionOffset(elf_t* elfFile, size_t i);
+size_t elf_getSectionOffset(elf_t* elfFile, size_t i);
 
 /**
  * Return the size of a given section
@@ -260,8 +239,7 @@ elf_getSectionOffset(elf_t* elfFile, size_t i);
  *
  * \return The size of a given section.
  */
-size_t
-elf_getSectionSize(elf_t* elfFile, size_t i);
+size_t elf_getSectionSize(elf_t* elfFile, size_t i);
 
 /**
  * Return the related section index of a given section
@@ -271,8 +249,7 @@ elf_getSectionSize(elf_t* elfFile, size_t i);
  *
  * \return The related section index of a given section.
  */
-uint32_t
-elf_getSectionLink(elf_t* elfFile, size_t i);
+uint32_t elf_getSectionLink(elf_t* elfFile, size_t i);
 
 /**
  * Return extra information of a given section
@@ -282,8 +259,7 @@ elf_getSectionLink(elf_t* elfFile, size_t i);
  *
  * \return Extra information of a given section.
  */
-uint32_t
-elf_getSectionInfo(elf_t* elfFile, size_t i);
+uint32_t elf_getSectionInfo(elf_t* elfFile, size_t i);
 
 /**
  * Return the alignment of a given section
@@ -293,8 +269,7 @@ elf_getSectionInfo(elf_t* elfFile, size_t i);
  *
  * \return The alignment of a given section.
  */
-size_t
-elf_getSectionAddrAlign(elf_t* elfFile, size_t i);
+size_t elf_getSectionAddrAlign(elf_t* elfFile, size_t i);
 
 /**
  * Return the entry size of a given section
@@ -304,8 +279,7 @@ elf_getSectionAddrAlign(elf_t* elfFile, size_t i);
  *
  * \return The entry size of a given section.
  */
-size_t
-elf_getSectionEntrySize(elf_t* elfFile, size_t i);
+size_t elf_getSectionEntrySize(elf_t* elfFile, size_t i);
 
 /* Program header functions */
 
@@ -317,8 +291,7 @@ elf_getSectionEntrySize(elf_t* elfFile, size_t i);
  *
  * \return Pointer to the segment data
  */
-void*
-elf_getProgramSegment(elf_t* elf, size_t ph);
+void* elf_getProgramSegment(elf_t* elf, size_t ph);
 
 /**
  * Return the type for a given program header.
@@ -328,8 +301,7 @@ elf_getProgramSegment(elf_t* elf, size_t ph);
  *
  * \return The type of a given program header.
  */
-uint32_t
-elf_getProgramHeaderType(elf_t* elfFile, size_t ph);
+uint32_t elf_getProgramHeaderType(elf_t* elfFile, size_t ph);
 
 /**
  * Return the segment offset for a given program header.
@@ -339,8 +311,7 @@ elf_getProgramHeaderType(elf_t* elfFile, size_t ph);
  *
  * \return The offset of this program header from the start of the file.
  */
-size_t
-elf_getProgramHeaderOffset(elf_t* elfFile, size_t ph);
+size_t elf_getProgramHeaderOffset(elf_t* elfFile, size_t ph);
 
 /**
  * Return the base virtual address of given program header.
@@ -350,8 +321,7 @@ elf_getProgramHeaderOffset(elf_t* elfFile, size_t ph);
  *
  * \return The memory size of the specified program header.
  */
-uintptr_t
-elf_getProgramHeaderVaddr(elf_t* elfFile, size_t ph);
+uintptr_t elf_getProgramHeaderVaddr(elf_t* elfFile, size_t ph);
 
 /**
  * Return the base physical address of given program header.
@@ -361,8 +331,7 @@ elf_getProgramHeaderVaddr(elf_t* elfFile, size_t ph);
  *
  * \return The memory size of the specified program header.
  */
-uintptr_t
-elf_getProgramHeaderPaddr(elf_t* elfFile, size_t ph);
+uintptr_t elf_getProgramHeaderPaddr(elf_t* elfFile, size_t ph);
 
 /**
  * Return the file size of a given program header.
@@ -372,8 +341,7 @@ elf_getProgramHeaderPaddr(elf_t* elfFile, size_t ph);
  *
  * \return The file size of the specified program header.
  */
-size_t
-elf_getProgramHeaderFileSize(elf_t* elfFile, size_t ph);
+size_t elf_getProgramHeaderFileSize(elf_t* elfFile, size_t ph);
 
 /**
  * Return the memory size of a given program header.
@@ -383,8 +351,7 @@ elf_getProgramHeaderFileSize(elf_t* elfFile, size_t ph);
  *
  * \return The memory size of the specified program header.
  */
-size_t
-elf_getProgramHeaderMemorySize(elf_t* elfFile, size_t ph);
+size_t elf_getProgramHeaderMemorySize(elf_t* elfFile, size_t ph);
 
 /**
  * Return the flags for a given program header.
@@ -394,8 +361,7 @@ elf_getProgramHeaderMemorySize(elf_t* elfFile, size_t ph);
  *
  * \return The flags of a given program header.
  */
-uint32_t
-elf_getProgramHeaderFlags(elf_t* elfFile, size_t ph);
+uint32_t elf_getProgramHeaderFlags(elf_t* elfFile, size_t ph);
 
 /**
  * Return the alignment for a given program header.
@@ -405,8 +371,7 @@ elf_getProgramHeaderFlags(elf_t* elfFile, size_t ph);
  *
  * \return The alignment of the given program header.
  */
-size_t
-elf_getProgramHeaderAlign(elf_t* elfFile, size_t ph);
+size_t elf_getProgramHeaderAlign(elf_t* elfFile, size_t ph);
 
 /* Utility functions */
 
@@ -422,24 +387,20 @@ elf_getProgramHeaderAlign(elf_t* elfFile, size_t ph);
  * \return true on success. false on failure, if for example, it is an invalid
  * ELF file
  */
-int
-elf_getMemoryBounds(
-    elf_t* elfFile, elf_addr_type_t addr_type, uintptr_t* min, uintptr_t* max);
+int elf_getMemoryBounds(elf_t* elfFile, elf_addr_type_t addr_type, uintptr_t* min, uintptr_t* max);
 
 /**
  *
  * \return true if the address in in this program header
  */
-int
-elf_vaddrInProgramHeader(elf_t* elfFile, size_t ph, uintptr_t vaddr);
+int elf_vaddrInProgramHeader(elf_t* elfFile, size_t ph, uintptr_t vaddr);
 
 /**
  * Return the physical translation of a physical address, with respect
  * to a given program header
  *
  */
-uintptr_t
-elf_vtopProgramHeader(elf_t* elfFile, size_t ph, uintptr_t vaddr);
+uintptr_t elf_vtopProgramHeader(elf_t* elfFile, size_t ph, uintptr_t vaddr);
 
 /**
  * Load an ELF file into memory
@@ -460,5 +421,4 @@ elf_vtopProgramHeader(elf_t* elfFile, size_t ph, uintptr_t vaddr);
  * platform, we assume that any memory addresses are within the first 4GB.
  *
  */
-int
-elf_loadFile(elf_t* elfFile, elf_addr_type_t addr_type);
+int elf_loadFile(elf_t* elfFile, elf_addr_type_t addr_type);

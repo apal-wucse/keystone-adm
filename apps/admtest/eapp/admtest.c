@@ -7,8 +7,10 @@
 void hexdump_buffer_align(const unsigned char* buf, size_t size) {
     for (size_t i = 0; i < size; i++) {
         printf("%02X", buf[i]);
-        if (i % 4 == 3) printf(" ");
-        if (i % 16 == 15) printf("\n");
+        if (i % 4 == 3)
+            printf(" ");
+        if (i % 16 == 15)
+            printf("\n");
     }
     return;
 }
@@ -40,8 +42,7 @@ int main() {
         return 1;
     }
     printf("OK\n");
-    printf("Successfully fetched region, base: 0x%lx, size: %lu\n", ptr,
-           data_sz);
+    printf("Successfully fetched region, base: 0x%lx, size: %lu\n", ptr, data_sz);
 
     printf("\n-----------------------------------\n");
     printf("Dump stored data (first 64 bytes)\n");

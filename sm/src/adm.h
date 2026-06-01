@@ -3,7 +3,7 @@
 
 #include <sbi/sbi_types.h>
 
-#define ADM_SLOT_MAX 16
+#define ADM_SLOT_MAX     16
 #define DATA_ALIGN_BYTES 8
 
 /* uid for unused slot */
@@ -74,6 +74,6 @@ typedef struct adm_state {
     struct adm_type_info type_info[ADM_SLOT_MAX];
 } AdmState;
 
-int validate_adm_regions(uintptr_t start_addr, uintptr_t size, struct adm_type_info *type_info);
+int validate_adm_regions(uintptr_t start_addr, uintptr_t size, struct adm_type_info* type_info);
 
 #endif

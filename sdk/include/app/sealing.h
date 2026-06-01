@@ -15,12 +15,12 @@
 #define SEALING_H
 
 #define SEALING_KEY_SIZE 128
-#define SIGNATURE_SIZE 64
+#define SIGNATURE_SIZE   64
 
 /* sealing key structure */
 struct sealing_key {
-  uint8_t key[SEALING_KEY_SIZE];
-  uint8_t signature[SIGNATURE_SIZE];
+    uint8_t key[SEALING_KEY_SIZE];
+    uint8_t signature[SIGNATURE_SIZE];
 };
 
 #endif /* SEALING_H */

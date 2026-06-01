@@ -8,7 +8,7 @@
 
 #define FILENAME "data.tmp"
 #define BLOCK_SZ 4096
-#define BLOCK_N 1
+#define BLOCK_N  1
 
 int check_blk(unsigned char* buf1, unsigned char* buf2, size_t cnt) {
     for (size_t i = 0; i < cnt; i++) {
@@ -23,8 +23,7 @@ int main() {
     int fd;
 
     printf("## I/O syscall delegation test\n");
-    printf("## Size of block: %d\n## Block r/w count: %d\n\n", BLOCK_SZ,
-           BLOCK_N);
+    printf("## Size of block: %d\n## Block r/w count: %d\n\n", BLOCK_SZ, BLOCK_N);
 
     unsigned char* buf = (unsigned char*)malloc(sizeof(char) * BLOCK_SZ);
     for (int i = 0; i < BLOCK_SZ; i++) {

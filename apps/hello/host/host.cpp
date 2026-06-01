@@ -9,19 +9,18 @@
 using namespace Keystone;
 
 int main(int argc, char** argv) {
-  Enclave enclave;
-  Params params;
+    Enclave enclave;
+    Params params;
 
-  params.setFreeMemSize(256 * 1024);
-  params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 256 * 1024);
+    params.setFreeMemSize(256 * 1024);
+    params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 256 * 1024);
 
-  enclave.init(argv[1], argv[2], argv[3], params);
+    enclave.init(argv[1], argv[2], argv[3], params);
 
-  enclave.registerOcallDispatch(incoming_call_dispatch);
-  edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(),
-                           enclave.getSharedBufferSize());
+    enclave.registerOcallDispatch(incoming_call_dispatch);
+    edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
 
-  enclave.run();
+    enclave.run();
 
-  return 0;
+    return 0;
 }

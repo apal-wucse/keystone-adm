@@ -8,7 +8,7 @@
 
 /* This fires once FOR EACH sm supported enclave during init of
    enclave metadata. It may not fail currently. */
-void platform_init_enclave(struct enclave *enclave);
+void platform_init_enclave(struct enclave* enclave);
 
 /* This fires once GLOBALLY before any other platform init */
 unsigned long platform_init_global_once();
@@ -16,16 +16,16 @@ unsigned long platform_init_global_once();
 unsigned long platform_init_global();
 
 /* This fires once each time an enclave is created by the sm */
-unsigned long platform_create_enclave(struct enclave *enclave);
+unsigned long platform_create_enclave(struct enclave* enclave);
 
 /* This fires once each time an enclave is destroyed by the sm */
-void platform_destroy_enclave(struct enclave *enclave);
+void platform_destroy_enclave(struct enclave* enclave);
 
 /* This fires when context switching INTO an enclave from the OS */
-void platform_switch_to_enclave(struct enclave *enclave);
+void platform_switch_to_enclave(struct enclave* enclave);
 
 /* This fires when context switching OUT of an enclave into the OS */
-void platform_switch_from_enclave(struct enclave *enclave);
+void platform_switch_from_enclave(struct enclave* enclave);
 
 /* Future version: This fires when context switching from enclave A to
    enclave B */

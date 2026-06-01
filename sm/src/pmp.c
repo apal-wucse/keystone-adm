@@ -19,7 +19,7 @@ static spinlock_t pmp_lock = SPIN_LOCK_INITIALIZER;
 
 /* PMP region getter/setters */
 static struct pmp_region regions[PMP_MAX_N_REGION];
-static uint32_t reg_bitmap = 0;
+static uint32_t reg_bitmap        = 0;
 static uint32_t region_def_bitmap = 0;
 
 static inline int region_register_idx(region_id i) { return regions[i].reg_idx; }
@@ -58,21 +58,21 @@ static inline uintptr_t region_pmpcfg_val(region_id i, pmpreg_id reg_idx, uint8_
 }
 
 static void region_clear_all(region_id i) {
-    regions[i].addr = 0;
-    regions[i].size = 0;
-    regions[i].addrmode = 0;
+    regions[i].addr          = 0;
+    regions[i].size          = 0;
+    regions[i].addrmode      = 0;
     regions[i].allow_overlap = 0;
-    regions[i].reg_idx = 0;
+    regions[i].reg_idx       = 0;
 }
 
 static void region_init(
     region_id i, uintptr_t addr, uint64_t size, uint8_t addrmode, int allow_overlap,
     pmpreg_id reg_idx) {
-    regions[i].addr = addr;
-    regions[i].size = size;
-    regions[i].addrmode = addrmode;
+    regions[i].addr          = addr;
+    regions[i].size          = size;
+    regions[i].addrmode      = addrmode;
     regions[i].allow_overlap = allow_overlap;
-    regions[i].reg_idx = (addrmode == PMP_A_TOR && reg_idx > 0 ? reg_idx + 1 : reg_idx);
+    regions[i].reg_idx       = (addrmode == PMP_A_TOR && reg_idx > 0 ? reg_idx + 1 : reg_idx);
 }
 
 static int is_pmp_region_valid(region_id region_idx) {
@@ -113,7 +113,7 @@ static pmpreg_id get_conseq_free_reg_idx() {
  * cannot be a valid addr and size anyway.
  */
 static int detect_region_overlap(uintptr_t addr, uintptr_t size) {
-    void *epm_base;
+    void* epm_base;
     size_t epm_size;
     int region_overlap = 0, i;
 
@@ -131,7 +131,7 @@ static int detect_region_overlap(uintptr_t addr, uintptr_t size) {
             continue;
         }
 
-        epm_base = (void *)region_get_addr(i);
+        epm_base = (void*)region_get_addr(i);
         epm_size = region_get_size(i);
 
         // Only looking at valid regions, no need to check epm_base+size
@@ -177,7 +177,7 @@ int pmp_set_global(int region_idx, uint8_t perm) {
 
 void pmp_init() {
     uintptr_t pmpaddr = 0;
-    uintptr_t pmpcfg = 0;
+    uintptr_t pmpcfg  = 0;
     int i;
     for (i = 0; i < PMP_N_REG; i++) {
         switch (i) {
@@ -198,7 +198,7 @@ int pmp_set_keystone(int region_idx, uint8_t perm) {
 
     uint8_t perm_bits = perm & PMP_ALL_PERM;
     pmpreg_id reg_idx = region_register_idx(region_idx);
-    uintptr_t pmpcfg = region_pmpcfg_val(region_idx, reg_idx, perm_bits);
+    uintptr_t pmpcfg  = region_pmpcfg_val(region_idx, reg_idx, perm_bits);
     uintptr_t pmpaddr;
 
     pmpaddr = region_pmpaddr_val(region_idx);
@@ -226,7 +226,7 @@ int pmp_set_keystone(int region_idx, uint8_t perm) {
     /* TOR decoding with 2 registers */
     if (region_needs_two_entries(region_idx)) {
         n--;
-        pmpcfg = 0;
+        pmpcfg  = 0;
         pmpaddr = region_get_addr(region_idx) >> 2;
         switch (n) {
 #define X(n, g)                                                                                    \
@@ -248,7 +248,7 @@ int pmp_unset(int region_idx) {
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
 
     pmpreg_id reg_idx = region_register_idx(region_idx);
-    int n = reg_idx;
+    int n             = reg_idx;
     switch (n) {
 #define X(n, g)                                                                                    \
     case n: {                                                                                      \
@@ -280,7 +280,7 @@ int pmp_unset(int region_idx) {
 }
 
 int pmp_region_init_atomic(
-    uintptr_t start, uint64_t size, enum pmp_priority priority, region_id *rid, int allow_overlap) {
+    uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap) {
     int ret;
     spin_lock(&pmp_lock);
     ret = pmp_region_init(start, size, priority, rid, allow_overlap);
@@ -289,8 +289,8 @@ int pmp_region_init_atomic(
 }
 
 static int tor_region_init(
-    uintptr_t start, uint64_t size, enum pmp_priority priority, region_id *rid, int allow_overlap) {
-    pmpreg_id reg_idx = -1;
+    uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap) {
+    pmpreg_id reg_idx    = -1;
     region_id region_idx = -1;
 
     sm_assert(size);
@@ -339,8 +339,8 @@ static int tor_region_init(
 }
 
 static int napot_region_init(
-    uintptr_t start, uint64_t size, enum pmp_priority priority, region_id *rid, int allow_overlap) {
-    pmpreg_id reg_idx = -1;
+    uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap) {
+    pmpreg_id reg_idx    = -1;
     region_id region_idx = -1;
 
     sm_assert(size);
@@ -417,7 +417,7 @@ int pmp_region_free_atomic(int region_idx) {
 }
 
 int pmp_region_init(
-    uintptr_t start, uint64_t size, enum pmp_priority priority, int *rid, int allow_overlap) {
+    uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid, int allow_overlap) {
     if (!size)
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_SIZE_INVALID, "Invalid PMP size");
 

@@ -9,34 +9,34 @@
 #include <sbi/sbi_console.h>
 
 /* This will hash the loader and the runtime + eapp elf files. */
-int validate_and_hash_epm(hash_ctx *hash_ctx, struct enclave *encl) {
-    uintptr_t loader = encl->pa_params.dram_base; // also base
+int validate_and_hash_epm(hash_ctx* hash_ctx, struct enclave* encl) {
+    uintptr_t loader  = encl->pa_params.dram_base; // also base
     uintptr_t runtime = encl->pa_params.runtime_base;
-    uintptr_t eapp = encl->pa_params.user_base;
-    uintptr_t free = encl->pa_params.free_base;
+    uintptr_t eapp    = encl->pa_params.user_base;
+    uintptr_t free    = encl->pa_params.free_base;
     // uintptr_t adm = encl->pa_params.additional_ptr;
     // uintptr_t adm_size = encl->pa_params.additional_size;
 
     // ensure pointers don't point to middle of correct files
     uintptr_t sizes[3] = {runtime - loader, eapp - runtime, free - eapp};
-    hash_extend(hash_ctx, (void *)sizes, sizeof(sizes));
+    hash_extend(hash_ctx, (void*)sizes, sizeof(sizes));
 
     // using pointers to ensure that they themselves are correct
     // TODO(Evgeny): can extend by entire file instead of page at a time?
     for (uintptr_t page = loader; page < runtime; page += RISCV_PGSIZE) {
-        hash_extend_page(hash_ctx, (void *)page);
+        hash_extend_page(hash_ctx, (void*)page);
     }
     for (uintptr_t page = runtime; page < eapp; page += RISCV_PGSIZE) {
-        hash_extend_page(hash_ctx, (void *)page);
+        hash_extend_page(hash_ctx, (void*)page);
     }
     for (uintptr_t page = eapp; page < free; page += RISCV_PGSIZE) {
-        hash_extend_page(hash_ctx, (void *)page);
+        hash_extend_page(hash_ctx, (void*)page);
     }
 
     return 0;
 }
 
-unsigned long validate_and_hash_enclave(struct enclave *enclave) {
+unsigned long validate_and_hash_enclave(struct enclave* enclave) {
     hash_ctx hash_ctx;
     hash_init(&hash_ctx);
 

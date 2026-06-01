@@ -48,11 +48,11 @@ typedef uint64_t HSSTicks_t;
 #include "sbi/sbi_hart.h"
 #include "sbi/sbi_init.h"
 #include "sbi/sbi_scratch.h"
-#define mHSS_CSR_READ csr_read
+#define mHSS_CSR_READ  csr_read
 #define mHSS_CSR_WRITE csr_write
 #else
 #include "encoding.h"
-#define mHSS_CSR_READ read_csr
+#define mHSS_CSR_READ  read_csr
 #define mHSS_CSR_WRITE write_csr
 #endif
 

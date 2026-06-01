@@ -11,14 +11,15 @@
 #define PAGE_SIZE 4096
 
 using random_bytes_engine =
-    std::independent_bits_engine<std::default_random_engine, CHAR_BIT,
-                                 unsigned char>;
+    std::independent_bits_engine<std::default_random_engine, CHAR_BIT, unsigned char>;
 
 void hexdump_buffer_align(const unsigned char* buf, size_t size) {
     for (size_t i = 0; i < size; i++) {
         printf("%02X", buf[i]);
-        if (i % 4 == 3) printf(" ");
-        if (i % 16 == 15) printf("\n");
+        if (i % 4 == 3)
+            printf(" ");
+        if (i % 16 == 15)
+            printf("\n");
     }
     return;
 }
@@ -31,8 +32,7 @@ int main(int argc, char** argv) {
     uint64_t testSize, admSize;
 
     if (argc < 6) {
-        std::cerr << "** error: please specify protection policy and test size"
-                  << std::endl;
+        std::cerr << "** error: please specify protection policy and test size" << std::endl;
         std::cerr << "** usage: " << argv[0]
                   << " <App Binary> <Runtime Binary> <Loader Binary> "
                      "<Protection Type> <Test Size (B)>"
@@ -58,8 +58,7 @@ int main(int argc, char** argv) {
     random_bytes_engine rbe;
     std::vector<unsigned char> randBytes(testSize);
     std::generate(randBytes.begin(), randBytes.end(), std::ref(rbe));
-    std::cout << "[host] Generated random bytes (first 64 bytes): "
-              << std::endl;
+    std::cout << "[host] Generated random bytes (first 64 bytes): " << std::endl;
     hexdump_buffer_align(randBytes.data(), 64);
     std::cout << std::endl;
 
@@ -70,8 +69,7 @@ int main(int argc, char** argv) {
     enclave.init(argv[1], argv[2], argv[3], params, data);
 
     enclave.registerOcallDispatchProtected(incoming_call_dispatch);
-    edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(),
-                             enclave.getSharedBufferSize());
+    edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
 
     enclave.run();
 

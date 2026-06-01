@@ -19,7 +19,7 @@
 #include "keystone-sbi.h"
 #include "keystone_user.h"
 #define DRV_DESCRIPTION "Keystone Driver with ADM Support"
-#define DRV_VERSION "1.0.0"
+#define DRV_VERSION     "1.0.0"
 
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Dayeol Lee <dayeol@berkeley.edu>");
@@ -28,23 +28,23 @@ MODULE_VERSION(DRV_VERSION);
 MODULE_LICENSE("Dual BSD/GPL");
 
 static const struct file_operations keystone_fops = {
-    .owner = THIS_MODULE,
-    .mmap = keystone_mmap,
+    .owner          = THIS_MODULE,
+    .mmap           = keystone_mmap,
     .unlocked_ioctl = keystone_ioctl,
-    .release = keystone_release};
+    .release        = keystone_release};
 
 struct miscdevice keystone_dev = {
     .minor = MISC_DYNAMIC_MINOR,
-    .name = "keystone_enclave",
-    .fops = &keystone_fops,
-    .mode = 0666,
+    .name  = "keystone_enclave",
+    .fops  = &keystone_fops,
+    .mode  = 0666,
 };
 
-int keystone_mmap(struct file *filp, struct vm_area_struct *vma) {
-    struct utm *utm;
-    struct epm *epm;
-    struct adm *adm;
-    struct enclave *enclave;
+int keystone_mmap(struct file* filp, struct vm_area_struct* vma) {
+    struct utm* utm;
+    struct epm* epm;
+    struct adm* adm;
+    struct enclave* enclave;
     unsigned long vsize, psize;
     vaddr_t paddr;
     enclave = get_enclave_by_id((unsigned long)filp->private_data);
@@ -53,9 +53,9 @@ int keystone_mmap(struct file *filp, struct vm_area_struct *vma) {
         return -EINVAL;
     }
 
-    utm = enclave->utm;
-    epm = enclave->epm;
-    adm = enclave->adm;
+    utm   = enclave->utm;
+    epm   = enclave->epm;
+    adm   = enclave->adm;
     vsize = vma->vm_end - vma->vm_start;
 
     switch (enclave->map_target) {

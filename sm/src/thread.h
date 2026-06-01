@@ -56,7 +56,7 @@ struct csrs {
     uintptr_t scause;   // Supervisor trap cause.
     // NOTE: This should be stval, toolchain issue?
     uintptr_t stval; // Supervisor bad address.
-    uintptr_t sip;      // Supervisor interrupt pending.
+    uintptr_t sip;   // Supervisor interrupt pending.
 
     /*  Supervisor Protection and Translation */
     uintptr_t satp; // Page-table base register.
@@ -72,10 +72,10 @@ struct thread_state {
 };
 
 /* swap previous and current thread states */
-void swap_prev_state(struct thread_state *state, struct sbi_trap_regs *regs, int return_on_resume);
-void swap_prev_mepc(struct thread_state *state, struct sbi_trap_regs *regs, uintptr_t mepc);
-void swap_prev_mstatus(struct thread_state *state, struct sbi_trap_regs *regs, uintptr_t mstatus);
-void swap_prev_smode_csrs(struct thread_state *thread);
+void swap_prev_state(struct thread_state* state, struct sbi_trap_regs* regs, int return_on_resume);
+void swap_prev_mepc(struct thread_state* state, struct sbi_trap_regs* regs, uintptr_t mepc);
+void swap_prev_mstatus(struct thread_state* state, struct sbi_trap_regs* regs, uintptr_t mstatus);
+void swap_prev_smode_csrs(struct thread_state* thread);
 
 void switch_vector_enclave();
 void switch_vector_host();
@@ -83,6 +83,6 @@ extern void trap_vector_enclave();
 extern void trap_vector();
 
 /* Clean state generation */
-void clean_state(struct thread_state *state);
-void clean_smode_csrs(struct thread_state *state);
+void clean_state(struct thread_state* state);
+void clean_smode_csrs(struct thread_state* state);
 #endif /* thread */
