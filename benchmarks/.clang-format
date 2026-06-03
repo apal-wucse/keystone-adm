@@ -1,0 +1,11 @@
+IndentWidth: 4
+TabWidth: 4
+ColumnLimit: 100
+Cpp11BracedListStyle: true
+AlignAfterOpenBracket: AlwaysBreak
+DerivePointerAlignment: false
+PointerAlignment: Left
+AlignConsecutiveAssignments: true
+AlignConsecutiveMacros: Consecutive
+SpacesInAngles: false
+BreakAfterReturnType: Automatic

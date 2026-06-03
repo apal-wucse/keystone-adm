@@ -7,7 +7,10 @@ final: prev: {
     runtime = final.callPackage ./runtime { };
   };
 
+  mkKeystonePackage = final.callPackage ./build-support/mk-keystone-pkg.nix { };
+
   keystoneApps = final.callPackage ./apps { };
+  keystoneBenchmarks = final.callPackage ./benchmarks { };
 
   meta-sifive = final.callPackage ./meta-sifive { };
 

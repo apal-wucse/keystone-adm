@@ -1,9 +1,7 @@
 #include "adm.h"
-
-#include <stdbool.h>
-
 #include "adm_err.h"
 #include "string.h"
+#include <stdbool.h>
 
 uintptr_t _adm_start;
 size_t _adm_len;
@@ -14,6 +12,16 @@ bool enabled = false;
 extern char* __adm_malloc_start;
 extern char* __adm_malloc_zone_stop;
 extern bool __adm_malloc_initialized;
+
+const char* adm_err_msg[] = {
+    [ADM_ERR_SUCCESS]            = "success",
+    [ADM_ERR_NOT_AVAILABLE]      = "adm is not available",
+    [ADM_ERR_NOSPACE]            = "no space left",
+    [ADM_ERR_INVALID_ARGS]       = "invalid arguments",
+    [ADM_ERR_UID_NOTFOUND]       = "no region matched with uid",
+    [ADM_ERR_OUT_OF_BOUNDS]      = "out of bounds",
+    [ADM_ERR_MALLOC_INITIALIZED] = "malloc region was already initialized",
+};
 
 void adm_init_internals(uintptr_t start, size_t len) {
     if (start == 0 || len == 0) {
@@ -27,12 +35,11 @@ void adm_init_internals(uintptr_t start, size_t len) {
 }
 
 /* retrive region by uid */
-ADMERR
-adm_get_region(uintptr_t uid, uintptr_t* ptr, size_t* size) {
+ADMERR adm_get_region(uintptr_t uid, uintptr_t* ptr, size_t* size) {
     AdmRegionHeader* region_hdr;
 
     if (!enabled || !_adm_hdr)
-        return -1;
+        return ADM_ERR_NOT_AVAILABLE;
     for (size_t i = 0; i < _adm_hdr->data_n; i++) {
         if (_adm_hdr->uid_tbl[i] != uid)
             continue; // skip unmatched uid
@@ -87,8 +94,7 @@ static uintptr_t adm_setup_new_hdr(size_t size, uintptr_t uid, AdmDataTypes type
     return region;
 }
 
-ADMERR
-adm_set_bytes(void* ptr, size_t size, uintptr_t uid) {
+ADMERR adm_set_bytes(void* ptr, size_t size, uintptr_t uid) {
     uintptr_t data_offset;
 
     if (!ptr || size == 0) {
@@ -116,8 +122,7 @@ void* adm_new_region(size_t size, uintptr_t uid, AdmDataTypes type) {
 }
 
 /* region removing & relocating */
-ADMERR
-adm_remove_region(uintptr_t uid) {
+ADMERR adm_remove_region(uintptr_t uid) {
     /* check validity */
     if (!enabled || !_adm_hdr)
         return ADM_ERR_NOT_AVAILABLE;
@@ -174,8 +179,7 @@ adm_remove_region(uintptr_t uid) {
     return ADM_ERR_UID_NOTFOUND;
 }
 
-ADMERR
-adm_reset() {
+ADMERR adm_reset() {
     if (!enabled || !_adm_hdr) {
         return ADM_ERR_NOT_AVAILABLE;
     }
@@ -188,8 +192,7 @@ adm_reset() {
     return ADM_ERR_SUCCESS;
 }
 
-ADMERR
-adm_dynalloc_init(size_t size) {
+ADMERR adm_dynalloc_init(size_t size) {
     if (__adm_malloc_initialized)
         return ADM_ERR_MALLOC_INITIALIZED; // already initialized
     uintptr_t ptr = 0;
@@ -222,8 +225,7 @@ bool adm_region_exists(uintptr_t uid) {
     return false;
 }
 
-ADMERR
-adm_gen_type_info(AdmTypeInfo* type_info, size_t* count) {
+ADMERR adm_gen_type_info(AdmTypeInfo* type_info, size_t* count) {
     if (!enabled || !_adm_hdr) {
         return ADM_ERR_NOT_AVAILABLE;
     }
@@ -232,6 +234,7 @@ adm_gen_type_info(AdmTypeInfo* type_info, size_t* count) {
         type_info[i].uid            = _adm_hdr->uid_tbl[i];
         type_info[i].type           = region_hdr->type;
         type_info[i].size           = region_hdr->size;
+        type_info[i].offset         = region_hdr->offset;
     }
     *count = _adm_hdr->data_n;
     return ADM_ERR_SUCCESS;

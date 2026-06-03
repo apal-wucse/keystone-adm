@@ -3,32 +3,53 @@
 #include "sm.h"
 #include <stdint.h>
 
-int validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type_info) {
+const char* adm_validation_err_msg[] = {
+    [ADM_VALID]                         = "ADM is valid",
+    [ADM_INVALID_PARAMS]                = "invalid parameters",
+    [ADM_EXCEEDED_SLOT_SIZE]            = "exceeded maximum number of slot",
+    [ADM_EXCEEDED_REGION_SIZE]          = "exceeded ADM regions size",
+    [ADM_INVALID_ORDER]                 = "invalid region order",
+    [ADM_REGION_OVERLAPPED]             = "region are overlapped",
+    [ADM_OFFSET_MISMATCH]               = "data offset is mismatched",
+    [ADM_TYPE_BYTE_MISMATCH]            = "data size is mismatched with TYPE_BYTE",
+    [ADM_TYPE_16_MISMATCH]              = "data size is mismatched with TYPE_16",
+    [ADM_TYPE_32_MISMATCH]              = "data size is mismatched with TYPE_32",
+    [ADM_TYPE_64_MISMATCH]              = "data size is mismatched with TYPE_64",
+    [ADM_TYPE_STATIC_ARR_BYTE_MISMATCH] = "data size is mismatched with TYPE_STATIC_ARR_BYTE",
+    [ADM_TYPE_STATIC_ARR_16_MISMATCH]   = "data size is mismatched with TYPE_STATIC_ARR_16",
+    [ADM_TYPE_STATIC_ARR_32_MISMATCH]   = "data size is mismatched with TYPE_STATIC_ARR_32",
+    [ADM_TYPE_STATIC_ARR_64_MISMATCH]   = "data size is mismatched with TYPE_STATIC_ARR_64",
+    [ADM_TYPE_DYN_MISMATCH]             = "dynamic region size is mismatched",
+    [ADM_INVALID_TYPE]                  = "invalid region type",
+};
+
+AdmValidationError
+validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type_info) {
     /* Parameter Validation */
     if (start_addr == 0 || size == 0 || type_info == NULL)
-        return -1;
+        return ADM_INVALID_PARAMS;
     /* ADM Region Info */
     AdmHeader* info = (AdmHeader*)start_addr;
     if (info->data_n > ADM_SLOT_MAX)
-        return -1;
+        return ADM_EXCEEDED_SLOT_SIZE;
     /* Validation */
     for (int i = 0; i < info->data_n; i++) {
         if (info->data_offsets[i] >= size) // must not exceed region
-            return -1;
+            return ADM_EXCEEDED_REGION_SIZE;
         if (i < info->data_n - 1 &&
             info->data_offsets[i] >= info->data_offsets[i + 1]) // must be increasing order
-            return -1;
+            return ADM_INVALID_ORDER;
 
         uintptr_t hdr_offset = info->data_offsets[i];
         if (hdr_offset + sizeof(AdmRegionHeader) > size)
-            return -1;
+            return ADM_EXCEEDED_REGION_SIZE;
         AdmRegionHeader* data = (AdmRegionHeader*)(start_addr + hdr_offset);
 
         if (data->offset + data->size > size) // must not exceed region
-            return -1;
+            return ADM_EXCEEDED_REGION_SIZE;
         if (i < info->data_n - 1 &&
             data->offset + data->size > info->data_offsets[i + 1]) // must not overlap successor
-            return -1;
+            return ADM_REGION_OVERLAPPED;
 
         AdmDataTypes type = TYPE_NONE;
         size_t size       = 0;
@@ -45,40 +66,40 @@ int validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type
         }
 
         if (data->offset != offset)
-            return -1;
+            return ADM_OFFSET_MISMATCH;
 
         switch (type) {
         case TYPE_BYTE:
             if (data->size != 1)
-                return -1;
+                return ADM_TYPE_BYTE_MISMATCH;
             break;
         case TYPE_16:
             if (data->size != 2)
-                return -1;
+                return ADM_TYPE_16_MISMATCH;
             break;
         case TYPE_32:
             if (data->size != 4)
-                return -1;
+                return ADM_TYPE_32_MISMATCH;
             break;
         case TYPE_64:
             if (data->size != 8)
-                return -1;
+                return ADM_TYPE_64_MISMATCH;
             break;
         case TYPE_STATIC_ARR_BYTE:
             if (data->size != size)
-                return -1;
+                return ADM_TYPE_STATIC_ARR_BYTE_MISMATCH;
             break;
         case TYPE_STATIC_ARR_16:
             if (data->size != size * 2)
-                return -1;
+                return ADM_TYPE_STATIC_ARR_16_MISMATCH;
             break;
         case TYPE_STATIC_ARR_32:
             if (data->size != size * 4)
-                return -1;
+                return ADM_TYPE_STATIC_ARR_32_MISMATCH;
             break;
         case TYPE_STATIC_ARR_64:
             if (data->size != size * 8)
-                return -1;
+                return ADM_TYPE_STATIC_ARR_64_MISMATCH;
             break;
         case TYPE_ARR_BYTE:
         case TYPE_ARR_16:
@@ -88,16 +109,14 @@ int validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type
             break;
         case TYPE_DYN_ALLOC_SPACE:
             if (data->size != size)
-                return -1;
+                return ADM_TYPE_DYN_MISMATCH;
             break;
         case TYPE_NONE:
+        default:
             // No type info
             // unexpected data received
-            return -1;
-        default:
-            // fallback
-            return -1;
+            return ADM_INVALID_TYPE;
         }
     }
-    return 0;
+    return ADM_VALID;
 }

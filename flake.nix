@@ -76,6 +76,7 @@
                 ;
               inherit (pkgsRiscv64)
                 keystoneApps
+                keystoneBenchmarks
                 ;
             };
 

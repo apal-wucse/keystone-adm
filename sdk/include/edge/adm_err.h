@@ -11,4 +11,8 @@ typedef unsigned int ADMERR;
 #define ADM_ERR_OUT_OF_BOUNDS      0x05
 #define ADM_ERR_MALLOC_INITIALIZED 0x06
 
+extern const char* adm_err_msg[];
+
+#define ADM_ERR_MSG(code) adm_err_msg[(code)]
+
 #endif

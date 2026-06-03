@@ -612,13 +612,14 @@ unsigned long run_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
     AdmShareTypes share_type = enclaves[eid].adm_state_info.share;
     if (adm_memid >= 0) {
         if (share_type == ADM_SHARE_RW) { // ADM enabled and validation enabled
-            int ret;
+            AdmValidationError ret;
             uintptr_t adm_start = get_enclave_region_base(eid, adm_memid);
             uintptr_t adm_size  = get_enclave_region_size(eid, adm_memid);
 
             ret = validate_adm_regions(adm_start, adm_size, enclaves[eid].adm_state_info.type_info);
-            if (ret) {
+            if (ret != ADM_VALID) {
                 // validation failed
+                pr_adm_validation_err(ret);
                 return SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA;
             }
 
@@ -777,12 +778,13 @@ unsigned long resume_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
         }
         // validate if needed
         if (share_type == ADM_SHARE_RW) {
-            int ret;
+            AdmValidationError ret;
             uintptr_t adm_start = get_enclave_region_base(eid, adm_memid);
             uintptr_t adm_size  = get_enclave_region_size(eid, adm_memid);
             ret = validate_adm_regions(adm_start, adm_size, enclaves[eid].adm_state_info.type_info);
-            if (ret) {
+            if (ret != ADM_VALID) {
                 // validation failed
+                pr_adm_validation_err(ret);
                 return SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA;
             }
 

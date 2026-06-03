@@ -74,6 +74,34 @@ typedef struct adm_state {
     struct adm_type_info type_info[ADM_SLOT_MAX];
 } AdmState;
 
-int validate_adm_regions(uintptr_t start_addr, uintptr_t size, struct adm_type_info* type_info);
+typedef enum adm_validation_error {
+    ADM_VALID = 0,
+    ADM_INVALID_PARAMS,
+    ADM_EXCEEDED_SLOT_SIZE,
+    ADM_EXCEEDED_REGION_SIZE,
+    ADM_INVALID_ORDER,
+    ADM_REGION_OVERLAPPED,
+    ADM_OFFSET_MISMATCH,
+    ADM_TYPE_BYTE_MISMATCH,
+    ADM_TYPE_16_MISMATCH,
+    ADM_TYPE_32_MISMATCH,
+    ADM_TYPE_64_MISMATCH,
+    ADM_TYPE_STATIC_ARR_BYTE_MISMATCH,
+    ADM_TYPE_STATIC_ARR_16_MISMATCH,
+    ADM_TYPE_STATIC_ARR_32_MISMATCH,
+    ADM_TYPE_STATIC_ARR_64_MISMATCH,
+    ADM_TYPE_DYN_MISMATCH,
+    ADM_INVALID_TYPE,
+} AdmValidationError;
+
+extern const char* adm_validation_err_msg[];
+
+#define pr_adm_validation_err(code)                                                                \
+    do {                                                                                           \
+        sbi_printf("[SM] adm validation: %s\n", adm_validation_err_msg[(code)]);                   \
+    } while (0)
+
+AdmValidationError
+validate_adm_regions(uintptr_t start_addr, uintptr_t size, struct adm_type_info* type_info);
 
 #endif

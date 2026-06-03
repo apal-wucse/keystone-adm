@@ -214,7 +214,7 @@ uintptr_t dispatch_edgecall_ocall_with_share(
     /* Copy type info from user space */
     if (count > ADM_SLOT_MAX)
         goto ocall_error;
-    if (!type_info) {
+    if (type_info) {
         AdmTypeInfo type_info_buffer[ADM_SLOT_MAX];
         copy_from_user((void*)type_info_buffer, (void*)type_info, sizeof(AdmTypeInfo) * count);
         ret = sbi_stop_enclave_with_share((uintptr_t)type_info_buffer, count, share_type);

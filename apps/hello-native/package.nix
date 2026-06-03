@@ -7,10 +7,14 @@
   withPlatform ? "generic",
 }:
 let
-  runtime =
-    (keystonePkgs.runtime.override {
-      inherit withPlatform;
-    }).nolibc;
+  runtime = keystonePkgs.runtime.override {
+    inherit withPlatform;
+    withEdgeProtection = false;
+    withLinuxSyscall = false;
+    withIoSyscall = false;
+    withNetSyscall = false;
+    withGlibc = false;
+  };
 
   encApp = stdenv.mkDerivation (finalAttrs: {
     pname = "keystone-hello-native-eapp";

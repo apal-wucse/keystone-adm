@@ -44,8 +44,9 @@ in
     fsType = "ext4";
   };
 
-  environment.systemPackages = [
-    pkgs.keystoneApps
+  environment.systemPackages = with pkgs; [
+    keystoneApps
+    keystoneBenchmarks
   ];
 
   system.build.qcow2 = qcowImage;

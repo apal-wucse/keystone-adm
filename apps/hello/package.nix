@@ -7,10 +7,10 @@
   withPlatform ? "generic",
 }:
 let
-  runtime =
-    (keystonePkgs.runtime.override {
-      inherit withPlatform;
-    }).weakSyscall;
+  runtime = keystonePkgs.runtime.override {
+    inherit withPlatform;
+    withEdgeProtection = false;
+  };
 
   runtimeAdm = keystonePkgs.runtime.override { inherit withPlatform; };
 
