@@ -2,7 +2,7 @@
   stdenv,
   cmake,
   glibc,
-  makeself,
+  mkKeystonePackage,
   keystonePkgs,
   withPlatform ? "generic",
 }:
@@ -49,27 +49,8 @@ let
     ];
   });
 in
-stdenv.mkDerivation (finalAttrs: {
-  pname = "keystone-admtest";
+mkKeystonePackage {
+  pname = "admtest";
   version = "0.1.0";
-
-  nativeBuildInputs = [
-    makeself
-  ];
-
-  dontUnpack = true;
-  dontBuild = true;
-  dontFixup = true;
-
-  installPhase = ''
-    mkdir -p $out/bin
-    mkdir -p $TMPDIR/pkg-files
-    cp ${encApp}/bin/admtest ${hostApp}/bin/admtest-host $TMPDIR/pkg-files/
-    cp ${runtime}/bin/eyrie-rt ${runtime}/bin/loader.bin $TMPDIR/pkg-files/
-    makeself --noprogress \
-      $TMPDIR/pkg-files \
-      $out/bin/admtest.ke \
-      "Keystone Enclave Package" \
-      "./admtest-host" "admtest" "eyrie-rt" "loader.bin"
-  '';
-})
+  inherit encApp hostApp runtime;
+}

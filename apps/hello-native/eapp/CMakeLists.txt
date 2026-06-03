@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(keystone-hello-native-eapp C CXX ASM)
 
-set(eapp_bin hello)
+set(eapp_bin hello-native)
 set(eapp_src hello.c)
 
 # eapp

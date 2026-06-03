@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(keystone-iotest-adm-nocpy-eapp C CXX ASM)
 
-set(eapp_bin iotest)
+set(eapp_bin iotest-adm-nocpy)
 set(eapp_src iotest.c)
 
 # eapp

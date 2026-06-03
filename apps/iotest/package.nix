@@ -2,7 +2,7 @@
   stdenv,
   cmake,
   glibc,
-  makeself,
+  mkKeystonePackage,
   keystonePkgs,
   withPlatform ? "generic",
 }:
@@ -49,27 +49,8 @@ let
     ];
   });
 in
-stdenv.mkDerivation (finalAttrs: {
-  pname = "keystone-iotest";
+mkKeystonePackage {
+  pname = "iotest";
   version = "0.1.0";
-
-  nativeBuildInputs = [
-    makeself
-  ];
-
-  dontUnpack = true;
-  dontBuild = true;
-  dontFixup = true;
-
-  installPhase = ''
-    mkdir -p $out/bin
-    mkdir -p $TMPDIR/pkg-files
-    cp ${encApp}/bin/iotest ${hostApp}/bin/iotest-runner $TMPDIR/pkg-files/
-    cp ${runtime}/bin/eyrie-rt ${runtime}/bin/loader.bin $TMPDIR/pkg-files/
-    makeself --noprogress \
-      $TMPDIR/pkg-files \
-      $out/bin/iotest.ke \
-      "Keystone Enclave Package" \
-      "./iotest-runner" "iotest" "eyrie-rt" "loader.bin"
-  '';
-})
+  inherit encApp hostApp runtime;
+}

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(keystone-admtest-host C CXX ASM)
 
-set(host_bin admtest-host)
+set(host_bin admtest-runner)
 set(host_src host.cpp)
 
 # host
