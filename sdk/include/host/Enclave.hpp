@@ -14,38 +14,39 @@
 #include <cerrno>
 #include <cstring>
 #include <functional>
-#include <iostream>
+#include <memory>
+#include <vector>
 
-#include "./common.h"
-extern "C" {
-#include "common/sha3.h"
-}
 #include "AdditionalDataMemory.hpp"
 #include "ElfFile.hpp"
 #include "Error.hpp"
 #include "KeystoneDevice.hpp"
+#include "KeystoneLogs.hpp"
 #include "Memory.hpp"
 #include "Params.hpp"
+#include "adm_types.h"
 
 namespace Keystone {
 
 typedef std::function<void(void*)> OcallFunc;
 
 class Enclave {
-  private:
+private:
+    Logs logger;
     Params params;
     uintptr_t runtimeElfAddr;
     uintptr_t enclaveElfAddr;
-    Memory* pMemory;
-    KeystoneDevice* pDevice;
+    std::unique_ptr<Memory> pMemory;
+    std::unique_ptr<KeystoneDevice> pDevice;
     void* shared_buffer;
     size_t shared_buffer_size;
     bool admEnabled;
-    AdditionalDataMemory* additionalMemory;
+    std::unique_ptr<AdditionalDataMemory> additionalMemory;
     void* additional_memory;
     size_t additional_memory_size;
     OcallFunc oFuncDispatch;
     OcallFunc oFuncDispatchProtected;
+    std::vector<AdmTypeInfo> initialTypeInfo;
 #ifdef CS_BENCHMARK
     unsigned long cs_cnt;
 #endif
@@ -76,15 +77,16 @@ class Enclave {
 #endif
 
 #ifdef TIME_BENCHMARK
-    int perf_fd;
+    int perf_fd = -1;
     bool perfEventInit();
     void perfClkStart();
     unsigned long perfClkEnd();
     void perfEventClose();
 #endif
 
-  public:
-    Enclave();
+public:
+    Enclave() : Enclave(Params(), false) {}
+    Enclave(Params params, bool debug);
     ~Enclave();
     static Error
     measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath);
@@ -92,20 +94,18 @@ class Enclave {
     size_t getSharedBufferSize();
     void* getAdditionalMemory();
     size_t getAdditionalMemorySize();
-    Memory* getMemory();
+    Memory& getMemory();
     uintptr_t getRuntimeElfAddr() { return runtimeElfAddr; }
     uintptr_t getEnclaveElfAddr() { return enclaveElfAddr; }
     Error registerOcallDispatch(OcallFunc func);
     Error registerOcallDispatchProtected(OcallFunc func);
-    Error
-    init(const char* filepath, const char* runtime, const char* loaderpath, Params parameters);
+    Error init(const char* filepath, const char* runtime, const char* loaderpath);
     Error init(
-        const char* filepath, const char* runtime, const char* loader, Params parameters,
+        const char* filepath, const char* runtime, const char* loader,
         AdditionalData& additionalData);
     Error init(
-        const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params,
+        const char* eapppath, const char* runtimepath, const char* loaderpath,
         uintptr_t alternatePhysAddr);
-    Error destroy();
     Error run(uintptr_t* ret = nullptr);
 
 #ifdef CS_BENCHMARK

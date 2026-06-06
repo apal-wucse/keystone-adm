@@ -1,7 +1,5 @@
 #include "AdditionalData.hpp"
 
-#include "Params.hpp"
-
 namespace Keystone {
 
 AdditionalData::AdditionalData() { storedData = std::vector<DataBytes>(); }

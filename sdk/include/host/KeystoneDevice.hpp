@@ -14,71 +14,48 @@
 
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 #include <vector>
 
-#include "./common.h"
 #include "./keystone_user.h"
 #include "Error.hpp"
-#include "Params.hpp"
+#include "KeystoneLogs.hpp"
+#include "UniqueFd.hpp"
 #include "adm_types.h"
 
 namespace Keystone {
 
 class KeystoneDevice {
-  protected:
+protected:
     int eid;
     uintptr_t physAddr;
     uintptr_t admPhysAddr;
     bool pteLocked;
 
-  private:
-    int fd;
+private:
+    UniqueFd fd;
     Error __run(bool resume, uintptr_t* ret);
+    Logs logger;
 
-  public:
-    virtual uintptr_t getPhysAddr() { return physAddr; }
-    virtual uintptr_t getAdmPhysAddr() { return admPhysAddr; }
-    virtual bool isPteLocked() { return pteLocked; }
+public:
+    uintptr_t getPhysAddr() { return physAddr; }
+    uintptr_t getAdmPhysAddr() { return admPhysAddr; }
+    bool isPteLocked() { return pteLocked; }
 
-    KeystoneDevice();
-    virtual ~KeystoneDevice() {}
-    virtual bool initDevice(Params params);
-    virtual Error create(uint64_t minPages);
-    //  virtual Error create(uint64_t minPages, uint64_t admReqSize);
-    virtual uintptr_t initUTM(size_t size);
-    virtual uintptr_t initADM(size_t size, ProtectionTypes protect_type);
-    virtual Error finalizePte();
-    virtual Error finalize(
-        uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-        struct runtime_params_t params, std::vector<AdmTypeInfo> type_info);
-    virtual Error destroy();
-    virtual Error run(uintptr_t* ret);
-    virtual Error resume(uintptr_t* ret);
-    virtual void* map(uintptr_t addr, size_t size);
-    virtual void* romap(uintptr_t addr, size_t size);
-    virtual Error roprotect(uintptr_t addr, size_t size);
-};
-
-class MockKeystoneDevice : public KeystoneDevice {
-  private:
-    /* allocated buffer with map() */
-    void* sharedBuffer;
-
-  public:
-    MockKeystoneDevice() {}
-    ~MockKeystoneDevice();
-    bool initDevice(Params params);
+    KeystoneDevice() : KeystoneDevice(false) {}
+    KeystoneDevice(bool debug);
     Error create(uint64_t minPages);
     uintptr_t initUTM(size_t size);
-    uintptr_t initADM(size_t size);
+    uintptr_t initADM(size_t size, ProtectionTypes protect_type);
+    Error finalizePte();
     Error finalize(
         uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-        struct runtime_params_t params);
+        struct runtime_params_t params, std::vector<AdmTypeInfo> type_info);
     Error destroy();
     Error run(uintptr_t* ret);
     Error resume(uintptr_t* ret);
     void* map(uintptr_t addr, size_t size);
+    void* romap(uintptr_t addr, size_t size);
+    Error roprotect(uintptr_t addr, size_t size);
 };
 
 } // namespace Keystone

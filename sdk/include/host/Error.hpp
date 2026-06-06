@@ -5,10 +5,14 @@
 
 #pragma once
 
+#include <format>
+
 namespace Keystone {
 
 enum class Error {
     Success = 0,
+    InitFailure,
+    InvalidParameter,
     FileInitFailure,
     DeviceInitFailure,
     DeviceError,
@@ -35,6 +39,12 @@ enum class Error {
 };
 
 } // namespace Keystone
+
+template <> struct std::formatter<Keystone::Error> : std::formatter<int> {
+    auto format(Keystone::Error c, std::format_context& ctx) const {
+        return std::formatter<int>::format(static_cast<int>(c), ctx);
+    }
+};
 /*
 
 {

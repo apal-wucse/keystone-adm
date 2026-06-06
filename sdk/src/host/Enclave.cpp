@@ -10,21 +10,50 @@
 #include <unistd.h>
 extern "C" {
 #include "./keystone_user.h"
-#include "common/sha3.h"
 }
 #include "ElfFile.hpp"
 #include "hash_util.hpp"
 
 namespace Keystone {
 
-Enclave::Enclave() { additionalMemory = new AdditionalDataMemory(); }
+Enclave::Enclave(Params params, bool debug)
+    : params(params), logger("sdk", "enclave", debug ? Loglevel::TRACE : Loglevel::WARN) {
+    pDevice          = std::make_unique<KeystoneDevice>(debug);
+    pMemory          = std::make_unique<Memory>(pDevice.get(), debug);
+    additionalMemory = std::make_unique<AdditionalDataMemory>(debug);
+}
 
-Enclave::~Enclave() { destroy(); }
+Enclave::~Enclave() {
+    if (!pDevice) {
+        return;
+    }
+#ifdef TIME_BENCHMARK
+    perfClkStart();
+#endif
+    Error err = pDevice->destroy();
+    if (err != Error::Success) {
+        logger.fatal("an error occured when destroying enclave, code = {}", err);
+        return;
+    }
+#ifdef TIME_BENCHMARK
+    cycle_destroy_enclave = perfClkEnd();
+    perfEventClose();
+    timeBenchResult();
+#endif
+#ifdef CS_BENCHMARK
+    cswitchBenchResult();
+#endif
+}
 
 uint64_t calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
     uint64_t req_pages = 0;
 
+    if (elfFiles == nullptr)
+        return 0;
+
     for (int i = 0; i < numElfFiles; i++) {
+        if (elfFiles[i] == nullptr)
+            continue;
         ElfFile* elfFile = elfFiles[i];
         req_pages += ceil(elfFile->getFileSize() / PAGE_SIZE);
     }
@@ -48,16 +77,13 @@ uint64_t calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
 }
 
 bool Enclave::prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr) {
+    assert(pDevice);
+    assert(pMemory);
     // FIXME: this will be deprecated with complete freemem support.
     // We just add freemem size for now.
     uint64_t minPages;
     minPages = ROUND_UP(params.getFreeMemSize(), PAGE_BITS) / PAGE_SIZE;
     minPages += requiredPages;
-
-    if (params.isSimulated()) {
-        pMemory->init(0, 0, minPages);
-        return true;
-    }
 
     /* Call Enclave Driver */
     if (pDevice->create(minPages) != Error::Success) {
@@ -72,12 +98,13 @@ bool Enclave::prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhys
         physAddr = pDevice->getPhysAddr();
     }
 
-    pMemory->init(pDevice, physAddr, minPages);
+    pMemory->init(physAddr, minPages);
 
     return true;
 }
 
 uintptr_t Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
+    assert(pMemory);
     uintptr_t startOffset = pMemory->getCurrentOffset();
     size_t bytesRemaining = fileSize;
 
@@ -103,6 +130,8 @@ uintptr_t Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
 }
 
 static void measureElfFile(hash_ctx_t* hash_ctx, ElfFile* file) {
+    assert(hash_ctx != nullptr);
+    assert(file != nullptr);
     uintptr_t fptr = (uintptr_t)file->getPtr();
     uintptr_t fend = fptr + (uintptr_t)file->getFileSize();
 
@@ -120,6 +149,9 @@ static void measureElfFile(hash_ctx_t* hash_ctx, ElfFile* file) {
 
 Error Enclave::measure(
     char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath) {
+    assert(
+        hash != nullptr || eapppath != nullptr || runtimepath != nullptr || loaderpath != nullptr);
+
     hash_ctx_t hash_ctx;
     hash_init(&hash_ctx);
 
@@ -145,27 +177,34 @@ Error Enclave::measure(
 }
 
 Error Enclave::init(
-    const char* filepath, const char* runtimepath, const char* loader, Params parameters,
+    const char* filepath, const char* runtimepath, const char* loader,
     AdditionalData& additionalData) {
-    if (!parameters.isAdmEnabled()) {
-        std::cout << "ADM is not enabled in parameters. The passed additionaldata "
-                     "will not be used."
-                  << std::endl;
+    if (!params.isAdmEnabled()) {
+        logger.warn("adm is disabled in parameters");
     }
-    additionalMemory = new AdditionalDataMemory();
+    assert(additionalMemory);
+    initialTypeInfo = additionalData.genTypeInfo();
     additionalMemory->setupData(additionalData);
-    return this->init(filepath, runtimepath, loader, parameters);
+    return this->init(filepath, runtimepath, loader);
+}
+
+Error Enclave::init(const char* eapppath, const char* runtimepath, const char* loaderpath) {
+    return this->init(eapppath, runtimepath, loaderpath, (uintptr_t)0);
 }
 
 Error Enclave::init(
-    const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params) {
-    return this->init(eapppath, runtimepath, loaderpath, _params, (uintptr_t)0);
-}
-
-Error Enclave::init(
-    const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params,
+    const char* eapppath, const char* runtimepath, const char* loaderpath,
     uintptr_t alternatePhysAddr) {
-    params = _params;
+    logger.trace("enclave initialization is started");
+
+    assert(pDevice);
+    assert(pMemory);
+    assert(additionalMemory);
+
+    if (eapppath == nullptr || runtimepath == nullptr || loaderpath == nullptr) {
+        logger.error("invalid parameters");
+        return Error::InvalidParameter;
+    }
 
 #ifdef CS_BENCHMARK
     cs_cnt = 0;
@@ -187,66 +226,49 @@ Error Enclave::init(
 
 #ifdef TIME_BENCHMARK
     if (!perfEventInit()) {
-        std::cerr << "Failed to init perf event." << std::endl;
+        logger.errorErrno("failed to init perf event");
         return Error::PerfInitFailure;
     }
-#endif
-
-    if (params.isSimulated()) {
-        pMemory = new SimulatedEnclaveMemory();
-        pDevice = new MockKeystoneDevice();
-        return Error::DeviceInitFailure;
-    } else {
-        pMemory = new PhysicalEnclaveMemory();
-        pDevice = new KeystoneDevice();
-    }
-
-    if (!pDevice->initDevice(params)) {
-        destroy();
-        return Error::DeviceInitFailure;
-    }
-
-#ifdef TIME_BENCHMARK
     perfClkStart();
 #endif
+
     ElfFile* enclaveFile = new ElfFile(eapppath);
     ElfFile* runtimeFile = new ElfFile(runtimepath);
     ElfFile* loaderFile  = new ElfFile(loaderpath);
-
     ElfFile* elfFiles[3] = {enclaveFile, runtimeFile, loaderFile};
+    logger.trace("binaries are loaded");
+    logger.trace("eapp = {}, rt = {}, loader = {}", eapppath, runtimepath, loaderpath);
     size_t requiredPages = calculate_required_pages(elfFiles, 3);
+    logger.trace("required pages for private memory = {}", requiredPages);
+
 #ifdef TIME_BENCHMARK
     cycle_read_bin = perfClkEnd();
-#endif
-
-#ifdef TIME_BENCHMARK
     perfClkStart();
 #endif
     /* Alloc EPM */
     if (!prepareEnclaveMemory(requiredPages, alternatePhysAddr)) {
-        ERROR("failed to init private memory - ioctl() failed");
-        destroy();
+        logger.error("failed to allocate private memory");
         return Error::DeviceError;
     }
 #ifdef TIME_BENCHMARK
     cycle_epm_alloc = perfClkEnd();
 #endif
-    uintptr_t utm_free, adm_ptr;
+    logger.trace("allocation finished: private memory");
 #ifdef TIME_BENCHMARK
     perfClkStart();
 #endif
     /* Alloc UTM */
+    uintptr_t utm_free, adm_ptr;
     utm_free = pMemory->allocUtm(params.getUntrustedSize());
 
     if (!utm_free) {
-        ERROR("failed to init untrusted memory - ioctl() failed");
-        destroy();
+        logger.error("failed to allocate shared memory");
         return Error::DeviceError;
     }
 #ifdef TIME_BENCHMARK
     cycle_utm_alloc = perfClkEnd();
 #endif
-
+    logger.trace("allocation finished: shared memory");
     /* Alloc ADM if needed */
     if (params.isAdmEnabled()) {
 #ifdef TIME_BENCHMARK
@@ -255,13 +277,13 @@ Error Enclave::init(
         adm_ptr = pMemory->allocAdm(params.getAdditionalSize(), params.getAdmProtectionType());
 
         if (!adm_ptr) {
-            ERROR("failed to init additional memory - ioctl() failed");
-            destroy();
+            logger.error("failed to allocate data memory");
             return Error::DeviceError;
         }
 #ifdef TIME_BENCHMARK
         cycle_adm_alloc = perfClkEnd();
 #endif
+        logger.trace("allocation finished: data memory");
     }
 
 #ifdef TIME_BENCHMARK
@@ -269,16 +291,19 @@ Error Enclave::init(
 #endif
     /* Copy loader into beginning of enclave memory */
     copyFile((uintptr_t)loaderFile->getPtr(), loaderFile->getFileSize());
+    logger.trace("copy finished: loader binary");
 
     pMemory->startRuntimeMem();
     runtimeElfAddr = copyFile(
         (uintptr_t)runtimeFile->getPtr(),
         runtimeFile->getFileSize()); // TODO: figure out if we need runtimeELFAddr
+    logger.trace("copy finished: runtime binary");
 
     pMemory->startEappMem();
     enclaveElfAddr = copyFile(
         (uintptr_t)enclaveFile->getPtr(),
         enclaveFile->getFileSize()); // TODO: figure out if we need enclaveElfAddr
+    logger.trace("copy finished: eapp binary");
 
     pMemory->startFreeMem();
 #ifdef TIME_BENCHMARK
@@ -303,8 +328,7 @@ Error Enclave::init(
 #endif
         /* finalize enclave pte */
         if (pDevice->finalizePte() != Error::Success) {
-            ERROR("failed to finalize enclave pte");
-            destroy();
+            logger.error("failed to finalize private memory");
             return Error::DevicePteFinalizeError;
         }
 
@@ -312,8 +336,7 @@ Error Enclave::init(
          * after this, user space va pointing to adm is stored in additional_memory
          */
         if (!mapAdditionalMem(params.getAdditionalSize())) {
-            ERROR("failed to obtain the additional memory\n");
-            destroy();
+            logger.error("failed to map data memory to userspace");
             return Error::DeviceMemoryMapError;
         }
 
@@ -325,8 +348,7 @@ Error Enclave::init(
             (uintptr_t)additional_memory, (uintptr_t)additional_memory_size,
             params.getAdditionalMem());
         if (ret != Error::Success) {
-            ERROR("failed to setup additional memory\n");
-            destroy();
+            logger.error("failed to configure data memory");
             return Error::AdmInvalidMemory;
         }
 #ifdef TIME_BENCHMARK
@@ -339,7 +361,7 @@ Error Enclave::init(
         /* locate structured data to adm */
         ret = additionalMemory->finalize();
         if (ret != Error::Success) {
-            ERROR("failed to finalize additional memory\n");
+            logger.error("failed to finalize data memory");
             return Error::AdmFinalizeFailure;
         }
 #ifdef TIME_BENCHMARK
@@ -355,8 +377,8 @@ Error Enclave::init(
 #endif
     if (pDevice->finalize(
             pMemory->getRuntimePhysAddr(), pMemory->getEappPhysAddr(), pMemory->getFreePhysAddr(),
-            runtimeParams, params.getTypeInfo()) != Error::Success) {
-        destroy();
+            runtimeParams, initialTypeInfo) != Error::Success) {
+        logger.error("failed to finalize enclave");
         return Error::DeviceError;
     }
 #ifdef TIME_BENCHMARK
@@ -367,15 +389,14 @@ Error Enclave::init(
     perfClkStart();
 #endif
     if (!mapUntrusted(params.getUntrustedSize())) {
-        ERROR(
-            "failed to finalize enclave - cannot obtain the untrusted buffer "
-            "pointer \n");
-        destroy();
+        logger.error("failed to map shared memory to userspace");
         return Error::DeviceMemoryMapError;
     }
 #ifdef TIME_BENCHMARK
     cycle_map_utm = perfClkEnd();
 #endif
+
+    logger.trace("finished enclave initialization");
 
     /* ELF files are no longer needed */
     delete enclaveFile;
@@ -385,68 +406,45 @@ Error Enclave::init(
 }
 
 bool Enclave::mapUntrusted(size_t size) {
+    assert(pDevice);
     if (size == 0) {
         return true;
     }
-
     shared_buffer = pDevice->map(0, size);
-
     if (shared_buffer == NULL) {
         return false;
     }
-
     shared_buffer_size = size;
-
     return true;
 }
 
 bool Enclave::mapAdditionalMem(size_t size) {
+    assert(pDevice);
     if (size == 0) {
         return true;
     }
-
     additional_memory = pDevice->map(0, size);
-
     if (additional_memory == NULL) {
         return false;
     }
-
     additional_memory_size = size;
-
     return true;
 }
 
-Error Enclave::destroy() {
-#ifdef TIME_BENCHMARK
-    perfClkStart();
-#endif
-    Error err = pDevice->destroy();
-#ifdef TIME_BENCHMARK
-    cycle_destroy_enclave = perfClkEnd();
-    perfEventClose();
-    timeBenchResult();
-#endif
-#ifdef CS_BENCHMARK
-    cswitchBenchResult();
-#endif
-    return err;
-}
-
 Error Enclave::run(uintptr_t* retval) {
-    if (params.isSimulated()) {
-        return Error::Success;
-    }
-
+    assert(pDevice);
 #ifdef TIME_BENCHMARK
     perfClkStart();
 #endif
+    logger.trace("try to run enclave");
     Error ret = pDevice->run(retval);
     while (ret == Error::EdgeCallHost || ret == Error::EnclaveInterrupted) {
-        /* enclave is stopped in the middle. */
 #ifdef CS_BENCHMARK
         cs_cnt++;
 #endif
+        /* enclave is stopped in the middle. */
         if (ret == Error::EdgeCallHost) {
+            logger.trace("edge call is handled");
             if (params.isAdmEnabled()) { // if adm is enabled, force edge protection
                 if (oFuncDispatchProtected != NULL) {
                     oFuncDispatchProtected(getSharedBuffer());
@@ -456,19 +454,21 @@ Error Enclave::run(uintptr_t* retval) {
                     oFuncDispatch(getSharedBuffer());
                 }
             }
+        } else {
+            logger.trace("enclave is interrupted");
         }
+        logger.trace("try to resume enclave");
         ret = pDevice->resume(retval);
     }
-
 #ifdef TIME_BENCHMARK
     cycle_run_enclave = perfClkEnd();
 #endif
     if (ret != Error::Success) {
-        ERROR("failed to run enclave - ioctl() failed");
-        destroy();
+        logger.error("failed to run enclave, code = {}", ret);
         return Error::DeviceError;
     }
 
+    logger.trace("finished enclave execution");
     return Error::Success;
 }
 
@@ -480,7 +480,10 @@ void* Enclave::getAdditionalMemory() { return additional_memory; }
 
 size_t Enclave::getAdditionalMemorySize() { return additional_memory_size; }
 
-Memory* Enclave::getMemory() { return pMemory; }
+Memory& Enclave::getMemory() {
+    assert(pMemory);
+    return *pMemory;
+}
 
 Error Enclave::registerOcallDispatch(OcallFunc func) {
     oFuncDispatch = func;
@@ -507,14 +510,14 @@ void Enclave::cswitchBenchResult() {
 
 inline bool Enclave::perfEventInit() {
     struct perf_event_attr pe;
-    pid_t pid = getpid();
-    memset(&pe, 0, sizeof(pe));
+    pid_t pid = ::getpid();
+    ::memset(&pe, 0, sizeof(pe));
     pe.type           = PERF_TYPE_HARDWARE;
     pe.size           = sizeof(pe);
     pe.config         = PERF_COUNT_HW_CPU_CYCLES;
     pe.disabled       = 1;
     pe.exclude_kernel = 0;
-    perf_fd           = syscall(SYS_perf_event_open, &pe, pid, -1, -1, 0);
+    perf_fd           = ::syscall(SYS_perf_event_open, &pe, pid, -1, -1, 0);
     if (perf_fd == -1) {
         std::cerr << "Failed to open perf event." << std::endl;
         return false;
@@ -522,17 +525,22 @@ inline bool Enclave::perfEventInit() {
     return true;
 }
 
-inline void Enclave::perfEventClose() { close(perf_fd); }
+inline void Enclave::perfEventClose() {
+    if (perf_fd < 0)
+        ::close(perf_fd);
+}
 
 inline void Enclave::perfClkStart() {
-    ioctl(perf_fd, PERF_EVENT_IOC_RESET, 0);
-    ioctl(perf_fd, PERF_EVENT_IOC_ENABLE, 0);
+    assert(perf_fd >= 0);
+    ::ioctl(perf_fd, PERF_EVENT_IOC_RESET, 0);
+    ::ioctl(perf_fd, PERF_EVENT_IOC_ENABLE, 0);
 }
 
 inline unsigned long Enclave::perfClkEnd() {
     unsigned long count;
-    ioctl(perf_fd, PERF_EVENT_IOC_DISABLE, 0);
-    read(perf_fd, &count, sizeof(count));
+    assert(perf_fd >= 0);
+    ::ioctl(perf_fd, PERF_EVENT_IOC_DISABLE, 0);
+    ::read(perf_fd, &count, sizeof(count));
     return count;
 }
 #endif

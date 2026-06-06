@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cstdio>
-#include <vector>
 
 #include "adm_types.h"
 
@@ -23,6 +22,7 @@
 #else                                     // for x86 tests
 #define DEFAULT_FREEMEM_SIZE  1024 * 1024 // 1 MB
 #define DEFAULT_UNTRUSTED_PTR 0xffffffff80000000
+#define DEFAULT_ADM_PTR       0xffffffffa0000000
 #define DEFAULT_STACK_SIZE    1024 * 16 // 16k
 #define DEFAULT_STACK_START   0x0000000040000000
 #endif
@@ -34,9 +34,8 @@
 namespace Keystone {
 
 class Params {
-  public:
+public:
     Params() {
-        simulated        = false;
         untrusted        = DEFAULT_UNTRUSTED_PTR;
         untrusted_size   = DEFAULT_UNTRUSTED_SIZE;
         freemem_size     = DEFAULT_FREEMEM_SIZE;
@@ -44,11 +43,8 @@ class Params {
         adm              = DEFAULT_ADM_PTR;
         adm_size         = DEFAULT_ADM_SIZE;
         adm_protect_type = ProtectionTypes::STRICT;
-        type_info        = std::vector<AdmTypeInfo>();
     }
 
-    void setSimulated(bool _simulated) { simulated = _simulated; }
-    void setEnclaveEntry(uint64_t) { printf("WARN: setEnclaveEntry() is deprecated.\n"); }
     void setUntrustedMem(uint64_t ptr, uint64_t size) {
         untrusted      = ptr;
         untrusted_size = size;
@@ -60,7 +56,6 @@ class Params {
         adm_size         = size;
         adm_protect_type = protect_type;
     }
-    bool isSimulated() { return simulated; }
     uintptr_t getUntrustedMem() { return untrusted; }
     uintptr_t getUntrustedSize() { return untrusted_size; }
     uintptr_t getUntrustedEnd() { return untrusted + untrusted_size; }
@@ -70,12 +65,8 @@ class Params {
     uintptr_t getAdditionalSize() { return adm_size; }
     uintptr_t getAdditionalEnd() { return adm + adm_size; }
     ProtectionTypes getAdmProtectionType() { return adm_protect_type; }
-    std::vector<AdmTypeInfo> getTypeInfo() { return type_info; }
-    void addTypeInfoEntry(AdmTypeInfo type) { type_info.push_back(type); }
-    void setTypeInfo(std::vector<AdmTypeInfo> info) { type_info = info; }
 
-  private:
-    bool simulated;
+private:
     uint64_t runtime_entry;
     uint64_t enclave_entry;
     uint64_t untrusted;
@@ -85,7 +76,6 @@ class Params {
     uint64_t adm;
     uint64_t adm_size;
     ProtectionTypes adm_protect_type;
-    std::vector<AdmTypeInfo> type_info;
 };
 
 } // namespace Keystone

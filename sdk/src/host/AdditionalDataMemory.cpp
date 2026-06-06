@@ -2,69 +2,58 @@
 
 namespace Keystone {
 
-AdditionalDataMemory::AdditionalDataMemory() {
-    memReady  = false;
-    finalized = false;
-}
+AdditionalDataMemory::AdditionalDataMemory(bool debug)
+    : memReady(false), finalized(false),
+      logger("sdk", "adm", debug ? Loglevel::TRACE : Loglevel::WARN) {}
 
 AdditionalDataMemory::~AdditionalDataMemory() {}
 
 Error AdditionalDataMemory::setupMemory(uintptr_t ptr, uintptr_t size, uintptr_t baseAddr) {
     if (!ptr) {
-        ERROR("Invalid ADM pointer\n");
+        logger.error("invalid adm pointer address, addr = {:x}", ptr);
         return Error::AdmInvalidMemory;
     }
-
     if (size == 0) {
-        ERROR("Invalid ADM size\n");
+        logger.error("invalid adm size, size = {}", size);
         return Error::AdmInvalidMemory;
     }
-
     if (memReady) {
-        ERROR("ADM is already set up\n");
-        ERROR("Overwriting is not allowed\n");
+        logger.warn("adm is already configured, overwriting is not allowed");
         return Error::Success;
     }
-
     if (finalized) {
-        ERROR("ADM is already finalized\n");
-        ERROR("Overwriting is not allowed\n");
+        logger.warn("adm is already finalized, overwriting is not allowed");
         return Error::Success;
     }
-
     adm           = ptr;
     admSize       = size;
     addrInEnclave = baseAddr;
     memReady      = true;
-
+    logger.trace(
+        "adm is configured, ptr = {:x}, size = {}, addr(enclave) = {:x}", ptr, size, baseAddr);
     return Error::Success;
 }
 
 Error AdditionalDataMemory::setupData(AdditionalData& additionalData) {
     if (finalized) {
-        ERROR("ADM is already finalized\n");
-        ERROR("Overwriting is not allowed\n");
+        logger.warn("adm is already finalized, overwriting is not allowed");
         return Error::Success;
     }
-
     this->additionalData = additionalData;
-
     return Error::Success;
 }
 
 Error AdditionalDataMemory::finalize() {
     if (!validateMemory()) {
-        ERROR("validation failed\n");
+        logger.error("adm validation failed");
         return Error::AdmFinalizeFailure;
     }
-
     AdmHeader* hdr = (AdmHeader*)adm;
     hdr->data_n    = additionalData.getStoredSize();
     for (int i = 0; i < ADM_SLOT_MAX; i++) {
         hdr->data_offsets[i] = 0;
         hdr->uid_tbl[i]      = 0;
     }
-
     uintptr_t offset = sizeof(AdmHeader);
     size_t dataIdx   = 0;
     for (const AdditionalData::DataBytes& d : additionalData.getStoredData()) {
@@ -77,27 +66,26 @@ Error AdditionalDataMemory::finalize() {
         uint8_t* dst               = (uint8_t*)(adm + dataHdr->offset);
 
         std::memcpy(dst, d.data, d.size);
+        logger.trace(
+            "stored data, uid = {}, offset = {:x}, size = {}", d.uid, dataHdr->offset, d.size);
 
         dataIdx++;
         offset += sizeof(AdmRegionHeader) + (d.size / DATA_ALIGN_BYTES + 1) * DATA_ALIGN_BYTES;
     }
-
     hdr->free_list = offset;
-
-    finalized = true;
-
+    finalized      = true;
     return Error::Success;
 }
 
 bool AdditionalDataMemory::validateMemory() {
     if (!memReady) {
+        logger.warn("validation failed, adm is not ready");
         return false;
     }
-
     if (additionalData.getStoredSize() > ADM_SLOT_MAX) {
+        logger.warn("validation failed, exceed maximum slot size");
         return false;
     }
-
     /* Validate total data size */
     size_t total           = 0;
     size_t hdrSize         = sizeof(AdmHeader);
@@ -113,17 +101,17 @@ bool AdditionalDataMemory::validateMemory() {
         }
         total += dataSize;
     }
-
     if (total > admSize) {
+        logger.warn("validation failed, exceed allocated memory size");
         return false;
     }
-
     return true;
 }
 
 AdmHeader* AdditionalDataMemory::getHdr() {
     if (!finalized) {
-        return NULL;
+        logger.warn("adm is not finalized");
+        return nullptr;
     }
     return (AdmHeader*)adm;
 }
@@ -131,35 +119,36 @@ AdmHeader* AdditionalDataMemory::getHdr() {
 AdmRegionHeader* AdditionalDataMemory::getRegionHdr(uintptr_t uid) {
     AdmHeader* hdr;
     if (!finalized) {
-        return NULL;
+        logger.warn("adm is not finalized");
+        return nullptr;
     }
     hdr = getHdr();
     for (size_t i = 0; i < hdr->data_n; i++) {
         if (hdr->uid_tbl[i] != uid)
             continue;
+        logger.trace("found region, uid = {}, offset = {:x}", uid, hdr->data_offsets[i]);
         return (AdmRegionHeader*)(adm + hdr->data_offsets[i]);
     }
-    return NULL;
+    logger.trace("no such region, uid = {}", uid);
+    return nullptr;
 }
 
 DataVec AdditionalDataMemory::getRegion(uintptr_t uid) {
     AdmRegionHeader* dataHdr;
     DataVec data;
-
     if (!finalized) {
+        logger.warn("adm is not finalized");
         goto nodata;
     }
-
     dataHdr = getRegionHdr(uid);
-    if (dataHdr == NULL) {
+    if (dataHdr == nullptr) {
         goto nodata;
     }
-
     data.assign(
         (uint8_t*)(adm + dataHdr->offset), (uint8_t*)(adm + dataHdr->offset + dataHdr->size));
-
+    logger.trace(
+        "found data, uid = {}, offset = {:x}, size = {}", uid, dataHdr->offset, dataHdr->size);
     return data;
-
 nodata:
     return DataVec();
 }

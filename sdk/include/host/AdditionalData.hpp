@@ -5,9 +5,6 @@
 #include <cstring>
 #include <vector>
 
-#include "./common.h"
-#include "Error.hpp"
-#include "Params.hpp"
 #include "adm_types.h"
 
 using DataVec = std::vector<uint8_t>;
@@ -15,7 +12,7 @@ using DataVec = std::vector<uint8_t>;
 namespace Keystone {
 
 class AdditionalData {
-  public:
+public:
     struct DataBytes {
         size_t size;
         uint8_t* data;
@@ -28,7 +25,7 @@ class AdditionalData {
     const std::vector<DataBytes>& getStoredData();
     std::vector<AdmTypeInfo> genTypeInfo();
 
-  private:
+private:
     std::vector<DataBytes> storedData;
 };
 

@@ -14,17 +14,17 @@ typedef unsigned char byte;
 #define PUBLIC_KEY_SIZE    32
 
 class PublicKey {
-  public:
+public:
     byte data[PUBLIC_KEY_SIZE];
     explicit PublicKey(std::string hexstr);
 };
 
 class DevicePublicKey : public PublicKey {
-  public:
+public:
     explicit DevicePublicKey(std::string hexstr) : PublicKey(hexstr) {}
 };
 
 class SecurityMonitorPublicKey : public PublicKey {
-  public:
+public:
     explicit SecurityMonitorPublicKey(std::string hexstr) : PublicKey(hexstr) {}
 };

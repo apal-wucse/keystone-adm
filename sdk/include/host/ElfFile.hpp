@@ -17,10 +17,12 @@ extern "C" {
 #include "./elf.h"
 }
 
+#include "KeystoneLogs.hpp"
+
 namespace Keystone {
 
 class ElfFile {
-  public:
+public:
     explicit ElfFile(std::string filename);
     ~ElfFile();
     size_t getFileSize() { return fileSize; }
@@ -43,7 +45,7 @@ class ElfFile {
     uintptr_t getEntryPoint();
     void* getProgramSegment(size_t ph);
 
-  private:
+private:
     int filep;
 
     /* virtual addresses */
@@ -58,6 +60,8 @@ class ElfFile {
 
     /* libelf structure */
     elf_t elf;
+
+    Logs logger;
 };
 
 } // namespace Keystone

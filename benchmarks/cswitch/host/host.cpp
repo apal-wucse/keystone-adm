@@ -21,30 +21,29 @@ int main(int argc, char** argv) {
         std::cerr << "**error: please specify protection policy" << std::endl;
         return 1;
     }
-#endif
 
-    Keystone::Enclave enclave;
-    Keystone::Params params;
     Keystone::AdditionalData data;
     ProtectionTypes protection;
-
-    params.setFreeMemSize(1024 * 1024);
-    params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 1024 * 1024);
-#ifdef ADM_BUILD
     if (atoi(argv[4]) == 1)
         protection = ProtectionTypes::STRICT;
     else
         protection = ProtectionTypes::READABLE;
 
-    params.setAdditionalMem(DEFAULT_ADM_PTR, 1024 * 1024, protection);
+    Keystone::Enclave enclave = Keystone::EnclaveBuilder()
+                                    .workingMemory(1024 * 1024)
+                                    .sharedMemory(1024 * 1024)
+                                    .dataMemory(1024 * 1024, protection)
+                                    .build();
+
     char test_data[] = "Hello, World!";
     data.storeBytes((uint8_t*)test_data, strlen(test_data), 1);
-    params.setTypeInfo(data.genTypeInfo());
 
-    enclave.init(argv[1], argv[2], argv[3], params, data);
+    enclave.init(argv[1], argv[2], argv[3], data);
     enclave.registerOcallDispatchProtected(incoming_call_dispatch);
 #else
-    enclave.init(argv[1], argv[2], argv[3], params);
+    Keystone::Enclave enclave =
+        Keystone::EnclaveBuilder().workingMemory(1024 * 1024).sharedMemory(1024 * 1024).build();
+    enclave.init(argv[1], argv[2], argv[3]);
     enclave.registerOcallDispatch(incoming_call_dispatch);
 #endif
 

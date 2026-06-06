@@ -25,8 +25,6 @@ void hexdump_buffer_align(const unsigned char* buf, size_t size) {
 }
 
 int main(int argc, char** argv) {
-    Keystone::Enclave enclave;
-    Keystone::Params params;
     Keystone::AdditionalData data;
     ProtectionTypes protection;
     uint64_t testSize, admSize;
@@ -51,9 +49,11 @@ int main(int argc, char** argv) {
     testSize = atoi(argv[5]);
     admSize  = ((testSize + PAGE_SIZE - 1) / PAGE_SIZE + 1) * PAGE_SIZE;
 
-    params.setFreeMemSize(1024 * 1024);
-    params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 1024 * 1024);
-    params.setAdditionalMem(DEFAULT_ADM_PTR, admSize, protection);
+    Keystone::Enclave enclave = Keystone::EnclaveBuilder()
+                                    .workingMemory(1024 * 1024)
+                                    .sharedMemory(1024 * 1024)
+                                    .dataMemory(admSize, protection)
+                                    .build();
 
     random_bytes_engine rbe;
     std::vector<unsigned char> randBytes(testSize);
@@ -61,13 +61,9 @@ int main(int argc, char** argv) {
     std::cout << "[host] Generated random bytes (first 64 bytes): " << std::endl;
     hexdump_buffer_align(randBytes.data(), 64);
     std::cout << std::endl;
-
     data.storeBytes(randBytes.data(), randBytes.size(), 1);
 
-    params.setTypeInfo(data.genTypeInfo());
-
-    enclave.init(argv[1], argv[2], argv[3], params, data);
-
+    enclave.init(argv[1], argv[2], argv[3], data);
     enclave.registerOcallDispatchProtected(incoming_call_dispatch);
     edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
 

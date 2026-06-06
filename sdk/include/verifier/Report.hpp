@@ -32,10 +32,10 @@ struct report_t {
 };
 
 class Report {
-  private:
+private:
     struct report_t report;
 
-  public:
+public:
     std::string BytesToHex(byte* bytes, size_t len);
     void HexToBytes(byte* bytes, size_t len, std::string hexstr);
     void fromJson(std::string json);

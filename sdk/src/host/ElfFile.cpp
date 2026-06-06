@@ -12,37 +12,39 @@ namespace Keystone {
 static size_t fstatFileSize(int filep) {
     int rc;
     struct stat stat_buf;
-    rc = fstat(filep, &stat_buf);
+    rc = ::fstat(filep, &stat_buf);
     return (rc == 0 ? stat_buf.st_size : 0);
 }
 
-ElfFile::ElfFile(std::string filename) {
+ElfFile::ElfFile(std::string filename) : logger("sdk", "elf", Loglevel::ERROR) {
     fileSize = 0;
     ptr      = NULL;
-    filep    = open(filename.c_str(), O_RDONLY);
+    filep    = ::open(filename.c_str(), O_RDONLY);
 
     if (filep < 0) {
-        ERROR("file does not exist - %s", filename.c_str());
+        logger.errorErrno("failed to open, filename = {}", filename);
         return;
     }
 
     fileSize = fstatFileSize(filep);
     if (!fileSize) {
-        ERROR("invalid file size - %s", filename.c_str());
+        logger.error("fstat failed, filename = {}", filename);
+        return;
     }
 
-    ptr = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, filep, 0);
+    ptr = ::mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, filep, 0);
 
     if (!ptr) {
-        ERROR("mmap failed for %s", filename.c_str());
+        logger.errorErrno("mmap failed, fd = {}", filep);
+        return;
     }
     /* preparation for libelf */
-    if (elf_newFile(ptr, fileSize, &elf)) {
+    if (::elf_newFile(ptr, fileSize, &elf)) {
         return;
     }
 
     /* get bound vaddrs */
-    elf_getMemoryBounds(&elf, VIRTUAL, &minVaddr, &maxVaddr);
+    ::elf_getMemoryBounds(&elf, VIRTUAL, &minVaddr, &maxVaddr);
 
     if (!IS_ALIGNED(minVaddr, PAGE_SIZE)) {
         return;
@@ -52,8 +54,8 @@ ElfFile::ElfFile(std::string filename) {
 }
 
 ElfFile::~ElfFile() {
-    close(filep);
-    munmap(ptr, fileSize);
+    ::close(filep);
+    ::munmap(ptr, fileSize);
 }
 
 } // namespace Keystone

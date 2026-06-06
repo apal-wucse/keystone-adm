@@ -7,5 +7,6 @@ set(host_bin iotest-adm-nocpy-runner)
 # host
 add_executable(${host_bin} ${host_src})
 target_link_libraries(${host_bin} PRIVATE keystone-host keystone-edge)
+target_compile_features(${host_bin} PRIVATE cxx_std_23)
 
 install(TARGETS ${host_bin})

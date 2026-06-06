@@ -14,10 +14,9 @@
 
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 
-#include "./common.h"
 #include "KeystoneDevice.hpp"
+#include "KeystoneLogs.hpp"
 #include "hash_util.hpp"
 
 namespace Keystone {
@@ -70,15 +69,17 @@ typedef struct {
 #define RISCV_PGLEVEL_TOP ((VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS)
 
 class Memory {
-  public:
-    Memory();
+public:
+    Memory() : Memory(nullptr) {}
+    Memory(KeystoneDevice* dev) : Memory(dev, false) {}
+    Memory(KeystoneDevice* dev, bool debug);
     ~Memory() {}
-    virtual void init(KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages) = 0;
-    virtual uintptr_t readMem(uintptr_t src, size_t size)                         = 0;
-    virtual void writeMem(uintptr_t src, uintptr_t dst, size_t size)              = 0;
-    virtual uintptr_t allocMem(size_t size)                                       = 0;
-    virtual uintptr_t allocUtm(size_t size)                                       = 0;
-    virtual uintptr_t allocAdm(size_t size, ProtectionTypes protect_type)         = 0;
+    void init(uintptr_t phys_addr, size_t min_pages);
+    uintptr_t readMem(uintptr_t src, size_t size);
+    void writeMem(uintptr_t src, uintptr_t dst, size_t size);
+    uintptr_t allocMem(size_t size);
+    uintptr_t allocUtm(size_t size);
+    uintptr_t allocAdm(size_t size, ProtectionTypes protect_type);
     size_t epmAllocVspace(uintptr_t addr, size_t num_pages);
     uintptr_t allocPages(size_t size);
 
@@ -101,6 +102,8 @@ class Memory {
     uintptr_t getEappPhysAddr() { return eappPhysAddr; }
     uintptr_t getFreePhysAddr() { return freePhysAddr; }
 
+private:
+    Logs logger;
     KeystoneDevice* pDevice;
     size_t epmSize;
     uintptr_t epmFreeList;
@@ -117,34 +120,6 @@ class Memory {
     uintptr_t untrustedSize;
     uintptr_t admPhysAddr;
     uintptr_t admSize;
-};
-
-class PhysicalEnclaveMemory : public Memory {
-  public:
-    PhysicalEnclaveMemory() {}
-    ~PhysicalEnclaveMemory() {}
-    void init(KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages);
-    uintptr_t readMem(uintptr_t src, size_t size);
-    void writeMem(uintptr_t src, uintptr_t dst, size_t size);
-    uintptr_t allocMem(size_t size);
-    uintptr_t allocUtm(size_t size);
-    uintptr_t allocAdm(size_t size, ProtectionTypes protect_type);
-};
-
-// Simulated memory reads/writes from calloc'ed memory
-class SimulatedEnclaveMemory : public Memory {
-  private:
-    void* allocateAligned(size_t size, size_t alignment);
-
-  public:
-    SimulatedEnclaveMemory() {}
-    ~SimulatedEnclaveMemory() {}
-    void init(KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages);
-    uintptr_t readMem(uintptr_t src, size_t size);
-    void writeMem(uintptr_t src, uintptr_t dst, size_t size);
-    uintptr_t allocMem(size_t size);
-    uintptr_t allocUtm(size_t size);
-    uintptr_t allocAdm(size_t size, ProtectionTypes protect_type);
 };
 
 } // namespace Keystone
