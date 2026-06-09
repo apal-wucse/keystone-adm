@@ -54,6 +54,8 @@
   boot.extraModulePackages = [ pkgs.linuxPackages_6_12.keystone-driver ];
   boot.kernelModules = [ "keystone-driver" ];
 
+  boot.kernel.sysctl."kernel.perf_event_paranoid" = 0;
+
   services.openssh.enable = true;
   services.openssh.settings.PermitRootLogin = "yes";
   networking.firewall.allowedTCPPorts = [ 22 ];
@@ -76,6 +78,7 @@
     perf
     gdb
     binutils
+    strace
   ];
 
   environment.etc."nix/registry.json".text = builtins.toJSON {

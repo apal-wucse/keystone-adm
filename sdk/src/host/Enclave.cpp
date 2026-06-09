@@ -526,8 +526,10 @@ inline bool Enclave::perfEventInit() {
 }
 
 inline void Enclave::perfEventClose() {
-    if (perf_fd < 0)
+    if (perf_fd >= 0) {
         ::close(perf_fd);
+        perf_fd = -1;
+    }
 }
 
 inline void Enclave::perfClkStart() {
@@ -540,7 +542,11 @@ inline unsigned long Enclave::perfClkEnd() {
     unsigned long count;
     assert(perf_fd >= 0);
     ::ioctl(perf_fd, PERF_EVENT_IOC_DISABLE, 0);
-    ::read(perf_fd, &count, sizeof(count));
+    ssize_t n = ::read(perf_fd, &count, sizeof(count));
+    if (n != (ssize_t)sizeof(count)) {
+        logger.fatal("perf read returned {} bytes, expected {}", n, sizeof(count));
+        return 0;
+    }
     return count;
 }
 #endif
