@@ -95,6 +95,7 @@
               clang-format.enable = true;
             };
             settings.formatter.clang-format.excludes = [
+              "benchmarks/iozone/src/**"
               "crypto/**"
               "runtime/crypto/**"
               "runtime/include/crypto/**"

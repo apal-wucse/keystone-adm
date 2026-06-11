@@ -14,6 +14,12 @@
   hostAppBin ? "${keystonePname}-runner",
   eyrieRtBin ? "eyrie-rt",
   rtLoaderBin ? "loader.bin",
+  launchCmd ? [
+    "./${hostAppBin}"
+    "${encAppBin}"
+    "eyrie-rt"
+    "loader.bin"
+  ],
   ...
 }@args:
 stdenv.mkDerivation (
@@ -37,7 +43,7 @@ stdenv.mkDerivation (
         $TMPDIR/${keystonePname} \
         $out/bin/${keystonePname}.ke \
         "Keystone Enclave Package" \
-        "./${hostAppBin}" "${encAppBin}" "eyrie-rt" "loader.bin"
+        ${lib.escapeShellArgs launchCmd}
 
       runHook postInstall
     '';

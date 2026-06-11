@@ -6,6 +6,7 @@
 let
   cswitch = callPackage ../../../benchmarks/cswitch/package.nix { inherit withPlatform; };
   transfer = callPackage ../../../benchmarks/transfer/package.nix { inherit withPlatform; };
+  iozone = callPackage ../../../benchmarks/iozone/package.nix { inherit withPlatform; };
 in
 symlinkJoin {
   pname = "keystone-benchmarks";
@@ -14,5 +15,6 @@ symlinkJoin {
   paths = [
     cswitch
     transfer
+    iozone
   ];
 }
