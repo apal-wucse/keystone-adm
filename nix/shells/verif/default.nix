@@ -1,6 +1,7 @@
 {
   mkShell,
   asciidoctor-with-extensions,
+  cbmc,
   gnumake,
   ipaexfont,
   rocq-core,
@@ -10,6 +11,7 @@ mkShell {
   name = "keystone-verif-devshell";
   nativeBuildInputs = [
     asciidoctor-with-extensions
+    cbmc
     gnumake
     rocq-core
     tlaplus

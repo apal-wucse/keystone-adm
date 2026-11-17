@@ -10,7 +10,7 @@ ADOC_FLAGS := --failure-level WARN \
 	-a pdf-theme=model \
 	-a pdf-fontsdir="$(VERIF_FONTS_DIR);GEM_FONTS_DIR"
 
-.PHONY: all docs check reach prove clean
+.PHONY: all docs check reach prove cbmc clean
 all: docs
 
 docs: $(PDFS)
@@ -113,6 +113,41 @@ check-impl:
 		-config ADMImplFixed2E.cfg ADMImpl.tla
 	$(call run_reach,ADMImpl,ADMImplFixed.cfg,$(REACH_IMPL))
 
+# --- CBMC: validate_adm_regions -------------------------------------------------
+
+CBMC ?= cbmc
+CBMC_OUT := $(CURDIR)/cbmc/.out
+CBMC_FLAGS := --function harness -I cbmc/stubs -I ../sm/src -D__riscv_xlen=64 \
+	--unwind 17 --unwinding-assertions
+CBMC_SAFETY := --pointer-check --bounds-check --pointer-overflow-check \
+	--unsigned-overflow-check --signed-overflow-check
+# bound on the number of regions in B6
+N_MAX ?= 2
+# loops of validate_adm_regions bounded by the number of regions (cbmc
+# --show-loops); a stale list makes an unwinding assertion fail
+CBMC_N_LOOPS := 1 3 4 5
+CBMC_UNWIND_N = $(subst $(eval) ,$(comma),$(foreach l,$(CBMC_N_LOOPS),validate_adm_regions.$(l):$(shell echo $$(($(N_MAX) + 1)))))
+comma := ,
+
+# A report: the failed properties of each harness (logs in cbmc/.out).
+#   b7  B7 for any S > 0: memory safety, overflow, termination
+#   b6  B6 (W1-W9) for at most N_MAX regions, and a witness that a valid
+#       ADM with N_MAX regions exists
+cbmc:
+	@mkdir -p $(CBMC_OUT)
+	@echo "=== B7"; $(CBMC) $(CBMC_FLAGS) $(CBMC_SAFETY) \
+		cbmc/b7.c ../sm/src/adm.c > $(CBMC_OUT)/b7.log 2>&1; \
+		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/b7.log
+	@echo "=== B6 (N_MAX = $(N_MAX))"; $(CBMC) $(CBMC_FLAGS) -DN_MAX=$(N_MAX) \
+		--unwindset $(CBMC_UNWIND_N) \
+		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6.log 2>&1; \
+		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/b6.log
+	@$(CBMC) $(CBMC_FLAGS) -DN_MAX=$(N_MAX) -DREACH --unwindset $(CBMC_UNWIND_N) \
+		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6-reach.log 2>&1; \
+		if grep -q 'reach: .*: FAILURE' $(CBMC_OUT)/b6-reach.log; \
+		then echo "reached:     valid ADM with $(N_MAX) regions"; \
+		else echo "NOT REACHED: valid ADM with $(N_MAX) regions"; fi
+
 # --- Rocq proofs ---------------------------------------------------------------
 
 ROCQ ?= rocq
@@ -137,5 +172,5 @@ prove: rocq/ADM.vo rocq/ADMRegions.vo
 
 clean:
 	rm -f $(PDFS)
-	rm -rf tla/.tlc
+	rm -rf tla/.tlc cbmc/.out
 	rm -f rocq/*.vo rocq/*.vok rocq/*.vos rocq/*.glob rocq/.*.aux $(ROCQ_LOG)

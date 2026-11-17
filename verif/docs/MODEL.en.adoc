@@ -703,7 +703,7 @@ The second half of E2 guarantees only the structure (number, types, sizes, offse
 
 These are candidates found by code reading. For #1, #5, #6, #7, #11, #12 and #13, the effect on the properties of Section 7 was checked with the implementation model of Section 10.3. The others are outside the scope of the model or are handled at the code level.
 
-#1, #5, #6, #7, #11, #12 and #13 have been fixed in `++sm/src/++`. #1 and #5 are fixed as `++FixValidateFail++` and `++FixStaleMeta++` of Section 10.3 (`++enclave.c++`). For #6, #11 and #12, `++stop_enclave_with_share++` checks its arguments and the state first, and the guard of `++destroy_enclave++` is limited to FRESH / STOPPED. #7 and #13 are fixed as `++FixHartRestart++` (`++init_resend++`), `++FixNonRetSuspend++` and `++FixStopping++` of Section 10.3 (`++pmp.c++`, `++ipi.c++`, `++sm.c++`, `++enclave.c++`). The "Implementation" column of the table describes the code before the fix.
+#1–#7 and #11–#13 have been fixed in `++sm/src/++`. #2–#4 are fixed in `++adm.c++` after the CBMC check of Section 10.4. #1 and #5 are fixed as `++FixValidateFail++` and `++FixStaleMeta++` of Section 10.3 (`++enclave.c++`). For #6, #11 and #12, `++stop_enclave_with_share++` checks its arguments and the state first, and the guard of `++destroy_enclave++` is limited to FRESH / STOPPED. #7 and #13 are fixed as `++FixHartRestart++` (`++init_resend++`), `++FixNonRetSuspend++` and `++FixStopping++` of Section 10.3 (`++pmp.c++`, `++ipi.c++`, `++sm.c++`, `++enclave.c++`). The "Implementation" column of the table describes the code before the fix.
 
 [cols="1,3,6,8,7",options="header"]
 |===
@@ -734,7 +734,7 @@ These are candidates found by code reading. For #1, #5, #6, #7, #11, #12 and #13
 | 4
 | B6 (W3, W4, W6), B7
 | Overflow-free range checks; headers and data bodies are disjoint
-| `++data->offset + data->size++` has no overflow check. Layouts where a data body overlaps the ADM header or a region header are not excluded. The last region has no overlap check against a successor
+| `++data->offset + data->size++` has no overflow check. Layouts where a data body overlaps the ADM header or a region header are not excluded. The last region has no overlap check against a successor. CBMC also found region headers overlapping each other or the ADM header, and overflow of the `++meta++` size times the element width (Section 10.4)
 | same
 
 | 5
@@ -897,7 +897,7 @@ The specifications are in `++verif/tla/++`. `++make check++` runs the checks and
 
 | B6, B7
 | —
-| Properties of the validation function itself; to be checked at the code level (not started)
+| Properties of the validation function itself; checked with CBMC in Section 10.4
 
 | C1, C2, and the consequences of C1
 | `++ADMRegions.tla++` / `++ADMRegions.cfg++` (2 harts, 2 enclaves, 5 pages)
@@ -1169,8 +1169,47 @@ The runtime's `++dispatch_edgecall_ocall_with_share++` passes the arguments of t
 * One IPI round of `++pmp_set_global++`, together with the re-send of `++init_resend++`, is one atomic transition. The memory ordering between the records and the HSM states (where the `++mb()++` goes) is an assumption outside the model.
 * The fix flags model one possible fix each; they are not fixes of the implementation. Every modeled difference (#1, #5, #6, #7, #11, #12 and #13) is also fixed in the implementation.
 
-=== 10.4 Remaining work
+=== 10.4 Checking the validation function with CBMC
+
+The harnesses are in `++verif/cbmc/++`. `++make cbmc++` checks `++validate_adm_regions++` of `++sm/src/adm.c++` as it is with CBMC. The ADM is memory of size S (below 2^40^) with arbitrary contents, and the metadata are 16 arbitrary entries. The harnesses compute in 128 bits so that wrap-around cannot hide a violation.
+
+[cols="2,4,8",options="header"]
+|===
+| Property
+| Harness and bounds
+| Result
+
+| B7
+| `++b7.c++`; any S > 0, at most 16 regions, any metadata
+| No read outside the ADM, no overflow, termination (the loops are unwound far enough)
+
+| B6
+| `++b6.c++`; S at least the ADM header, at most `++N_MAX++` regions, distinct metadata UIDs
+| W1–W9 hold (checked with `++N_MAX++` = 2, 3, 4). A valid ADM with two regions is shown to exist, so the check is not vacuous
+|===
+
+Before the fix, the following counterexamples were found (`++N_MAX++` = 2).
+
+* B7: overflow of `++data->offset + data->size++` (#4) and of `++meta.size++` times the element width. With S smaller than the ADM header, the header is read out of bounds, but an ADM is page-granular, so this does not happen in practice.
+* B6: W2 (duplicate UIDs, a missing expected region; #2), W3 (a region header overlapping the ADM header), W4 (overflow; #4), W6 (headers overlapping each other, headers and data, data and data; #4), W7 (the type is not compared; #3), and W9 (overflow of the multiplication). W1, W5 and W8 held.
+
+W4 is the most dangerous. Writing a huge `++size++` into a region of a variable-length array type makes `++offset + size++` wrap around and pass validation. An enclave that trusts this `++size++` reads and writes outside the ADM.
+
+The fix (`++adm.c++`):
+
+* Compare the number of regions with the number of used metadata entries, and reject duplicate and unknown UIDs (W2).
+* A region header lies after the ADM header, inside the ADM, and does not overlap the previous one (W3, W5, W6).
+* Check the range of a data body as `++size > S || offset > S - size++` (W4), and that it overlaps neither the ADM header, nor any region header, nor any other data body (W6).
+* Compare the type in the region header with the metadata (W7), and the size by division (W9).
+* Read each field of the ADM once.
+* New error codes `++ADM_REGION_COUNT_MISMATCH++`, `++ADM_INVALID_UID++` and `++ADM_TYPE_MISMATCH++`.
+
+The ADMs built by the SDK and the runtime pass the new checks: the runtime passes every region as metadata on each stop, and writes the type into the region header.
+
+Bounds: B6 holds for at most 4 regions. Each condition relates at most two regions, so a larger bound is not expected to reveal a new kind of violation, but this is not proved. With 16 regions, the many reads at symbolic positions kept the check from finishing. B7 covers up to 16 regions (about 20 minutes).
+
+=== 10.5 Remaining work
 
 . Reproduce #7 and #13 on QEMU, and confirm that they no longer occur after the fix. Also check the fix of #1 (destruction on validation failure) on QEMU.
-. Bounded-check `++validate_adm_regions++` with CBMC or a similar tool to confirm B6 and B7.
+. Raise the bound on the number of regions in the B6 check (or give an argument that does not depend on it).
 . Confirm C3 and C5 for the region allocation in `++pmp.c++`.

@@ -6,3 +6,4 @@
 /rocq/*.glob
 /rocq/.*.aux
 /rocq/.assumptions.log
+/cbmc/.out/
