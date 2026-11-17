@@ -1,0 +1,8 @@
+/tla/.tlc/
+/tla/*_TTrace_*
+/rocq/*.vo
+/rocq/*.vok
+/rocq/*.vos
+/rocq/*.glob
+/rocq/.*.aux
+/rocq/.assumptions.log

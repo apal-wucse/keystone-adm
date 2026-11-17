@@ -1,0 +1,15 @@
+# Serif theme: Noto Serif for Latin text, IPAex Mincho for Japanese text.
+# IPAex Mincho ships a single weight, so it is used for every style.
+extends: default-with-font-fallbacks
+font:
+  catalog:
+    merge: true
+    IPAex Mincho:
+      normal: ipaexm.ttf
+      bold: ipaexm.ttf
+      italic: ipaexm.ttf
+      bold_italic: ipaexm.ttf
+  fallbacks: [IPAex Mincho, M+ 1p Fallback, Noto Emoji]
+base:
+  # justified text stretches the few spaces in Japanese lines too far
+  text-align: left
