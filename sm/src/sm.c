@@ -12,7 +12,10 @@
 #include <sbi/riscv_barrier.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/sbi_console.h>
+#include <sbi/sbi_ecall_interface.h>
+#include <sbi/sbi_error.h>
 #include <sbi/sbi_hart.h>
+#include <sbi/sbi_hsm.h>
 #include <sbi/sbi_string.h>
 
 static int sm_init_done = 0;
@@ -39,6 +42,18 @@ byte sm_private_key[PRIVATE_KEY_SIZE] = {
 };
 byte dev_public_key[PUBLIC_KEY_SIZE] = {
     0,
+};
+
+/* a non-retentive resume reconfigures the PMP without calling sm_init */
+static int sm_hsm_hart_suspend(u32 suspend_type) {
+    if (suspend_type & SBI_HSM_SUSP_NON_RET_BIT)
+        return SBI_EDENIED;
+    return SBI_ENOTSUPP;
+}
+
+static const struct sbi_hsm_device sm_hsm_device = {
+    .name         = "keystone-sm",
+    .hart_suspend = sm_hsm_hart_suspend,
 };
 
 int osm_pmp_set(uint8_t perm) {
@@ -134,6 +149,12 @@ void sm_init(bool cold_boot) {
 
         sbi_ecall_register_extension(&ecall_keystone_enclave);
 
+        if (sbi_hsm_get_device()) {
+            sbi_printf("[SM] intolerable error - HSM device already registered");
+            sbi_hart_hang();
+        }
+        sbi_hsm_set_device(&sm_hsm_device);
+
         sm_region_id = smm_init();
         if (sm_region_id < 0) {
             sbi_printf("[SM] intolerable error - failed to initialize SM memory");
@@ -169,6 +190,7 @@ void sm_init(bool cold_boot) {
     pmp_init();
     pmp_set_keystone(sm_region_id, PMP_NO_PERM);
     pmp_set_keystone(os_region_id, PMP_ALL_PERM);
+    pmp_restore_global();
 
     /* Fire platform specific global init */
     if (platform_init_global() != SBI_ERR_SM_ENCLAVE_SUCCESS) {

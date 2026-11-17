@@ -11,6 +11,7 @@
 #include "sm-sbi-opensbi.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_atomic.h>
+#include <sbi/riscv_barrier.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/sbi_hart.h>
 
@@ -21,6 +22,10 @@ static spinlock_t pmp_lock = SPIN_LOCK_INITIALIZER;
 static struct pmp_region regions[PMP_MAX_N_REGION];
 static uint32_t reg_bitmap        = 0;
 static uint32_t region_def_bitmap = 0;
+
+/* last permission set on every hart, restored on a restarted hart */
+#define GLOBAL_PERM_UNSET 0xff
+static uint8_t global_perm[PMP_MAX_N_REGION] = {[0 ... PMP_MAX_N_REGION - 1] = GLOBAL_PERM_UNSET};
 
 static inline int region_register_idx(region_id i) { return regions[i].reg_idx; }
 
@@ -156,10 +161,19 @@ int pmp_detect_region_overlap_atomic(uintptr_t addr, uintptr_t size) {
  *
  **********************************/
 
+/* must precede reading the HSM states in send_and_sync_pmp_ipi */
+static void record_global_perm(int region_idx, uint8_t perm) {
+    spin_lock(&pmp_lock);
+    global_perm[region_idx] = perm;
+    spin_unlock(&pmp_lock);
+    mb();
+}
+
 int pmp_unset_global(int region_idx) {
     if (!is_pmp_region_valid(region_idx))
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
 
+    record_global_perm(region_idx, GLOBAL_PERM_UNSET);
     send_and_sync_pmp_ipi(region_idx, SBI_PMP_IPI_TYPE_UNSET, PMP_NO_PERM);
 
     return SBI_ERR_SM_PMP_SUCCESS;
@@ -170,9 +184,22 @@ int pmp_set_global(int region_idx, uint8_t perm) {
     if (!is_pmp_region_valid(region_idx))
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
 
+    record_global_perm(region_idx, perm);
     send_and_sync_pmp_ipi(region_idx, SBI_PMP_IPI_TYPE_SET, perm);
 
     return SBI_ERR_SM_PMP_SUCCESS;
+}
+
+void pmp_restore_global() {
+    int i;
+
+    spin_lock(&pmp_lock);
+    for (i = 0; i < PMP_MAX_N_REGION; i++) {
+        if (is_pmp_region_valid(i) && global_perm[i] != GLOBAL_PERM_UNSET)
+            pmp_set_keystone(i, global_perm[i]);
+    }
+    spin_unlock(&pmp_lock);
+    mb();
 }
 
 void pmp_init() {
@@ -410,6 +437,7 @@ int pmp_region_free_atomic(int region_idx) {
         UNSET_BIT(reg_bitmap, reg_idx - 1);
 
     region_clear_all(region_idx);
+    global_perm[region_idx] = GLOBAL_PERM_UNSET;
 
     spin_unlock(&pmp_lock);
 

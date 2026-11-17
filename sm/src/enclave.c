@@ -524,27 +524,8 @@ error:
     return ret;
 }
 
-/*
- * Fully destroys an enclave
- * Deallocates EID, clears epm, etc
- * Fails only if the enclave isn't running.
- */
-unsigned long destroy_enclave(enclave_id eid) {
-    int destroyable;
-
-    spin_lock(&encl_lock);
-    /* Reject DESTROYING and ALLOCATED: only FRESH or STOPPED can be destroyed */
-    destroyable =
-        (ENCLAVE_EXISTS(eid) && (enclaves[eid].state == FRESH || enclaves[eid].state == STOPPED));
-    /* update the enclave state first so that
-     * no SM can run the enclave any longer */
-    if (destroyable)
-        enclaves[eid].state = DESTROYING;
-    spin_unlock(&encl_lock);
-
-    if (!destroyable)
-        return SBI_ERR_SM_ENCLAVE_NOT_DESTROYABLE;
-
+/* the caller has set the state to DESTROYING */
+static void destroy_enclave_body(enclave_id eid) {
     // 0. Let the platform specifics do cleanup/modifications
     platform_destroy_enclave(&enclaves[eid]);
 
@@ -589,8 +570,45 @@ unsigned long destroy_enclave(enclave_id eid) {
 
     // 3. release eid
     encl_free_eid(eid);
+}
+
+/*
+ * Fully destroys an enclave
+ * Deallocates EID, clears epm, etc
+ * Fails only if the enclave isn't running.
+ */
+unsigned long destroy_enclave(enclave_id eid) {
+    int destroyable;
+
+    spin_lock(&encl_lock);
+    /* Reject DESTROYING and ALLOCATED: only FRESH or STOPPED can be destroyed */
+    destroyable =
+        (ENCLAVE_EXISTS(eid) && (enclaves[eid].state == FRESH || enclaves[eid].state == STOPPED));
+    /* update the enclave state first so that
+     * no SM can run the enclave any longer */
+    if (destroyable)
+        enclaves[eid].state = DESTROYING;
+    spin_unlock(&encl_lock);
+
+    if (!destroyable)
+        return SBI_ERR_SM_ENCLAVE_NOT_DESTROYABLE;
+
+    destroy_enclave_body(eid);
 
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
+}
+
+/* destroy on validation failure; the enclave is RUNNING and entered by this hart only */
+static unsigned long fail_validation(enclave_id eid, AdmValidationError err) {
+    pr_adm_validation_err(err);
+
+    spin_lock(&encl_lock);
+    enclaves[eid].state = DESTROYING;
+    spin_unlock(&encl_lock);
+
+    destroy_enclave_body(eid);
+
+    return SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA;
 }
 
 unsigned long run_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
@@ -619,11 +637,8 @@ unsigned long run_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
             uintptr_t adm_size  = get_enclave_region_size(eid, adm_memid);
 
             ret = validate_adm_regions(adm_start, adm_size, enclaves[eid].adm_state_info.type_info);
-            if (ret != ADM_VALID) {
-                // validation failed
-                pr_adm_validation_err(ret);
-                return SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA;
-            }
+            if (ret != ADM_VALID)
+                return fail_validation(eid, ret);
 
             // reset validation info
             enclaves[eid].adm_state_info.share = ADM_SHARE_NONE;
@@ -641,6 +656,13 @@ unsigned long run_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
+static void finish_stop(enclave_id eid) {
+    spin_lock(&encl_lock);
+    if (enclaves[eid].state == STOPPING)
+        enclaves[eid].state = STOPPED;
+    spin_unlock(&encl_lock);
+}
+
 unsigned long exit_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
     int exitable;
 
@@ -649,7 +671,7 @@ unsigned long exit_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
     if (exitable) {
         enclaves[eid].n_thread--;
         if (enclaves[eid].n_thread == 0)
-            enclaves[eid].state = STOPPED;
+            enclaves[eid].state = STOPPING;
     }
     spin_unlock(&encl_lock);
 
@@ -657,6 +679,7 @@ unsigned long exit_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
         return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
 
     context_switch_to_host(regs, eid, 0);
+    finish_stop(eid);
 
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
@@ -670,7 +693,7 @@ unsigned long stop_enclave(struct sbi_trap_regs* regs, uint64_t request, enclave
     if (stoppable) {
         enclaves[eid].n_thread--;
         if (enclaves[eid].n_thread == 0)
-            enclaves[eid].state = STOPPED;
+            enclaves[eid].state = STOPPING;
     }
     default_perm = enclaves[eid].adm_default_protection;
     if (default_perm == DEFAULT_NOPERM) {
@@ -687,6 +710,7 @@ unsigned long stop_enclave(struct sbi_trap_regs* regs, uint64_t request, enclave
         return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
 
     context_switch_to_host(regs, eid, request == STOP_EDGE_CALL_HOST);
+    finish_stop(eid);
 
     switch (request) {
     case (STOP_TIMER_INTERRUPT):
@@ -723,20 +747,21 @@ unsigned long stop_enclave_with_share(
 
     enclaves[eid].n_thread--;
     if (enclaves[eid].n_thread == 0)
-        enclaves[eid].state = STOPPED;
+        enclaves[eid].state = STOPPING;
 
     enclaves[eid].adm_state_info.share = share_type;
 
-    // set assumed data types
-    if (type_info) {
-        // Assumes invalidated all entries by default
-        // Only copying used entries here
-        for (int i = 0; i < count; i++)
+    // set assumed data types, replacing all the previous ones
+    for (unsigned long i = 0; i < ADM_SLOT_MAX; i++) {
+        if (type_info && i < count)
             enclaves[eid].adm_state_info.type_info[i] = type_info[i];
+        else
+            enclaves[eid].adm_state_info.type_info[i] = (AdmTypeInfo){ADM_UID_UNUSED, TYPE_NONE, 0};
     }
     spin_unlock(&encl_lock);
 
     context_switch_to_host(regs, eid, 1);
+    finish_stop(eid);
 
     return SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST;
 }
@@ -783,11 +808,8 @@ unsigned long resume_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
             uintptr_t adm_start = get_enclave_region_base(eid, adm_memid);
             uintptr_t adm_size  = get_enclave_region_size(eid, adm_memid);
             ret = validate_adm_regions(adm_start, adm_size, enclaves[eid].adm_state_info.type_info);
-            if (ret != ADM_VALID) {
-                // validation failed
-                pr_adm_validation_err(ret);
-                return SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA;
-            }
+            if (ret != ADM_VALID)
+                return fail_validation(eid, ret);
 
             // reset validation info
             enclaves[eid].adm_state_info.share = ADM_SHARE_NONE;
@@ -797,6 +819,9 @@ unsigned long resume_enclave(struct sbi_trap_regs* regs, enclave_id eid) {
         } else if (share_type == ADM_SHARE_RONLY) {
             // reset share state
             enclaves[eid].adm_state_info.share = ADM_SHARE_NONE;
+            for (int i = 0; i < ADM_SLOT_MAX; i++)
+                enclaves[eid].adm_state_info.type_info[i] =
+                    (AdmTypeInfo){ADM_UID_UNUSED, TYPE_NONE, 0};
         }
     }
 

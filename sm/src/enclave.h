@@ -30,6 +30,7 @@ typedef enum {
     FRESH,
     STOPPED,
     RUNNING,
+    STOPPING, /* stopped, context_switch_to_host in progress */
 } enclave_state;
 
 /* Enclave stop reasons requested */

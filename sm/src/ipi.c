@@ -1,5 +1,6 @@
 #include "ipi.h"
 #include "pmp.h"
+#include <sbi/riscv_barrier.h>
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_domain.h>
 #include <sbi/sbi_fifo.h>
@@ -18,11 +19,24 @@ void sbi_pmp_ipi_local_update(struct sbi_tlb_info* __info) {
 }
 
 void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm) {
-    ulong mask        = 0;
-    ulong source_hart = current_hartid();
+    ulong mask                   = 0;
+    ulong source_hart            = current_hartid();
+    const struct sbi_domain* dom = sbi_domain_thishart_ptr();
     struct sbi_tlb_info tlb_info;
-    sbi_hsm_hart_interruptible_mask(sbi_domain_thishart_ptr(), 0, &mask);
+    u32 h;
+
+    sbi_hsm_hart_interruptible_mask(dom, 0, &mask);
 
     SBI_TLB_INFO_INIT(&tlb_info, type, 0, region_idx, perm, sbi_pmp_ipi_local_update, source_hart);
     sbi_tlb_request(mask, 0, &tlb_info);
+
+    /* START_PENDING harts are not reached above: resend once they are STARTED */
+    sbi_hartmask_for_each_hart(h, &dom->assigned_harts) {
+        if (h == source_hart || sbi_hsm_hart_get_state(dom, h) != SBI_HSM_STATE_START_PENDING)
+            continue;
+        while (sbi_hsm_hart_get_state(dom, h) == SBI_HSM_STATE_START_PENDING)
+            cpu_relax();
+        if (sbi_hsm_hart_get_state(dom, h) == SBI_HSM_STATE_STARTED)
+            sbi_tlb_request(1UL, h, &tlb_info);
+    }
 }
