@@ -533,7 +533,9 @@ unsigned long destroy_enclave(enclave_id eid) {
     int destroyable;
 
     spin_lock(&encl_lock);
-    destroyable = (ENCLAVE_EXISTS(eid) && enclaves[eid].state <= STOPPED);
+    /* Reject DESTROYING and ALLOCATED: only FRESH or STOPPED can be destroyed */
+    destroyable =
+        (ENCLAVE_EXISTS(eid) && (enclaves[eid].state == FRESH || enclaves[eid].state == STOPPED));
     /* update the enclave state first so that
      * no SM can run the enclave any longer */
     if (destroyable)
@@ -701,17 +703,27 @@ unsigned long stop_enclave_with_share(
     unsigned long count, unsigned long share_type) {
     int stoppable;
 
-    /* Setup validation info */
+    /* Validate every argument before touching the enclave state: an error
+     * returned after the state has been changed leaves the enclave running
+     * while the SM records it as STOPPED. */
     if (count > ADM_SLOT_MAX)
+        return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+    if (share_type != ADM_SHARE_NONE && share_type != ADM_SHARE_RONLY && share_type != ADM_SHARE_RW)
+        return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+    /* r/w share w/o validation info */
+    if (share_type == ADM_SHARE_RW && !type_info)
         return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
 
     spin_lock(&encl_lock);
     stoppable = enclaves[eid].state == RUNNING;
-    if (stoppable) {
-        enclaves[eid].n_thread--;
-        if (enclaves[eid].n_thread == 0)
-            enclaves[eid].state = STOPPED;
+    if (!stoppable) {
+        spin_unlock(&encl_lock);
+        return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
     }
+
+    enclaves[eid].n_thread--;
+    if (enclaves[eid].n_thread == 0)
+        enclaves[eid].state = STOPPED;
 
     enclaves[eid].adm_state_info.share = share_type;
 
@@ -721,19 +733,8 @@ unsigned long stop_enclave_with_share(
         // Only copying used entries here
         for (int i = 0; i < count; i++)
             enclaves[eid].adm_state_info.type_info[i] = type_info[i];
-    } else {
-        // invalid state
-        // r/w share w/o validation info
-        if (share_type == ADM_SHARE_RW) {
-            enclaves[eid].adm_state_info.share = ADM_SHARE_NONE;
-            spin_unlock(&encl_lock);
-            return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
-        }
     }
     spin_unlock(&encl_lock);
-
-    if (!stoppable)
-        return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
 
     context_switch_to_host(regs, eid, 1);
 
