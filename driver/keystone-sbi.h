@@ -18,6 +18,9 @@
 #define SBI_SM_RUN_ENCLAVE     2003
 #define SBI_SM_RESUME_ENCLAVE  2005
 
+/* the SM has destroyed the enclave */
+#define SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA 100017
+
 struct keystone_sbi_pregion_t {
     uintptr_t paddr;
     size_t size;

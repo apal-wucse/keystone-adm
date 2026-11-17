@@ -64,7 +64,7 @@ struct adm {
 };
 
 struct enclave {
-    unsigned long eid;
+    long eid; /* SM eid, -1 if the enclave does not exist in the SM */
     int close_on_pexit;
     struct utm* utm;
     struct epm* epm;

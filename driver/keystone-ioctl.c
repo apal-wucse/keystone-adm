@@ -134,6 +134,8 @@ int keystone_run_enclave(unsigned long data) {
     }
 
     ret = sbi_sm_run_enclave(enclave->eid);
+    if (ret.error == SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA)
+        enclave->eid = -1;
 
     arg->error = ret.error;
     arg->value = ret.value;
@@ -263,6 +265,8 @@ int keystone_resume_enclave(unsigned long data) {
     }
 
     ret = sbi_sm_resume_enclave(enclave->eid);
+    if (ret.error == SBI_ERR_SM_ENCLAVE_ADM_ILLEGAL_DATA)
+        enclave->eid = -1;
 
     arg->error = ret.error;
     arg->value = ret.value;
