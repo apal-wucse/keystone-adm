@@ -92,6 +92,9 @@ typedef enum adm_validation_error {
     ADM_TYPE_STATIC_ARR_64_MISMATCH,
     ADM_TYPE_DYN_MISMATCH,
     ADM_INVALID_TYPE,
+    ADM_REGION_COUNT_MISMATCH,
+    ADM_INVALID_UID,
+    ADM_TYPE_MISMATCH,
 } AdmValidationError;
 
 extern const char* adm_validation_err_msg[];
