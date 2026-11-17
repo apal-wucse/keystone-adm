@@ -99,19 +99,14 @@ int keystone_finalize_enclave(unsigned long arg) {
     ret = sbi_sm_create_enclave(&create_args);
 
     if (ret.error) {
+        /* eid stays -1: a later destroy frees the enclave and removes its id */
         keystone_err("create_enclave: SBI error code %ld\n", ret.error);
-        goto error_destroy_enclave;
+        return -EINVAL;
     }
 
     enclave->eid = ret.value;
 
     return 0;
-
-error_destroy_enclave:
-    /* This can handle partial initialization failure */
-    destroy_enclave(enclave);
-
-    return -EINVAL;
 }
 
 int keystone_run_enclave(unsigned long data) {
@@ -282,11 +277,6 @@ int keystone_swap_map(unsigned long data) {
 
     if (!enclave) {
         keystone_err("invalid enclave id: %lu\n", ueid);
-        return -EINVAL;
-    }
-
-    if (enclave->eid < 0) {
-        keystone_err("enclave was defined but does not exist, id: %lu\n", ueid);
         return -EINVAL;
     }
 
