@@ -64,7 +64,7 @@
               inherit (pkgsRiscv64) keystonePkgs;
             }
             // {
-              inherit (pkgsRiscv64.linuxPackages)
+              inherit (pkgsRiscv64.linuxPackages_6_12)
                 keystone-driver
                 ;
               inherit (pkgsRiscv64.keystonePkgs)

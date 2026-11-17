@@ -1,8 +1,8 @@
 {
   mkShell,
-  linuxPackages,
+  linuxPackages_6_12,
 }:
 mkShell {
   name = "keystone-driver-devshell";
-  inputsFrom = [ linuxPackages.keystone-driver ];
+  inputsFrom = [ linuxPackages_6_12.keystone-driver ];
 }
