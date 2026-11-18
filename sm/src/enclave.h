@@ -109,7 +109,8 @@ struct report {
 };
 
 /* sealing key structure */
-#define SEALING_KEY_SIZE 128
+#define SEALING_KEY_SIZE         128
+#define SEALING_KEY_IDENT_MAXLEN 1024
 struct sealing_key {
     uint8_t key[SEALING_KEY_SIZE];
     uint8_t signature[SIGNATURE_SIZE];

@@ -885,10 +885,25 @@ err_unlock:
     return ret;
 }
 
+static int is_in_enclave_epm(enclave_id eid, uintptr_t addr, size_t len) {
+    int memid      = get_enclave_region_index(eid, REGION_EPM);
+    uintptr_t base = get_enclave_region_base(eid, memid);
+    uintptr_t size = get_enclave_region_size(eid, memid);
+
+    return memid >= 0 && addr >= base && len <= size && addr - base <= size - len;
+}
+
 unsigned long
 get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid) {
     struct sealing_key* key_struct = (struct sealing_key*)sealing_key;
     int ret;
+
+    /* The addresses are physical and are accessed in M-mode: both buffers
+     * must be inside the EPM of the calling enclave. */
+    if (key_ident_size > SEALING_KEY_IDENT_MAXLEN ||
+        !is_in_enclave_epm(eid, sealing_key, sizeof(struct sealing_key)) ||
+        !is_in_enclave_epm(eid, key_ident, key_ident_size))
+        return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
 
     /* derive key */
     ret = sm_derive_sealing_key(
