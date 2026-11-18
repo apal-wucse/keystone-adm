@@ -1,7 +1,7 @@
 ----------------------------- MODULE ADMRegions -----------------------------
 (***************************************************************************)
 (* Region placement and PMP entry priority for the ADM design model        *)
-(* (group C, MODEL.adoc Section 7.3).                                      *)
+(* (group C, MODEL.typ Section 7.3).                                       *)
 (*                                                                         *)
 (* This module extends ADM with the physical placement of each enclave's   *)
 (* private memory (EPM) and ADM, and derives the permission a hart         *)

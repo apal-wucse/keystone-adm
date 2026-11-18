@@ -1,4 +1,4 @@
-// Host access to the ADM from a restarted hart (MODEL.adoc Section 8 #7).
+// Host access to the ADM from a restarted hart (MODEL.typ Section 8 #7).
 // Creates an enclave, whose ADM the host must not access, restarts CPU
 // $ADMPEEK_CPU (default 1) with CPU hotplug, and reads the ADM from it.
 // Run as root.

@@ -1,4 +1,4 @@
-/* Common definitions for the harnesses of validate_adm_regions (MODEL.adoc 6). */
+/* Common definitions for the harnesses of validate_adm_regions (MODEL.typ 6). */
 #pragma once
 #include "adm.h"
 #include <stdlib.h>

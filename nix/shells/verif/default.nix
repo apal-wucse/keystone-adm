@@ -2,21 +2,21 @@
   mkShell,
   applyPatches,
   keystone-sm,
-  asciidoctor-with-extensions,
   cbmc,
   gnumake,
   ipaexfont,
   rocq-core,
   tlaplus,
+  typst,
 }:
 mkShell {
   name = "keystone-verif-devshell";
   nativeBuildInputs = [
-    asciidoctor-with-extensions
     cbmc
     gnumake
     rocq-core
     tlaplus
+    typst
   ];
 
   # OpenSBI headers the SM is built with, for the CBMC harness of pmp.c
@@ -27,6 +27,6 @@ mkShell {
     }
   }/include";
 
-  # Japanese serif font (IPAex Mincho) used by verif/docs/theme
+  # Japanese fonts (IPAex Mincho / Gothic) used by verif/docs/model.typ
   VERIF_FONTS_DIR = "${ipaexfont}/share/fonts/opentype";
 }

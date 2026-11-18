@@ -1,6 +1,6 @@
 (** * Region placement and PMP entry priority (group C)
 
-    Rocq counterpart of [verif/tla/ADMRegions.tla] (MODEL.adoc Section
+    Rocq counterpart of [verif/tla/ADMRegions.tla] (MODEL.typ Section
     7.3).  The design model of ADM.v is extended with the physical placement
     of each enclave's private memory (EPM) and ADM, and the permission a
     hart actually gets at an address is derived from the PMP entries:

@@ -1,6 +1,6 @@
 (** * Design model of Additional Data Memory (ADM) / Protected Sharing
 
-    Rocq counterpart of [verif/tla/ADM.tla] (MODEL.adoc Sections 3-5 and 7).
+    Rocq counterpart of [verif/tla/ADM.tla] (MODEL.typ Sections 3-5 and 7).
     The TLA+ model is checked by TLC for small fixed configurations; here
     the same properties are proved for
 
@@ -26,7 +26,7 @@ Hypothesis hart_eq_dec : forall x y : Hart, {x = y} + {x <> y}.
 Hypothesis eid_eq_dec : forall x y : EID, {x = y} + {x <> y}.
 
 Variable Zero : Data.
-(** Structural predicate of MODEL.adoc Section 6.2, kept abstract. *)
+(** Structural predicate of MODEL.typ Section 6.2, kept abstract. *)
 Variable WF : Data -> Meta -> Prop.
 
 Inductive EState := INVALID | FRESH | RUNNING | STOPPED | DESTROYING.
@@ -88,7 +88,7 @@ Definition init : St :=
        (fun _ => false) (fun _ => K_none) (fun _ => false) (fun _ => None)
        (fun _ => false) (fun _ => Zero).
 
-(** ** Post-states of the transitions (MODEL.adoc Section 5) *)
+(** ** Post-states of the transitions (MODEL.typ Section 5) *)
 
 Definition do_create (s : St) (e : EID) (d : Data) (m0 : Meta) : St :=
   mkSt (updE (state s) e FRESH) (updE (share s) e SH_RW)
@@ -248,7 +248,7 @@ Inductive reachable : St -> Prop :=
 
     Every clause is in prenex form so that the proof automation can
     instantiate it at every enclave and hart in sight.  The properties in
-    the form of MODEL.adoc are derived from these clauses further below. *)
+    the form of MODEL.typ are derived from these clauses further below. *)
 
 Definition KeepKind (k : StopKind) : Prop :=
   k = K_share_none \/ k = K_share_ro \/ k = K_invol \/ k = K_exit.
@@ -505,7 +505,7 @@ Proof.
   - eapply inv_step; eassumption.
 Qed.
 
-(** ** State properties (MODEL.adoc Section 7), for every reachable state
+(** ** State properties (MODEL.typ Section 7), for every reachable state
 
     Names follow ADM.tla.  Where ADM.tla bounds a cardinality or
     quantifies over a finite set, the statement here is the corresponding

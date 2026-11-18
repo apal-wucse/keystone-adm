@@ -2,11 +2,11 @@
 (***************************************************************************)
 (* Design model of Additional Data Memory (ADM) / Protected Sharing.       *)
 (*                                                                         *)
-(* This module transcribes Sections 3-5 of verif/docs/MODEL.adoc and       *)
+(* This module transcribes Sections 3-5 of verif/docs/MODEL.typ and        *)
 (* states the access-control properties (group A, Section 7.1) together    *)
 (* with the state-consistency invariants (D2) they rely on.                *)
 (*                                                                         *)
-(* Abstractions made here, beyond those of MODEL.adoc:                     *)
+(* Abstractions made here, beyond those of MODEL.typ:                      *)
 (*  - Region placement (group C) is not modeled; an ADM exists exactly     *)
 (*    while state[e] # "INVALID".                                          *)
 (*  - The ADM contents are a single abstract value from Data, and the      *)
@@ -73,7 +73,7 @@ HostPerm(s) == CASE s = "NONE"  -> "NONE"
                  [] s = "RONLY" -> "R"
                  [] s = "RW"    -> "RW"
 
-\* Abstract structural predicate (MODEL.adoc Section 6.2).
+\* Abstract structural predicate (MODEL.typ Section 6.2).
 WF(d, m) == d = m
 
 NoPerm == [h \in Harts |-> "NONE"]
@@ -111,7 +111,7 @@ Init ==
     /\ snap     = [e \in EIDs |-> Zero]
 
 -----------------------------------------------------------------------------
-(* SM operations (MODEL.adoc Section 5.1)                                  *)
+(* SM operations (MODEL.typ Section 5.1)                                   *)
 
 \* The host creates enclave e with initial ADM contents d and metadata m0.
 Create(h, e, d, m0) ==
@@ -259,7 +259,7 @@ DestroyFree(e) ==
     /\ UNCHANGED <<runner, ctx, mem, secret, dead, snap>>
 
 -----------------------------------------------------------------------------
-(* Memory accesses (MODEL.adoc Sections 5.2 and 5.3)                       *)
+(* Memory accesses (MODEL.typ Sections 5.2 and 5.3)                        *)
 
 \* Hart h is adversarial with respect to e: host, or another enclave.
 Adversarial(h, e) == ctx[h] = Host \/ \E e2 \in EIDs \ {e} : ctx[h] = Enc(e2)
@@ -310,7 +310,7 @@ Next ==
 Spec == Init /\ [][Next]_vars
 
 -----------------------------------------------------------------------------
-(* Group A: access control (MODEL.adoc Section 7.1)                        *)
+(* Group A: access control (MODEL.typ Section 7.1)                         *)
 
 \* A1: right after creation, no hart can access the ADM.
 A1_InitialProtection ==
@@ -383,7 +383,7 @@ E1_NoUnintendedDisclosure ==
         (secret[e] /\ Adversarial(h, e)) => pmp[e][h] = "NONE"
 
 -----------------------------------------------------------------------------
-(* Group B: enforcement of validation (MODEL.adoc Section 7.2)             *)
+(* Group B: enforcement of validation (MODEL.typ Section 7.2)              *)
 (* B6 and B7 concern the validation function itself and are checked at     *)
 (* the code level, not in this model.                                      *)
 
@@ -433,7 +433,7 @@ E2_ContentsPreserved ==
          /\ \A h \in Harts : ctx[h] # Enc(e)) => mem[e] = snap[e]
 
 -----------------------------------------------------------------------------
-(* D2: state consistency (MODEL.adoc Section 7.4)                          *)
+(* D2: state consistency (MODEL.typ Section 7.4)                           *)
 
 D2a_RunningConsistent ==
     \A e \in EIDs, h \in Harts :

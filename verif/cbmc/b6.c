@@ -1,6 +1,6 @@
 /*
  * B6: validate_adm_regions returns ADM_VALID => WF(mem, S, meta)
- * (MODEL.adoc 6.2, conditions W1-W9).  Arithmetic is done in 128 bits,
+ * (MODEL.typ 6.2, conditions W1-W9).  Arithmetic is done in 128 bits,
  * so that wrap-around cannot hide a violation.
  */
 #include "harness.h"

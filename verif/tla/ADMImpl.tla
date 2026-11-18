@@ -1,6 +1,6 @@
 ------------------------------- MODULE ADMImpl -------------------------------
 (***************************************************************************)
-(* Implementation model of ADM / Protected Sharing (MODEL.adoc Section 8). *)
+(* Implementation model of ADM / Protected Sharing (MODEL.typ Section 8).  *)
 (*                                                                         *)
 (* This module is independent of ADM.tla: the design model is left as it  *)
 (* is.  It follows sm/src/enclave.c, adm.c, ipi.c, pmp.c and sm.c of this  *)
@@ -33,7 +33,7 @@
 (* as one atomic step because the caller waits for completion.             *)
 (*                                                                         *)
 (* The constants Fix* select a corrected implementation, one difference   *)
-(* of MODEL.adoc Section 8 at a time.  All FALSE is the code before any    *)
+(* of MODEL.typ Section 8 at a time.  All FALSE is the code before any     *)
 (* fix.  RestoreAt selects how #7 is fixed when FixHartRestart is TRUE.    *)
 (*                                                                         *)
 (* Abstractions: DEFAULT_NOPERM only; one thread; EPM and UTM are not      *)
@@ -592,7 +592,7 @@ Next ==
 Spec == Init /\ [][Next]_vars
 
 -----------------------------------------------------------------------------
-(* Properties of MODEL.adoc Section 7, restated on the implementation      *)
+(* Properties of MODEL.typ Section 7, restated on the implementation       *)
 (* variables.  Names and meaning follow ADM.tla; pmp[e][h] is replaced by  *)
 (* the effective permission Eff(e, h).                                     *)
 

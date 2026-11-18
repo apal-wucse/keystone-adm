@@ -1,5 +1,5 @@
 #!/bin/sh
-# QEMU checks of the fixes of MODEL.adoc Section 8 (Section 10.5).
+# QEMU checks of the fixes of MODEL.typ Section 8 (Section 10.5).
 #
 # usage: run-tests.sh [BIOS]
 #   Boots the image of run-virt on a fresh overlay (with the SM firmware

@@ -1,4 +1,4 @@
-// Validation failure on resume (MODEL.adoc Section 8 #1).
+// Validation failure on resume (MODEL.typ Section 8 #1).
 // ADMFAIL_CORRUPT=1: break the ADM header while it is shared; the SM must
 // destroy the enclave on resume, and the destroy by the SDK must succeed.
 #include <cstdio>

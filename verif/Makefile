@@ -1,22 +1,21 @@
 DOCS := MODEL MODEL.en
 PDFS := $(addsuffix .pdf,$(DOCS))
 
-ASCIIDOCTOR_PDF ?= asciidoctor-pdf
-# Directory containing ipaexm.ttf; set by the verif devshell
+TYPST ?= typst
+# Directory containing the IPAex fonts; set by the verif devshell
 VERIF_FONTS_DIR ?= $(error VERIF_FONTS_DIR is not set; enter the verif devshell)
-
-ADOC_FLAGS := --failure-level WARN \
-	-a pdf-themesdir=docs/theme \
-	-a pdf-theme=model \
-	-a pdf-fontsdir="$(VERIF_FONTS_DIR);GEM_FONTS_DIR"
+TYPST_FLAGS = --ignore-system-fonts --font-path "$(VERIF_FONTS_DIR)"
 
 .PHONY: all docs check reach prove cbmc clean
 all: docs
 
 docs: $(PDFS)
 
-%.pdf: docs/%.adoc docs/theme/model-theme.yml
-	$(ASCIIDOCTOR_PDF) $(ADOC_FLAGS) -o $@ $<
+# warnings (e.g. a missing font) are errors
+%.pdf: docs/%.typ docs/model.typ
+	@out=$$($(TYPST) compile $(TYPST_FLAGS) $< $@ 2>&1); st=$$?; \
+	[ -z "$$out" ] || printf '%s\n' "$$out" >&2; \
+	[ $$st -eq 0 ] && [ -z "$$out" ] || { rm -f $@; exit 1; }
 
 # --- TLA+ model checking -----------------------------------------------------
 
