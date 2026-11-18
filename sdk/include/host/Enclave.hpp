@@ -94,6 +94,7 @@ public:
     size_t getSharedBufferSize();
     void* getAdditionalMemory();
     size_t getAdditionalMemorySize();
+    int getEid() { return pDevice->getEid(); }
     Memory& getMemory();
     uintptr_t getRuntimeElfAddr() { return runtimeElfAddr; }
     uintptr_t getEnclaveElfAddr() { return enclaveElfAddr; }

@@ -1,6 +1,8 @@
 // Validation failure on resume (MODEL.typ Section 8 #1).
 // ADMFAIL_CORRUPT=1: break the ADM header while it is shared; the SM must
 // destroy the enclave on resume, and the destroy by the SDK must succeed.
+// The eapp also checks the sealing key (#15) and the removal of a region
+// (#16), and returns the result.
 #include <cstdio>
 #include <cstdlib>
 
@@ -48,8 +50,11 @@ int main(int argc, char** argv) {
         edge_call_init_internals(
             (uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
 
-        Keystone::Error err = enclave.run();
+        uintptr_t checks    = 0;
+        Keystone::Error err = enclave.run(&checks);
         printf("[host] run returned %d\n", (int)err);
+        if (err == Keystone::Error::Success)
+            printf("[host] eapp checks = %lu\n", checks);
         // the enclave is destroyed here
     }
     printf("[host] done\n");

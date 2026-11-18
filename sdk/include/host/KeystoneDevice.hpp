@@ -39,6 +39,7 @@ private:
 public:
     uintptr_t getPhysAddr() { return physAddr; }
     uintptr_t getAdmPhysAddr() { return admPhysAddr; }
+    int getEid() { return eid; }
     bool isPteLocked() { return pteLocked; }
 
     KeystoneDevice() : KeystoneDevice(false) {}

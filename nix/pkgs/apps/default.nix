@@ -12,6 +12,7 @@ let
   admtest = callPackage ../../../apps/admtest/package.nix { inherit withPlatform; };
   admfail = callPackage ../../../apps/admfail/package.nix { inherit withPlatform; };
   admpeek = callPackage ../../../apps/admpeek/package.nix { inherit withPlatform; };
+  admrace = callPackage ../../../apps/admrace/package.nix { inherit withPlatform; };
 in
 symlinkJoin {
   pname = "keystone-apps";
@@ -27,5 +28,6 @@ symlinkJoin {
     admtest
     admfail
     admpeek
+    admrace
   ];
 }

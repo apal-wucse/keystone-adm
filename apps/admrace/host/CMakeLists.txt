@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.20)
+project(keystone-admrace-host C CXX ASM)
+
+set(host_bin admrace-runner)
+set(host_src host.cpp)
+
+# host
+add_executable(${host_bin} ${host_src})
+target_link_libraries(${host_bin} PRIVATE keystone-host keystone-edge)
+target_compile_features(${host_bin} PRIVATE cxx_std_23)
+
+install(TARGETS ${host_bin})
