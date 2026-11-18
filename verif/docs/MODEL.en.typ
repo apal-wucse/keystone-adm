@@ -23,7 +23,8 @@ Notation: `x'` is the value after a transition, `∀h` ranges over all harts, `�
 == 1.2 Out of scope
 
 - The `DEFAULT_READ` mode.
-- The internals of the runtime (RT) and the eapp. Both are abstracted as "a principal that may call stop with any sharing state and any metadata".
+- The internals of the runtime (RT) and the eapp. Both are abstracted as "a principal that may call stop with any sharing state and any metadata". As an exception, adding and removing regions with the enclave-side ADM library is checked for consistency with the validation function (Section 10.4).
+- The allocator inside the ADM (`adm_alloc.c`). It is a simple malloc taken from elsewhere, and the validation of the SM does not look at the contents of the allocator's region (block sizes and the free list). The region is treated as such, and the behaviour of the allocator is not guaranteed. Giving that guarantee is a possible extension.
 - Denial of service, physical attacks, and side channels (dissertation Section 3.3).
 - Attestation, and the protection of private memory (EPM) itself (assumed as properties of the original Keystone).
 
@@ -45,10 +46,10 @@ The adversary can:
   [H5], [The SM's own (M-mode) accesses to the ADM are not blocked by PMP],
   [H6], [There is no memory access path that bypasses PMP (such as DMA)],
   [H7], [The enclave issuing an enclave SBI call is identified correctly from the per-hart context information kept by the SM],
-  [H8], [The SM does not read or write an address given by the caller of an SBI call without the PMP check],
+  [H8], [The SM reads or writes an address given by the caller of an SBI call only through the PMP check with the privilege of the caller, or inside the EPM of the calling enclave],
 )
 
-H3 and H4 are the counterpart of verification item D4: they are assumptions in the design model and proof obligations when verifying the implementation. H8 does not hold in the current implementation (Section 10.6).
+H3 and H4 are the counterpart of verification item D4: they are assumptions in the design model and proof obligations when verifying the implementation. H8 did not hold in `get_sealing_key`, which has been fixed (Section 8 \#15).
 
 = 2. Constants and Sets
 
@@ -246,12 +247,15 @@ Hart h is considered adversarial with respect to e when `ctx[h] = HOST`, or `ctx
 
 = 6. Specification of the Validation Function
 
+The dissertation treats the validation function as an example that can be extended for each use. WF in this section specifies the structural check of the current implementation. It does not include checks based on the meaning of the data, which the dissertation leaves as future work. For this reason the checks of the validation function (B6, B7) stay bounded, and a proof that does not depend on the bound is not a goal.
+
 == 6.1 ADM data structure (dissertation Section 3.6.3)
 Positions are offsets from the base of the ADM. Let `S` be the size of the ADM.
 
 ```
 ADM header (offset 0, size HDR)
   n            : number of active data regions
+  free         : offset where the next region header goes (free_list)
   hoff[0..15]  : offset to each region header
   uid[0..15]   : UID of each region
 
@@ -278,6 +282,9 @@ All of the following hold.
   [W7], [`∀i < n`: `type_i = meta[uid[i]].type`],
   [W8], [`∀i < n`: `doff_i = meta[uid[i]].offset`],
   [W9], [`∀i < n`: `SizeOK(type_i, dsize_i, meta[uid[i]].size)`],
+  [W10], [`∀i < n`: `doff_i = hoff[i] + RHDR` (the data body follows its region header)],
+  [W11], [`HDR ≤ free`, and `∀i < n`: `doff_i + dsize_i ≤ free`],
+  [W12], [`free` and every `hoff[i]` (`i < n`) are multiples of 8],
 )
 
 `SizeOK(t, d, s)`:
@@ -292,7 +299,7 @@ All of the following hold.
 
 A variable-length array is the type an enclave selects when it does not care about the size of the data; not comparing `dsize` with an expected value is intended by design. For this type, only the number, type, offset, and range (W4, W6) are validated.
 
-WF does not constrain the position of a region header relative to its data, nor `free_list` in the ADM header. The host can rewrite both during a writable share (Section 10.6).
+By W5, W6 and W10, the regions are in the order of their index (`doff_i + dsize_i ≤ hoff[i+1]`). By W8 and W10, `meta` also fixes the position of the region headers. W10–W12 are the layout that the enclave-side library relies on when it adds and removes regions (Section 8 \#16). There is no upper bound on `free`: when the ADM is almost full, the library sets `free` above S.
 
 == 6.3 Requirements on the validation function
 
@@ -383,7 +390,7 @@ The second half of E2 guarantees only the structure (number, types, sizes, offse
 
 These are candidates found by code reading. For \#1, \#5, \#6, \#7, \#11, \#12 and \#13, the effect on the properties of Section 7 was checked with the implementation model of Section 10.3. The others are outside the scope of the model or are handled at the code level.
 
-\#1–\#7 and \#11–\#14 have been fixed in `sm/src/`. \#14 is fixed in `pmp.c` after the CBMC check of Section 10.4. \#2–\#4 are fixed in `adm.c` after the CBMC check of Section 10.4. \#1 and \#5 are fixed as `FixValidateFail` and `FixStaleMeta` of Section 10.3 (`enclave.c`). For \#6, \#11 and \#12, `stop_enclave_with_share` checks its arguments and the state first, and the guard of `destroy_enclave` is limited to FRESH / STOPPED. \#7 and \#13 are fixed as `FixHartRestart` (`init_resend`), `FixNonRetSuspend` and `FixStopping` of Section 10.3 (`pmp.c`, `ipi.c`, `sm.c`, `enclave.c`). The re-send of \#7 was corrected after its first version turned out to leave a race (Section 10.3). The "Implementation" column of the table describes the code before the fix.
+\#1–\#7 and \#11–\#16 have been fixed (in `sm/src/`, except the library and the runtime of \#16). For \#16, W10–W12 are added to WF and checked by the SM (`adm.c`), and the library and the runtime are corrected (`sdk/src/edge/adm.c`, `runtime/call/syscall.c`). Removing a region no longer moves the other regions. For \#15, both buffers are checked to be inside the EPM of the calling enclave, and the identifier is limited to 1024 bytes (`enclave.c`). \#14 is fixed in `pmp.c` after the CBMC check of Section 10.4. \#2–\#4 are fixed in `adm.c` after the CBMC check of Section 10.4. \#1 and \#5 are fixed as `FixValidateFail` and `FixStaleMeta` of Section 10.3 (`enclave.c`). For \#6, \#11 and \#12, `stop_enclave_with_share` checks its arguments and the state first, and the guard of `destroy_enclave` is limited to FRESH / STOPPED. \#7 and \#13 are fixed as `FixHartRestart` (`init_resend`), `FixNonRetSuspend` and `FixStopping` of Section 10.3 (`pmp.c`, `ipi.c`, `sm.c`, `enclave.c`). The re-send of \#7 was corrected after its first version turned out to leave a race (Section 10.3). The "Implementation" column of the table describes the code before the fix.
 
 #table(
   columns: (1fr, 3fr, 6fr, 8fr, 7fr),
@@ -402,6 +409,8 @@ These are candidates found by code reading. For \#1, \#5, \#6, \#7, \#11, \#12 a
   [12], [A2, A9, D2, E1], [Out-of-range arguments are rejected without changing the state], [The check for `type_info == NULL` with `share_type == RW` comes after `n_thread` has been decremented and `state` set to `STOPPED`. In that case an error is returned without switching to the host, so the enclave keeps running while the SM records `STOPPED` and `n_thread = 0` (found by code reading while building the implementation model)], [`enclave.c` `stop_enclave_with_share`],
   [13], [A1–A4, A6, A8, B1, B2, E1, E2], [A stop is atomic: when the enclave is STOPPED, the PMP switch is complete], [`stop_enclave_with_share`, `stop_enclave` and `exit_enclave` set `state = STOPPED` under the lock, drop the lock, and only then call `context_switch_to_host`. That function reads `share` as it is at that moment, calls `pmp_set_global` / `pmp_set_keystone`, and swaps the register context in `threads[0]`. Between dropping the lock and the end of the switch, a resume or destroy from another hart is accepted (found by checking the implementation model; switching outside the lock is inherited from the original Keystone)], [`enclave.c` `stop_enclave_with_share`, `stop_enclave`, `exit_enclave`, `context_switch_to_host`],
   [14], [C2, C3], [The entries of the ADM and the EPM lie between the SM and OS entries and are shared with no other region], [A UTM (`PMP_PRI_BOTTOM`) shares the lowest-priority register with the OS region. Freeing a UTM clears that bit of `reg_bitmap`, so once `PMP_PRI_ANY` allocations (EPM, ADM) have used up registers 1–6, the next one receives the lowest-priority register. The entry of that region is overwritten by the OS region (all memory, all permissions) on every switch to the host. The host only needs to create and destroy enclaves (found with CBMC; inherited from the original Keystone)], [`pmp.c` `get_free_reg_idx`, `get_conseq_free_reg_idx`, `pmp_region_free_atomic`],
+  [15], [H8 (premise of E1, E2)], [The SM reads and writes only memory the caller can access], [`get_sealing_key` uses the two physical addresses passed by the enclave (where the key is written, where the identifier is read) in M-mode as they are, without a range check. The identifier length is unbounded as well, and is the size of a variable-length array on the SM stack. A malicious enclave can overwrite any physical address with the key and its signature (192 bytes). By having one byte read as the identifier and comparing the derived key with the keys of its own 256 candidates, it can also read any physical address (the EPM and ADM of other enclaves, the private key of the SM). Found by code reading; inherited from the original Keystone; not confirmed by running it], [`enclave.c` `get_sealing_key`, `sm.c` `sm_derive_sealing_key`],
+  [16], [E2 (B6)], [An ADM that passes validation is safe to use with the enclave-side library], [Validation (W1–W9) constrains neither the position of a region header relative to its data, nor the order of the regions, nor `free_list`. The library trusts all three. If the host rewrites them during a writable share, the ADM still passes validation, and adding or removing a region after the resume writes outside the ADM (the size computations of `adm_setup_new_hdr` and `adm_remove_region` wrap around). The runtime removes and adds a region for every delegated syscall. The library itself was also wrong: `adm_remove_region` does not update `offset` in the headers of the later regions when it removes a region other than the last, so that without any action by the host the data is misplaced and the next validation fails; `adm_reset` writes an address, not an offset, to `free_list` (found by code reading; the removal error was confirmed with a unit test and on QEMU). `adm_gen_type_info` and the runtime put the size in bytes, not the number of elements, into the metadata of a static-length array (found by the CBMC check)], [`sdk/src/edge/adm.c`, `runtime/call/syscall.c`, `sm/src/adm.c` `validate_adm_regions`],
 )
 
 = 9. Correspondence between the Model and the Implementation
@@ -419,6 +428,7 @@ These are candidates found by code reading. For \#1, \#5, \#6, \#7, \#11, \#12 a
   [Destroy, DestroyBody], [`destroy_enclave`], [`sm/src/enclave.c`],
   [Validation function (Section 6)], [`validate_adm_regions`], [`sm/src/adm.c`],
   [Metadata intake], [`copy_adm_type_info`], [`sm/src/adm_utils.h`],
+  [Adding and removing regions and generating the metadata on the enclave side (WF is preserved; Section 10.4)], [`adm_new_region`, `adm_remove_region`, `adm_gen_type_info`], [`sdk/src/edge/adm.c`],
   [Single-hart update of `pmp[h][e]`], [`pmp_set_keystone`], [`sm/src/pmp.c`],
   [All-hart update of `pmp[h][e]`], [`pmp_set_global` → `send_and_sync_pmp_ipi`], [`sm/src/pmp.c`, `sm/src/ipi.c`],
   [Region overlap check (C1)], [`detect_region_overlap`, `pmp_region_init`], [`sm/src/pmp.c`],
@@ -599,7 +609,7 @@ Unless stated otherwise, the configuration has 2 harts and 1 enclave.
 
 === Caveats
 
-- The counterexamples are counterexamples of the model. They have not been reproduced on QEMU or on hardware. The behavior of OpenSBI is based on reading the 1.1 source used by the build.
+- The counterexamples are counterexamples of the model. The checks on QEMU are in Section 10.5 (\#7 and \#13). The behavior of OpenSBI is based on reading the 1.1 source used by the build.
 - The EPM and the UTM are not modeled. The part of create before the call of `pmp_set_global` is one transition.
 - In `pmp_set_global`, writing the record and reading the mask are one transition. The memory ordering between the two (`pmp_lock` and `mb()`) is an assumption outside the model. The delivery to the harts of the mask is one transition per hart, and a hart that left the mask before the delivery does not apply the update.
 - The re-send loop looks at the harts in numerical order; the model looks at them in any order.
@@ -608,7 +618,7 @@ Unless stated otherwise, the configuration has 2 harts and 1 enclave.
 
 == 10.4 Checking the implementation with CBMC
 
-The harnesses are in `verif/cbmc/`. `make cbmc` checks `validate_adm_regions` of `sm/src/adm.c` and the region allocator of `sm/src/pmp.c` as they are with CBMC.
+The harnesses are in `verif/cbmc/`. `make cbmc` checks `validate_adm_regions` of `sm/src/adm.c`, the enclave-side library of `sdk/src/edge/adm.c` and the region allocator of `sm/src/pmp.c` as they are with CBMC.
 
 === The validation function (B6, B7)
 
@@ -618,7 +628,7 @@ For `validate_adm_regions`, the ADM is memory of size S (below 2#super[40]) with
   columns: (2fr, 4fr, 8fr),
   table.header([*Property*], [*Harness and bounds*], [*Result*]),
   [B7], [`b7.c`; any S > 0, at most 16 regions, any metadata], [No read outside the ADM, no write to the ADM, no overflow, termination (the loops are unwound far enough)],
-  [B6], [`b6.c`; S at least the ADM header, at most `N_MAX` regions, distinct metadata UIDs], [W1–W9 hold (checked with `N_MAX` = 2–6). A valid ADM with two regions is shown to exist, so the check is not vacuous. Metadata with a duplicated UID is checked separately never to be accepted (`-DDUP_META`, `N_MAX` = 2)],
+  [B6], [`b6.c`; S at least the ADM header, at most `N_MAX` regions, distinct metadata UIDs], [W1–W12 hold (checked with `N_MAX` = 2–6). A valid ADM with two regions is shown to exist, so the check is not vacuous. Metadata with a duplicated UID is checked separately never to be accepted (`-DDUP_META`, `N_MAX` = 2)],
 )
 
 Before the fix, the following counterexamples were found (`N_MAX` = 2).
@@ -634,12 +644,46 @@ The fix (`adm.c`):
 - A region header lies after the ADM header, inside the ADM, and does not overlap the previous one (W3, W5, W6).
 - Check the range of a data body as `size > S || offset > S - size` (W4), and that it overlaps neither the ADM header, nor any region header, nor any other data body (W6).
 - Compare the type in the region header with the metadata (W7), and the size by division (W9).
+- Check that a data body follows its region header (W10), that `free_list` lies after every region (W11), and that the region headers and `free_list` are at multiples of 8 (W12) (\#16).
 - Read each field of the ADM once.
-- New error codes `ADM_REGION_COUNT_MISMATCH`, `ADM_INVALID_UID` and `ADM_TYPE_MISMATCH`.
+- New error codes `ADM_REGION_COUNT_MISMATCH`, `ADM_INVALID_UID`, `ADM_TYPE_MISMATCH`, `ADM_HEADER_NOT_ADJACENT`, `ADM_MISALIGNED` and `ADM_INVALID_FREE_LIST`.
 
-The ADMs built by the SDK and the runtime pass the new checks: the runtime passes every region as metadata on each stop, and writes the type into the region header. `hello-adm.ke` runs on an image built with the fixed SM and driver.
+The validation function before W10–W12 were added has counterexamples for these three conditions (`N_MAX` = 2). The first ADM, built by the host-side SDK, and the ADMs built by the corrected library pass the checks including W10–W12 (next subsection and Section 10.5). The runtime passes every region as metadata on each stop.
 
-Bounds: B6 holds for at most 6 regions (about 56 minutes with 6). Each condition relates at most two regions, so a larger bound is not expected to reveal a new kind of violation, but this is not proved. With 16 regions, the many reads at symbolic positions kept the check from finishing. B7 covers up to 16 regions (about 37 minutes).
+Bounds: B6 holds for at most 6 regions (about 68 minutes with 6). Each condition relates at most two regions, so a larger bound is not expected to reveal a new kind of violation, but this is not proved. With 16 regions, the many reads at symbolic positions kept the check from finishing. B7 covers up to 16 regions (about 28 minutes).
+
+=== The enclave-side library (\#16)
+
+`admlib.c` starts from any ADM that the validation function of the SM accepts (with any metadata), calls `adm_new_region` or `adm_remove_region` of `sdk/src/edge/adm.c` once with any arguments, and checks the following. The validation function is that of `sm/src/adm.c`, as it is.
+
+- Nothing is written outside the ADM. The ADM is the first S bytes (any S) of a buffer of `S_FIX` bytes; accesses outside the buffer are caught by the pointer checks of CBMC, and a byte after the ADM is the same before and after the operation.
+- The other regions remain, at the same place and with the same contents.
+- After the operation, the ADM passes validation again with the metadata of `adm_gen_type_info`: the library preserves WF.
+- An added region is inside the ADM and is found by its UID.
+
+The region to add has a non-zero UID and a size that fits its type. `memset` is replaced by a byte loop.
+
+#table(
+  columns: (3fr, 2fr, 8fr),
+  table.header([*Regions before the operation*], [*`S_FIX`*], [*Result*]),
+  [at most 1], [304], [Every property holds (about 30 seconds). An addition and a removal are reached],
+  [at most 2], [336], [Every property holds (about 1 minute). An addition, a removal, and the removal of a region other than the last are reached],
+  [at most 4], [512], [As above (about 11 minutes)],
+  [at most 6], [640], [As above (about 34 minutes)],
+)
+
+`make cbmc` uses the setting of the second row (`LIB_N` and `LIB_S` change it). With the library and the validation function before the fix, the setting of the first row gives counterexamples, including writes outside the ADM (34 of 644 properties).
+
+This check found two more errors, both fixed.
+
+- An ADM with a region header at an offset that is not a multiple of 8 passed validation, and removing its last region left `free_list` misaligned. The position of the region headers was added to W12. The SM reads the region headers in M-mode too, so aligned headers are also what the SM wants.
+- `adm_gen_type_info` and the runtime put the size in bytes into the metadata. The SM compares the size of a static-length array (`STATIC_ARR_16/32/64`) as a number of elements (`SizeOK`, Section 6.2), so that an ADM with a region of these types always failed validation after a writable share. The library now gives the number of elements, and the runtime calls `adm_gen_type_info`.
+
+Bounds: the number of regions and the size of the ADM are small (table above). The check covers adding and removing a region; `adm_set_bytes` and `adm_reset` are not included. The allocator inside the ADM (`adm_alloc.c`) is out of scope (Section 1.2).
+
+A removal does not move the other regions. Before the fix it moved the later regions down, which invalidated, on every removal, the pointers into them, the offsets inside the ADM passed to the host, and the pointers kept by the allocator. In exchange, the space of a removed region that is not the last one is reused only once all the later regions are removed. The region the runtime uses for syscalls is normally the last one, so such holes do not accumulate.
+
+The host-side SDK (`sdk/src/host/AdditionalDataMemory.cpp`) was also wrong. When it builds the first ADM, its estimate of the required size is smaller than the layout it writes, and it writes past the end of an ADM that is almost full (regions of 64 and 16 bytes in an ADM of 400 bytes go 8 bytes past the end; confirmed with a unit test). The memory written is the host's own and no property of Section 7 is concerned; the check now uses the same computation as the layout.
 
 === PMP region allocation (C1, C2, C3, C5)
 
@@ -669,13 +713,26 @@ The cleanup of `create_enclave` on failure (C5 on the enclave side) was checked 
   [`admfail` (broken)], [The SM destroys the enclave (`exceeded maximum number of slot`), and the SDK's destroy succeeds. Eight repetitions do not exhaust any resource], [The SM keeps the enclave; later creations fail],
 )
 
-With the fixed SM, enclaves pinned to a restarted CPU (`hello-adm.ke`, `admfail.ke`) also run. The results of the table are the same with the SM after the correction of the re-send. \#13 requires timing a race and has not been reproduced on QEMU (checked in the model only). The new driver assumes the fixed SM (with an SM before the fixes, the driver frees memory the SM still protects after a validation failure).
+With the fixed SM, enclaves pinned to a restarted CPU (`hello-adm.ke`, `admfail.ke`) also run. The results of the table are the same with the SM after the correction of the re-send. \#13 is covered in the next subsection. For \#15, the eapp of `admfail` asks for a sealing key through the unmodified runtime. The fixed SM returns a key for an 8-byte identifier and refuses a 2000-byte one; the SM before the fix of \#15 (`fb37c88`) accepts 2000 bytes as well. That an address outside the EPM is refused was not checked by running it (the unmodified runtime only passes its own buffers). For \#16, the eapp of `admfail` makes a region after the region the runtime uses for syscalls, and checks its position and contents after the next syscall (for which the runtime removes its region and makes it again). After the fix, both are kept and the following resume from a writable share succeeds. With the library and the SM before the fix (`fb37c88`), validation fails (`region are overlapped`) although the host does not break the ADM, and the enclave is destroyed. `iotest-adm.ke` and `iotest-adm-nocpy.ke`, which delegate file I/O through the ADM (the latter with the allocator inside the ADM), also run with the fixed SM, library and runtime. The new driver assumes the fixed SM (with an SM before the fixes, the driver frees memory the SM still protects after a validation failure).
+
+=== The race between stop and resume (\#13)
+
+`verif/qemu/run-race.sh [BIOS]` runs `admrace.ke`. The eapp stops with the ADM shared for writing, then stops without a share, in a loop. The host issues resume from two threads (CPU 1 and CPU 2). While one of them runs the enclave up to the stop with the share, the other keeps issuing resume, so that a resume from another hart arrives right after the stop. The thread whose resume was accepted runs the enclave alone up to the stop without a share, and reads the ADM from every CPU there. While the enclave is stopped without a share, no CPU may be able to read it. At the start, without a race, the program checks that every CPU can read the ADM during a stop with the share and that no CPU can during a stop without a share.
+
+#table(
+  columns: (5fr, 11fr),
+  table.header([*SM*], [*Result*]),
+  [Fixed], [20,000 checks complete, and the ADM is never readable (in both of 2 runs)],
+  [Only the fix of \#13 removed (`verif/qemu/unfix-13.patch`)], [In all of 5 runs, the CPU running the enclave stops answering within seconds of the start (Linux reports a hard LOCKUP). No run reaches 1,000 checks],
+)
+
+With the SM without the fix, the stopped hart was inspected through the QEMU monitor (once): it is halted in M mode, `mcause` is an instruction access fault, and `mepc` and `mtval` are an address of the runtime (`0xffffffffc0000040`). The register context of the enclave and the PMP setting of that hart disagree. The likely cause is that a resume was accepted before `context_switch_to_host` of the stopping side finished, and the two switched `threads[0]` and the PMP concurrently (the race on the register context that Section 10.3 mentions as not modeled).
+
+So the cause of \#13 (a resume accepted in the middle of a stop), and that the fix removes it, are confirmed on QEMU. The PMP exposure of the model's counterexample (the host holds RW after the enclave is resumed) was not observed, because the machine stops before it.
 
 == 10.6 Remaining work
 
-+ Reproduce \#13 on hardware or QEMU.
-+ Raise the bound on the number of regions in the B6 check (or give an argument that does not depend on it).
-+ Make H8 hold. `get_sealing_key` reads and writes, in M-mode and without a range check, the two addresses passed by the enclave (inherited from the original Keystone). A malicious enclave can presumably write to any physical address, and read any by comparing derived keys (from code reading; not confirmed by running it). The ADM of another enclave is within reach, so E1 and E2 are claims that exclude this path.
-+ The enclave-side library trusts items WF does not constrain. In `sdk/src/edge/adm.c`, `adm_remove_region` computes sizes assuming that a region header immediately precedes its data, and `adm_setup_new_hdr` writes a new region header at `free_list`. Even with an ADM that passes validation, the host can presumably make the enclave misbehave through them. E2 guarantees W1–W9 and no more. Decide whether to strengthen WF (adjacency of header and data, range of `free_list`) or to check in the library.
++ Check H8 mechanically. The fix of \#15, and that the other SBI calls taking an address (create, attest, stop with sharing, the plugins) copy through MPRV, are established by code reading. The attack of \#15 itself was not run (it needs a malicious runtime).
++ Check the remaining functions of the library (`adm_set_bytes`, `adm_reset`).
 
 #rocq-appendix("en")

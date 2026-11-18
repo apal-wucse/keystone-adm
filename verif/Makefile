@@ -143,6 +143,22 @@ CBMC_N_LOOPS := 1 3 4 5
 CBMC_UNWIND_N = $(subst $(eval) ,$(comma),$(foreach l,$(CBMC_N_LOOPS),validate_adm_regions.$(l):$(shell echo $$(($(N_MAX) + 1)))))
 comma := ,
 
+# enclave-side library: regions before the operation, size of the buffer
+LIB_N ?= 2
+LIB_S ?= 336
+CBMC_LIB_LOOPS := $(foreach l,$(CBMC_N_LOOPS),validate_adm_regions.$(l)) adm_get_region.0 \
+	adm_remove_region.0 adm_remove_region.1 adm_gen_type_info.0 adm_setup_new_hdr.0
+CBMC_LIB_UNWIND = $(subst $(eval) ,$(comma),$(foreach l,$(CBMC_LIB_LOOPS),$(l):$(shell echo $$(($(LIB_N) + 2)))) \
+	memset.0:$(shell echo $$(($(LIB_S) + 1))))
+CBMC_LIB_FLAGS = --function harness -I ../sdk/include/edge -I cbmc/stubs -I ../sm/src \
+	-D__riscv_xlen=64 --unwind 17 --unwinding-assertions --unwindset $(CBMC_LIB_UNWIND) \
+	-DN_MAX=$(LIB_N) -DS_FIX=$(LIB_S)
+CBMC_LIB_SAFETY := --pointer-check --bounds-check --pointer-overflow-check
+CBMC_LIB_SRC := cbmc/admlib.c cbmc/admlib_sm.c ../sdk/src/edge/adm.c ../sm/src/adm.c
+# the last witness needs two regions
+CBMC_LIB_REACH = "a region is added" "a region is removed" \
+	$(if $(filter 1,$(LIB_N)),,"a region before another one is removed")
+
 # number of allocations and frees in the PMP harness
 K ?= 6
 # OpenSBI headers, set by the verif devshell
@@ -153,9 +169,13 @@ CBMC_PMP_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv
 
 # A report: the failed properties of each harness (logs in cbmc/.out).
 #   b7   B7 for any S > 0: memory safety, no write, overflow, termination
-#   b6   B6 (W1-W9) for at most N_MAX regions, a witness that a valid ADM
+#   b6   B6 (W1-W12) for at most N_MAX regions, a witness that a valid ADM
 #        with N_MAX regions exists, and that metadata with a duplicated
 #        uid is never accepted
+#   lib  the enclave-side library on an ADM the SM accepts, with at most
+#        LIB_N regions in LIB_S bytes: writes stay inside the ADM, the other
+#        regions are kept, the SM accepts the result; witnesses that a
+#        region is added and removed
 #   pmp  C1, C2, C3, C5 for the region allocator after K operations, and
 #        witnesses that TOR and NAPOT regions and out-of-order frees are
 #        covered
@@ -177,6 +197,14 @@ cbmc:
 		-DDUP_META --unwindset $(CBMC_UNWIND_N) \
 		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6-dup.log 2>&1; \
 		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/b6-dup.log
+	@echo "=== library (LIB_N = $(LIB_N), LIB_S = $(LIB_S))"; $(CBMC) $(CBMC_LIB_FLAGS) \
+		$(CBMC_LIB_SAFETY) $(CBMC_LIB_SRC) > $(CBMC_OUT)/lib.log 2>&1; \
+		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/lib.log
+	@$(CBMC) $(CBMC_LIB_FLAGS) -DREACH $(CBMC_LIB_SRC) > $(CBMC_OUT)/lib-reach.log 2>&1; \
+		for r in $(CBMC_LIB_REACH); do \
+			if grep -q "reach: $$r.*: FAILURE" $(CBMC_OUT)/lib-reach.log; \
+			then echo "reached:     $$r"; else echo "NOT REACHED: $$r"; fi; \
+		done
 	@echo "=== PMP (K = $(K))"; $(CBMC) $(CBMC_PMP_FLAGS) cbmc/pmp_regions.c \
 		> $(CBMC_OUT)/pmp.log 2>&1; \
 		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/pmp.log

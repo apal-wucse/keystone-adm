@@ -1,6 +1,6 @@
 /*
  * B6: validate_adm_regions returns ADM_VALID => WF(mem, S, meta)
- * (MODEL.typ 6.2, conditions W1-W9).  Arithmetic is done in 128 bits,
+ * (MODEL.typ 6.2, conditions W1-W12).  Arithmetic is done in 128 bits,
  * so that wrap-around cannot hide a violation.
  * The uids used in the metadata are assumed distinct; with -DDUP_META, they
  * are not, and the ADM must never be accepted.
@@ -97,6 +97,7 @@ void harness(void) {
     for (size_t i = 0; i < N_MAX && i < n; i++) {
         A(h->data_offsets[i] >= HDR, "W3: region header after the ADM header");
         A((u128)h->data_offsets[i] + RHDR <= S, "W3: region header inside the ADM");
+        A(h->data_offsets[i] % DATA_ALIGN_BYTES == 0, "W12: region header is aligned");
         if (i + 1 < n)
             A(h->data_offsets[i] < h->data_offsets[i + 1], "W5: increasing header offsets");
     }
@@ -112,12 +113,19 @@ void harness(void) {
         int k                    = meta_index(meta, h->uid_tbl[i]);
 
         A(doff[i] + dsize[i] <= S, "W4: data inside the ADM");
+        A(doff[i] == (u128)h->data_offsets[i] + RHDR, "W10: data right after its header");
+        A(doff[i] + dsize[i] <= h->free_list, "W11: free list after every region");
+        if (i + 1 < n)
+            A(doff[i] + dsize[i] <= h->data_offsets[i + 1], "W5, W6, W10: regions in order");
         if (k >= 0) {
             A(r->type == meta[k].type, "W7: region type matches meta");
             A(doff[i] == meta[k].offset, "W8: data offset matches meta");
             A(size_ok(meta[k].type, dsize[i], meta[k].size), "W9: data size matches meta");
         }
     }
+
+    A(h->free_list >= HDR, "W11: free list after the ADM header");
+    A(h->free_list % DATA_ALIGN_BYTES == 0, "W12: free list is aligned");
 
     /* W6 */
     for (size_t i = 0; i < N_MAX && i < n; i++) {

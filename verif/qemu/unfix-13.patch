@@ -1,0 +1,29 @@
+--- a/sm/src/enclave.c
++++ b/sm/src/enclave.c
+@@ -671,7 +671,7 @@
+     if (exitable) {
+         enclaves[eid].n_thread--;
+         if (enclaves[eid].n_thread == 0)
+-            enclaves[eid].state = STOPPING;
++            enclaves[eid].state = STOPPED;
+     }
+     spin_unlock(&encl_lock);
+ 
+@@ -693,7 +693,7 @@
+     if (stoppable) {
+         enclaves[eid].n_thread--;
+         if (enclaves[eid].n_thread == 0)
+-            enclaves[eid].state = STOPPING;
++            enclaves[eid].state = STOPPED;
+     }
+     default_perm = enclaves[eid].adm_default_protection;
+     if (default_perm == DEFAULT_NOPERM) {
+@@ -747,7 +747,7 @@
+ 
+     enclaves[eid].n_thread--;
+     if (enclaves[eid].n_thread == 0)
+-        enclaves[eid].state = STOPPING;
++        enclaves[eid].state = STOPPED;
+ 
+     enclaves[eid].adm_state_info.share = share_type;
+ 

@@ -7,6 +7,12 @@
 #   admpeek.ke of keystoneApps into it, and runs them:
 #     admfail  #1: the host breaks the shared ADM; the SM destroys the
 #              enclave on resume, and the destroy by the SDK succeeds
+#              "eapp checks" is 0 if a sealing key is returned and an
+#              identifier over the limit is refused (#15), and a region
+#              keeps its place and data when an earlier one is removed (#16)
+#     iotest-adm, iotest-adm-nocpy
+#              file I/O delegated through the ADM: the SM validates the
+#              ADM on every resume from a writable share
 #     admpeek  #7: after CPU hotplug, the host on the restarted hart has
 #              no access to the ADM of an existing enclave
 # Environment: RUN_VIRT (run-qemu-virt to use; default: nix build .#run-virt),
@@ -45,8 +51,12 @@ for c in 0 1; do
     ADMFAIL_CORRUPT=$c ./admfail.ke > out 2>&1
     if grep -q "DESTROY_ENCLAVE failed" out; then echo "destroy FAILED"
     else grep "run returned" out; fi
+    grep "eapp checks" out || true
 done
 printf "hello-adm: "; hello-adm.ke 2>&1 | tail -1
+for t in iotest-adm iotest-adm-nocpy; do
+    printf "%s: " $t; $t.ke 1 2>&1 | grep -a "^Step" | tr "\n" " "; echo
+done
 poweroff' || true
 wait $vm 2>/dev/null || true
 grep -a "\[SM\] adm validation" "$work/serial.log" || true
