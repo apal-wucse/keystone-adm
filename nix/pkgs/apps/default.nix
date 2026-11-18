@@ -10,6 +10,8 @@ let
   iotest-adm = callPackage ../../../apps/iotest-adm/package.nix { inherit withPlatform; };
   iotest-adm-nocpy = callPackage ../../../apps/iotest-adm-nocpy/package.nix { inherit withPlatform; };
   admtest = callPackage ../../../apps/admtest/package.nix { inherit withPlatform; };
+  admfail = callPackage ../../../apps/admfail/package.nix { inherit withPlatform; };
+  admpeek = callPackage ../../../apps/admpeek/package.nix { inherit withPlatform; };
 in
 symlinkJoin {
   pname = "keystone-apps";
@@ -23,5 +25,7 @@ symlinkJoin {
     iotest-adm
     iotest-adm-nocpy
     admtest
+    admfail
+    admpeek
   ];
 }
