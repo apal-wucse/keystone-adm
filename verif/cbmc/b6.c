@@ -2,6 +2,8 @@
  * B6: validate_adm_regions returns ADM_VALID => WF(mem, S, meta)
  * (MODEL.typ 6.2, conditions W1-W9).  Arithmetic is done in 128 bits,
  * so that wrap-around cannot hide a violation.
+ * The uids used in the metadata are assumed distinct; with -DDUP_META, they
+ * are not, and the ADM must never be accepted.
  */
 #include "harness.h"
 
@@ -49,10 +51,18 @@ void harness(void) {
     __CPROVER_assume(S >= HDR && S < S_MAX);
     uint8_t* adm = nondet_adm(S);
     AdmTypeInfo meta[ADM_SLOT_MAX];
+    __CPROVER_assume(((const AdmHeader*)adm)->data_n <= N_MAX);
+#ifdef DUP_META
+    int a, b;
+    __CPROVER_assume(0 <= a && a < b && b < ADM_SLOT_MAX);
+    __CPROVER_assume(meta[a].uid != ADM_UID_UNUSED && meta[a].uid == meta[b].uid);
+    A(validate_adm_regions((uintptr_t)adm, S, meta) != ADM_VALID,
+      "metadata with a duplicated uid is not accepted");
+    return;
+#endif
     for (int i = 0; i < ADM_SLOT_MAX; i++)
         for (int j = i + 1; j < ADM_SLOT_MAX; j++)
             __CPROVER_assume(meta[i].uid == ADM_UID_UNUSED || meta[i].uid != meta[j].uid);
-    __CPROVER_assume(((const AdmHeader*)adm)->data_n <= N_MAX);
 
     if (validate_adm_regions((uintptr_t)adm, S, meta) != ADM_VALID)
         return;

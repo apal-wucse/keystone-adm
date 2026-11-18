@@ -7,6 +7,7 @@
 (* repository and OpenSBI 1.1, with the steps split where the code drops  *)
 (* the enclave lock or crosses harts:                                      *)
 (*                                                                         *)
+(*   create_enclave   Create (ALLOCATED) -> CreateDone (FRESH)              *)
 (*   run_enclave      RunBegin (lock) -> RunValidate (+ enter)             *)
 (*   resume_enclave   ResumeBegin (lock) -> ResumeRevoke -> ResumeValidate *)
 (*                    (+ enter)                                            *)
@@ -15,6 +16,10 @@
 (*   stop_enclave, stop_enclave_with_share, exit_enclave                   *)
 (*                    StopInvoluntary / StopShare / Exit (lock)            *)
 (*                    -> StopSwitch (context_switch_to_host, unlocked)     *)
+(*                    -> StopDone                                          *)
+(*   pmp_set_global, pmp_unset_global (send_and_sync_pmp_ipi)              *)
+(*                    GBegin (record, mask, own entry) -> GDeliver per     *)
+(*                    hart -> GLook / GSend per hart (re-send) -> GDone    *)
 (*   HSM (OpenSBI 1.1 sbi_hsm.c, sbi_init.c)                               *)
 (*     hart_start   STOPPED -> PENDING -(sm_init(false))-> PENDING_R       *)
 (*                  -(prepare_next_jump)-> STARTING -(to S-mode)-> STARTED *)
@@ -29,19 +34,23 @@
 (* (osm_pmp_set).  Eff(e, h) is the resulting S/U-mode permission; a hart  *)
 (* that is not running S/U-mode code (not STARTED, or in the SM) has none. *)
 (* pmp_set_global reaches only the harts in the interruptible mask         *)
-(* (STARTED or SUSPENDED as OpenSBI sees them); its IPI round is modeled   *)
-(* as one atomic step because the caller waits for completion.             *)
+(* (STARTED or SUSPENDED as OpenSBI sees them).  The mask is read once,    *)
+(* the update is then delivered hart by hart, and the HSM state of a hart  *)
+(* may change in between (Resend = "atomic" keeps the earlier model, in    *)
+(* which the whole call is one step).                                      *)
 (*                                                                         *)
 (* The constants Fix* select a corrected implementation, one difference   *)
 (* of MODEL.typ Section 8 at a time.  All FALSE is the code before any     *)
 (* fix.  RestoreAt selects how #7 is fixed when FixHartRestart is TRUE.    *)
 (*                                                                         *)
 (* Abstractions: DEFAULT_NOPERM only; one thread; EPM and UTM are not      *)
-(* modeled; create_enclave is atomic (ALLOCATED is not modeled); the ADM   *)
-(* contents are one abstract value from Data, and validate_adm_regions     *)
-(* accepts the contents iff they match some used metadata slot (it looks   *)
-(* each region of the ADM up among the slots, Section 8 #2).  The design-  *)
-(* level expectation is that they match what the enclave supplied.         *)
+(* modeled; the steps of create_enclave before pmp_set_global are one      *)
+(* step; the record of a global value and the read of the mask are one     *)
+(* step (pmp_lock and mb() in the code).  The ADM contents are one         *)
+(* abstract value from Data, and validate_adm_regions accepts them iff     *)
+(* they match some used metadata slot.  This is what the code did before   *)
+(* Section 8 #2 was fixed; the code now accepts less, which only removes   *)
+(* behaviours.                                                             *)
 (***************************************************************************)
 EXTENDS Naturals, FiniteSets
 
@@ -62,6 +71,12 @@ CONSTANTS
                         \*     "init": in sm_init(false) only
                         \*     "started": in an OpenSBI hook after STARTED,
                         \*       before the jump to S-mode (needs a patch)
+    Resend,             \* #7  which harts the re-send of "init_resend" covers:
+                        \*     "state": those START_PENDING when the loop
+                        \*       looks at them (the first version of the fix)
+                        \*     "mask": those outside the mask of the round
+                        \*     "atomic": the call is one step (earlier model)
+    NoG,                \* "no pmp_set_global in progress"
     FixNonRetSuspend,   \* #7  an SM HSM device refuses non-retentive suspend
     FixStopping         \* #13 STOPPING until context_switch_to_host is done:
                         \*     no resume / destroy in between
@@ -71,6 +86,7 @@ ASSUME /\ Zero \in Data
        /\ NSlots \in Nat \ {0}
        /\ Unused \notin Meta
        /\ RestoreAt \in {"init_resend", "init", "started"}
+       /\ Resend \in {"state", "mask", "atomic"}
 
 VARIABLES
     state,      \* enclaves[e].state
@@ -83,20 +99,21 @@ VARIABLES
     entry,      \* entry[e][h]: ADM PMP entry of e on hart h
     rec,        \* rec[e]: last value set on every hart (pmp_set_global /
                 \* pmp_unset_global); kept by the #7 fix, unused otherwise
+    gs,         \* gs[h]: the pmp_set_global in progress on hart h, or NoG
     mem,        \* ADM contents
     \* ghost variables (as in ADM.tla)
     secret, dirty, sentMeta, dead, lastStop, snap
 
-vars == <<state, nthread, share, slots, ctx, op, hsm, entry, rec, mem,
+vars == <<state, nthread, share, slots, ctx, op, hsm, entry, rec, gs, mem,
           secret, dirty, sentMeta, dead, lastStop, snap>>
 
 Slot     == 1..NSlots
 Perm     == {"NONE", "R", "RW"}
 EntryV   == Perm \cup {"UNSET"}
 ShareV   == {"NONE", "RONLY", "RW", "BAD"}
-State    == {"INVALID", "FRESH", "RUNNING", "STOPPED", "DESTROYING"}
-Op       == {"none", "run", "resume_revoke", "resume_validate", "stop_switch",
-             "d_zero", "d_unset", "d_reset"}
+State    == {"INVALID", "ALLOCATED", "FRESH", "RUNNING", "STOPPED", "DESTROYING"}
+Op       == {"none", "create_done", "run", "resume_revoke", "resume_validate",
+             "stop_switch", "stop_done", "d_zero", "d_unset", "d_reset", "gset"}
 StopKind == {"none", "share_none", "share_ro", "share_rw", "invol", "exit"}
 
 Host   == <<"HOST", "">>
@@ -147,18 +164,83 @@ Eff(e, h) ==
          THEN IF ctx[h] \in {Enc(x) : x \in EIDs} THEN "NONE" ELSE "RW"
          ELSE entry[e][h]
 
-\* pmp_set_global / pmp_unset_global: the interruptible harts only.  With
-\* the "init_resend" fix, the sender also waits for every START_PENDING
-\* hart to become STARTED and sends the update again.  A hart that has not
-\* yet run sm_init(false) (PENDING) reads the record later; one that has
-\* (PENDING_R) gets the update.  Folding the re-send into the round is
-\* sound because such a hart runs no S-mode code until it is STARTED.
-Reached(h) == \/ InMask(h)
-              \/ FixHartRestart /\ RestoreAt = "init_resend" /\ hsm[h] = "PENDING_R"
-SetG(e, v) ==
-    [entry EXCEPT ![e] = [h \in Harts |-> IF Reached(h) THEN v
-                                          ELSE entry[e][h]]]
-RecG(e, v) == rec' = [rec EXCEPT ![e] = v]
+Pending(h) == hsm[h] \in {"PENDING", "PENDING_R"}
+InSm(h)    == ctx[h] \in {Sm(x) : x \in EIDs}
+\* The #7 fix re-sends ("init_resend").
+Resending  == FixHartRestart /\ RestoreAt = "init_resend"
+\* Resend = "atomic": the harts a call reaches, in one step.
+Reached(h) == InMask(h) \/ (Resending /\ hsm[h] = "PENDING_R")
+
+\* A pmp_set_global / pmp_unset_global in progress: region of e, value v;
+\* r1: harts of the mask not yet served; todo / wait: harts the re-send
+\* loop has not looked at / waits for; k: what the caller does next.
+GSet == [e : EIDs, v : EntryV, r1 : SUBSET Harts, todo : SUBSET Harts,
+         wait : SUBSET Harts, k : Op]
+
+\* The operation hart h is in (the caller's next step during a global set).
+OpK(h) == IF op[h] = "gset" THEN gs[h].k ELSE op[h]
+
+\* Hart x processes an IPI now: it runs S/U-mode code, sleeps, or waits in
+\* sbi_tlb_request itself (which serves incoming requests).
+CanTake(x) == InMask(x) /\ (~InSm(x) \/ op[x] = "gset")
+
+\* Hart h calls pmp_set_global(e, v) (v = "UNSET": pmp_unset_global) and
+\* continues with k.  row: e's entries before the call.  The value is
+\* recorded, the mask is read and the caller's own entry is set.
+GBegin(h, e, v, k, row) ==
+    /\ rec' = [rec EXCEPT ![e] = v]
+    /\ IF Resend = "atomic"
+       THEN /\ entry' = [entry EXCEPT ![e] =
+                            [x \in Harts |-> IF Reached(x) THEN v ELSE row[x]]]
+            /\ op'    = [op EXCEPT ![h] = k]
+            /\ UNCHANGED gs
+       ELSE LET M == {x \in Harts : InMask(x)} IN
+            /\ entry' = [entry EXCEPT ![e] = [row EXCEPT ![h] = v]]
+            /\ op'    = [op EXCEPT ![h] = "gset"]
+            /\ gs'    = [gs EXCEPT ![h] =
+                   [e |-> e, v |-> v, r1 |-> M \ {h},
+                    todo |-> IF ~Resending THEN {}
+                             ELSE IF Resend = "mask" THEN Harts \ (M \cup {h})
+                             ELSE Harts \ {h},
+                    wait |-> {}, k |-> k]]
+
+GOnly == UNCHANGED <<state, nthread, share, slots, ctx, hsm, rec, mem, secret,
+                     dirty, sentMeta, dead, lastStop, snap>>
+
+\* The round: hart x of the mask applies the update.  A hart that left the
+\* mask meanwhile (stopped) does not; it reads the record when it restarts.
+GDeliver(h, x) ==
+    /\ op[h] = "gset" /\ x \in gs[h].r1
+    /\ ~InMask(x) \/ CanTake(x)
+    /\ entry' = IF InMask(x) THEN [entry EXCEPT ![gs[h].e][x] = gs[h].v] ELSE entry
+    /\ gs'    = [gs EXCEPT ![h].r1 = @ \ {x}]
+    /\ GOnly /\ UNCHANGED op
+
+\* The re-send loop looks at hart x: wait for it, or skip it.
+GLook(h, x) ==
+    /\ op[h] = "gset" /\ gs[h].r1 = {} /\ x \in gs[h].todo
+    /\ gs' = [gs EXCEPT ![h].todo = @ \ {x},
+                        ![h].wait = IF Resend = "mask" \/ Pending(x)
+                                    THEN @ \cup {x} ELSE @]
+    /\ GOnly /\ UNCHANGED <<op, entry>>
+
+\* Hart x is no longer START_PENDING: send to it ("state": if STARTED;
+\* "mask": sbi_tlb_request skips a hart that is not interruptible).
+GSend(h, x) ==
+    /\ op[h] = "gset" /\ x \in gs[h].wait /\ ~Pending(x)
+    /\ LET target == IF Resend = "state" THEN hsm[x] \in {"STARTED", "STARTING"}
+                      ELSE InMask(x) IN
+       /\ ~target \/ CanTake(x)
+       /\ entry' = IF target THEN [entry EXCEPT ![gs[h].e][x] = gs[h].v] ELSE entry
+    /\ gs' = [gs EXCEPT ![h].wait = @ \ {x}]
+    /\ GOnly /\ UNCHANGED op
+
+GDone(h) ==
+    /\ op[h] = "gset"
+    /\ gs[h].r1 = {} /\ gs[h].todo = {} /\ gs[h].wait = {}
+    /\ op' = [op EXCEPT ![h] = gs[h].k]
+    /\ gs' = [gs EXCEPT ![h] = NoG]
+    /\ GOnly /\ UNCHANGED entry
 
 TypeOK ==
     /\ state    \in [EIDs -> State]
@@ -169,6 +251,7 @@ TypeOK ==
     /\ op       \in [Harts -> Op]
     /\ hsm      \in [Harts -> HsmState]
     /\ rec      \in [EIDs -> EntryV]
+    /\ gs       \in [Harts -> GSet \cup {NoG}]
     /\ entry    \in [EIDs -> [Harts -> EntryV]]
     /\ mem      \in [EIDs -> Data]
     /\ secret   \in [EIDs -> BOOLEAN]
@@ -188,6 +271,7 @@ Init ==
     /\ hsm      = [h \in Harts |-> "STARTED"]
     /\ entry    = [e \in EIDs |-> [h \in Harts |-> "UNSET"]]
     /\ rec      = [e \in EIDs |-> "UNSET"]
+    /\ gs       = [h \in Harts |-> NoG]
     /\ mem      = [e \in EIDs |-> Zero]
     /\ secret   = [e \in EIDs |-> FALSE]
     /\ dirty    = [e \in EIDs |-> FALSE]
@@ -199,30 +283,39 @@ Init ==
 HostReady(h) == ctx[h] = Host /\ op[h] = "none" /\ hsm[h] = "STARTED"
 
 \* A stop has released the lock but not yet updated the PMP (#13).
-Stopping(e) == \E h \in Harts : ctx[h] = Sm(e) /\ op[h] = "stop_switch"
+Stopping(e) == \E h \in Harts : ctx[h] = Sm(e) /\ OpK(h) \in {"stop_switch", "stop_done"}
 
 -----------------------------------------------------------------------------
-(* create_enclave (atomic).  The initial type_info is measured; here it is *)
+(* create_enclave: the regions are created and pmp_set_global(adm_region,  *)
+(* PMP_NO_PERM) is called while the enclave is ALLOCATED; it is FRESH once *)
+(* the call has returned.  The initial type_info is measured; here it is   *)
 (* one entry m0.                                                           *)
 
 Create(h, e, d, m0) ==
     /\ HostReady(h)
     /\ state[e] = "INVALID"
-    /\ state'    = [state EXCEPT ![e] = "FRESH"]
+    /\ state'    = [state EXCEPT ![e] = "ALLOCATED"]
     /\ nthread'  = [nthread EXCEPT ![e] = 0]
     /\ share'    = [share EXCEPT ![e] = "RW"]
     /\ slots'    = [slots EXCEPT ![e] = [i \in Slot |-> IF i = 1 THEN m0 ELSE Unused]]
-    \* pmp_set_global(adm_region, PMP_NO_PERM); stopped harts get nothing.
-    /\ entry'    = [entry EXCEPT ![e] = [x \in Harts |->
-                        IF Reached(x) THEN "NONE" ELSE "UNSET"]]
-    /\ RecG(e, "NONE")
+    /\ ctx'      = [ctx EXCEPT ![h] = Sm(e)]
+    \* a new region: no hart has an entry for it yet
+    /\ GBegin(h, e, "NONE", "create_done", [x \in Harts |-> "UNSET"])
     /\ mem'      = [mem EXCEPT ![e] = d]
     /\ secret'   = [secret EXCEPT ![e] = FALSE]
     /\ dirty'    = [dirty EXCEPT ![e] = TRUE]
     /\ sentMeta' = [sentMeta EXCEPT ![e] = {m0}]
     /\ dead'     = [dead EXCEPT ![e] = FALSE]
     /\ lastStop' = [lastStop EXCEPT ![e] = "none"]
-    /\ UNCHANGED <<ctx, op, hsm, snap>>
+    /\ UNCHANGED <<hsm, snap>>
+
+CreateDone(h, e) ==
+    /\ ctx[h] = Sm(e) /\ op[h] = "create_done"
+    /\ state' = [state EXCEPT ![e] = "FRESH"]
+    /\ ctx'   = [ctx EXCEPT ![h] = Host]
+    /\ op'    = [op EXCEPT ![h] = "none"]
+    /\ UNCHANGED <<nthread, share, slots, hsm, entry, rec, gs, mem, secret, dirty,
+                   sentMeta, dead, lastStop, snap>>
 
 -----------------------------------------------------------------------------
 (* run_enclave / resume_enclave                                            *)
@@ -292,9 +385,10 @@ ResumeBegin(h, e) ==
 \* permission").
 ResumeRevoke(h, e) ==
     /\ ctx[h] = Sm(e) /\ op[h] = "resume_revoke"
-    /\ entry' = IF share[e] \in {"RW", "RONLY"} THEN SetG(e, "NONE") ELSE entry
-    /\ rec'   = IF share[e] \in {"RW", "RONLY"} THEN [rec EXCEPT ![e] = "NONE"] ELSE rec
-    /\ op'    = [op EXCEPT ![h] = "resume_validate"]
+    /\ IF share[e] \in {"RW", "RONLY"}
+       THEN GBegin(h, e, "NONE", "resume_validate", entry[e])
+       ELSE /\ op' = [op EXCEPT ![h] = "resume_validate"]
+            /\ UNCHANGED <<entry, rec, gs>>
     /\ UNCHANGED <<state, nthread, share, slots, ctx, hsm, mem, secret, dirty,
                    sentMeta, dead, lastStop, snap>>
 
@@ -320,16 +414,6 @@ ResumeValidate(h, e) ==
 
 -----------------------------------------------------------------------------
 (* Stops, issued by the enclave on hart h (caller: enclave context).       *)
-
-\* context_switch_to_host with sharing state s (DEFAULT_NOPERM).
-SwitchToHost(h, e, s) ==
-    /\ ctx'   = [ctx EXCEPT ![h] = Host]
-    /\ entry' = CASE s = "RW"    -> SetG(e, "RW")
-                  [] s = "RONLY" -> SetG(e, "R")
-                  [] OTHER       -> [entry EXCEPT ![e][h] = "NONE"]
-    /\ rec'   = CASE s = "RW"    -> [rec EXCEPT ![e] = "RW"]
-                  [] s = "RONLY" -> [rec EXCEPT ![e] = "R"]
-                  [] OTHER       -> rec
 
 \* Ghost updates of a stop that reaches the host with sharing state s.
 StopGhosts(e, s, kind) ==
@@ -373,13 +457,27 @@ Exit(h, e) ==
 
 \* context_switch_to_host, run after the lock is released: it reads the
 \* sharing state as it is now (#13), and maps an out-of-range value to NONE.
+\* A shared ADM is granted on every hart (pmp_set_global) before the hart
+\* returns to the host (StopDone).
 StopSwitch(h, e) ==
     /\ ctx[h] = Sm(e) /\ op[h] = "stop_switch"
-    /\ SwitchToHost(h, e, share[e])
     /\ share' = IF share[e] = "BAD" THEN [share EXCEPT ![e] = "NONE"] ELSE share
-    /\ op' = [op EXCEPT ![h] = "none"]
+    /\ CASE share[e] = "RW"    -> GBegin(h, e, "RW", "stop_done", entry[e]) /\ UNCHANGED ctx
+         [] share[e] = "RONLY" -> GBegin(h, e, "R", "stop_done", entry[e]) /\ UNCHANGED ctx
+         [] OTHER ->
+              /\ entry' = [entry EXCEPT ![e][h] = "NONE"]
+              /\ ctx'   = [ctx EXCEPT ![h] = Host]
+              /\ op'    = [op EXCEPT ![h] = "none"]
+              /\ UNCHANGED <<rec, gs>>
     /\ UNCHANGED <<state, nthread, slots, hsm, mem, secret, dirty, sentMeta,
                    dead, lastStop, snap>>
+
+StopDone(h, e) ==
+    /\ ctx[h] = Sm(e) /\ op[h] = "stop_done"
+    /\ ctx' = [ctx EXCEPT ![h] = Host]
+    /\ op'  = [op EXCEPT ![h] = "none"]
+    /\ UNCHANGED <<state, nthread, share, slots, hsm, entry, rec, gs, mem, secret,
+                   dirty, sentMeta, dead, lastStop, snap>>
 
 Kind(s) == CASE s = "RONLY" -> "share_ro"
              [] s = "RW"    -> "share_rw"
@@ -427,7 +525,7 @@ DestroyBegin(h, e) ==
     /\ HostReady(h)
     \* ENCLAVE_EXISTS(eid) && state <= STOPPED
     /\ state[e] \in (IF FixDestroyGuard THEN {"FRESH", "STOPPED"}
-                     ELSE {"DESTROYING", "FRESH", "STOPPED"})
+                     ELSE {"DESTROYING", "ALLOCATED", "FRESH", "STOPPED"})
     /\ ~(FixStopping /\ Stopping(e))
     /\ state' = [state EXCEPT ![e] = "DESTROYING"]
     /\ ctx'   = [ctx EXCEPT ![h] = Sm(e)]
@@ -448,9 +546,7 @@ DestroyZero(h, e) ==
 \* the host.
 DestroyUnset(h, e) ==
     /\ ctx[h] = Sm(e) /\ op[h] = "d_unset"
-    /\ entry' = SetG(e, "UNSET")
-    /\ RecG(e, "UNSET")
-    /\ op'    = [op EXCEPT ![h] = "d_reset"]
+    /\ GBegin(h, e, "UNSET", "d_reset", entry[e])
     /\ UNCHANGED <<state, nthread, share, slots, ctx, hsm, mem, secret, dirty,
                    sentMeta, dead, lastStop, snap>>
 
@@ -483,7 +579,7 @@ Cleared(h)  == [e \in EIDs |-> [entry[e] EXCEPT ![h] = "UNSET"]]
 
 HsmOnly(h, st) ==
     /\ hsm' = [hsm EXCEPT ![h] = st]
-    /\ UNCHANGED <<state, nthread, share, slots, ctx, op, rec, mem,
+    /\ UNCHANGED <<state, nthread, share, slots, ctx, op, rec, gs, mem,
                    secret, dirty, sentMeta, dead, lastStop, snap>>
 
 HartStop(h) ==
@@ -572,19 +668,23 @@ AdvWrite(h, e, d) ==
 Next ==
     \/ \E h \in Harts, e \in EIDs :
         \/ \E d \in Data, m0 \in Meta : Create(h, e, d, m0)
-        \/ (RunBegin(h, e) \/ RunValidate(h, e)) /\ UNCHANGED rec
-        \/ (ResumeBegin(h, e) \/ ResumeValidate(h, e)) /\ UNCHANGED rec
+        \/ CreateDone(h, e)
+        \/ (RunBegin(h, e) \/ RunValidate(h, e)) /\ UNCHANGED <<rec, gs>>
+        \/ (ResumeBegin(h, e) \/ ResumeValidate(h, e)) /\ UNCHANGED <<rec, gs>>
         \/ ResumeRevoke(h, e)
-        \/ StopInvoluntary(h, e) \/ Exit(h, e)
-        \/ StopSwitch(h, e)
+        \/ (StopInvoluntary(h, e) \/ Exit(h, e)) /\ UNCHANGED gs
+        \/ StopSwitch(h, e) \/ StopDone(h, e)
         \/ \E s \in ShareV : (\/ StopShare(h, e, s, TRUE, <<>>)
                               \/ \E p \in Prov : StopShare(h, e, s, FALSE, p))
-                             /\ UNCHANGED rec
+                             /\ UNCHANGED <<rec, gs>>
         \/ (DestroyBegin(h, e) \/ DestroyZero(h, e) \/ DestroyReset(h, e))
-              /\ UNCHANGED rec
+              /\ UNCHANGED <<rec, gs>>
         \/ DestroyUnset(h, e)
-        \/ (\E d \in Data : EncWrite(h, e, d) \/ AdvWrite(h, e, d)) /\ UNCHANGED rec
+        \/ (\E d \in Data : EncWrite(h, e, d) \/ AdvWrite(h, e, d))
+              /\ UNCHANGED <<rec, gs>>
+    \/ \E h, x \in Harts : GDeliver(h, x) \/ GLook(h, x) \/ GSend(h, x)
     \/ \E h \in Harts :
+        \/ GDone(h)
         \/ HartStop(h) \/ HartStart(h) \/ HartInit(h) \/ HartStarted(h)
         \/ HartSuspend(h) \/ HartWakeRet(h) \/ HartWakeNonRet(h)
         \/ HartResumed(h) \/ HartEnterS(h)
@@ -599,10 +699,10 @@ Spec == Init /\ [][Next]_vars
 \* The enclave holds its ADM region: from creation until a destroyer
 \* unsets the entry (the two last destroy steps correspond to the atomic
 \* DestroyFree of ADM.tla).  E1 and A9 cover the released region.
-Released(e) == \E h \in Harts : ctx[h] = Sm(e) /\ op[h] = "d_reset"
+Released(e) == \E h \in Harts : ctx[h] = Sm(e) /\ OpK(h) = "d_reset"
 Exists(e) == state[e] # "INVALID" /\ ~Released(e)
 Validating(h, e) == ctx[h] = Sm(e) /\ op[h] \in {"run", "resume_validate"}
-Entering(h, e) == ctx[h] = Sm(e) /\ op[h] \in {"run", "resume_revoke", "resume_validate"}
+Entering(h, e) == ctx[h] = Sm(e) /\ OpK(h) \in {"run", "resume_revoke", "resume_validate"}
 
 A1_InitialProtection ==
     \A e \in EIDs : state[e] = "FRESH" => \A h \in Harts : Eff(e, h) = "NONE"
@@ -682,7 +782,7 @@ D2d_SingleRunner ==
 \* D3: at most one hart destroys a given enclave.
 D3_SingleDestroyer ==
     \A e \in EIDs :
-        Cardinality({h \in Harts : ctx[h] = Sm(e) /\ op[h] \in {"d_zero", "d_unset", "d_reset"}}) <= 1
+        Cardinality({h \in Harts : ctx[h] = Sm(e) /\ OpK(h) \in {"d_zero", "d_unset", "d_reset"}}) <= 1
 
 -----------------------------------------------------------------------------
 (* Reachability witnesses (expected to be VIOLATED in every configuration) *)
@@ -703,5 +803,9 @@ Reach_RestartWhileShared ==
 \* A hart is in context_switch_to_host after the lock was dropped.
 Reach_StopSwitchPending ==
     ~ \E h \in Harts : op[h] = "stop_switch"
+
+\* A pmp_set_global waits for a restarting hart, with a revocation to send.
+Reach_ResendWaits ==
+    ~ \E h \in Harts : op[h] = "gset" /\ gs[h].wait # {} /\ gs[h].v = "NONE"
 
 =============================================================================

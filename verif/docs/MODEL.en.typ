@@ -1,4 +1,5 @@
 #import "model.typ": doc
+#import "rocq.typ": rocq-appendix
 
 #show: doc.with(title: [Formal Model of ADM / Protected Sharing], lang: "en")
 
@@ -44,9 +45,10 @@ The adversary can:
   [H5], [The SM's own (M-mode) accesses to the ADM are not blocked by PMP],
   [H6], [There is no memory access path that bypasses PMP (such as DMA)],
   [H7], [The enclave issuing an enclave SBI call is identified correctly from the per-hart context information kept by the SM],
+  [H8], [The SM does not read or write an address given by the caller of an SBI call without the PMP check],
 )
 
-H3 and H4 are the counterpart of verification item D4: they are assumptions in the design model and proof obligations when verifying the implementation.
+H3 and H4 are the counterpart of verification item D4: they are assumptions in the design model and proof obligations when verifying the implementation. H8 does not hold in the current implementation (Section 10.6).
 
 = 2. Constants and Sets
 
@@ -290,6 +292,8 @@ All of the following hold.
 
 A variable-length array is the type an enclave selects when it does not care about the size of the data; not comparing `dsize` with an expected value is intended by design. For this type, only the number, type, offset, and range (W4, W6) are validated.
 
+WF does not constrain the position of a region header relative to its data, nor `free_list` in the ADM header. The host can rewrite both during a writable share (Section 10.6).
+
 == 6.3 Requirements on the validation function
 
 - *Soundness (B6)*: if the validation function returns success, then `WF(mem, S, meta)` holds.
@@ -379,7 +383,7 @@ The second half of E2 guarantees only the structure (number, types, sizes, offse
 
 These are candidates found by code reading. For \#1, \#5, \#6, \#7, \#11, \#12 and \#13, the effect on the properties of Section 7 was checked with the implementation model of Section 10.3. The others are outside the scope of the model or are handled at the code level.
 
-\#1–\#7 and \#11–\#14 have been fixed in `sm/src/`. \#14 is fixed in `pmp.c` after the CBMC check of Section 10.4. \#2–\#4 are fixed in `adm.c` after the CBMC check of Section 10.4. \#1 and \#5 are fixed as `FixValidateFail` and `FixStaleMeta` of Section 10.3 (`enclave.c`). For \#6, \#11 and \#12, `stop_enclave_with_share` checks its arguments and the state first, and the guard of `destroy_enclave` is limited to FRESH / STOPPED. \#7 and \#13 are fixed as `FixHartRestart` (`init_resend`), `FixNonRetSuspend` and `FixStopping` of Section 10.3 (`pmp.c`, `ipi.c`, `sm.c`, `enclave.c`). The "Implementation" column of the table describes the code before the fix.
+\#1–\#7 and \#11–\#14 have been fixed in `sm/src/`. \#14 is fixed in `pmp.c` after the CBMC check of Section 10.4. \#2–\#4 are fixed in `adm.c` after the CBMC check of Section 10.4. \#1 and \#5 are fixed as `FixValidateFail` and `FixStaleMeta` of Section 10.3 (`enclave.c`). For \#6, \#11 and \#12, `stop_enclave_with_share` checks its arguments and the state first, and the guard of `destroy_enclave` is limited to FRESH / STOPPED. \#7 and \#13 are fixed as `FixHartRestart` (`init_resend`), `FixNonRetSuspend` and `FixStopping` of Section 10.3 (`pmp.c`, `ipi.c`, `sm.c`, `enclave.c`). The re-send of \#7 was corrected after its first version turned out to leave a race (Section 10.3). The "Implementation" column of the table describes the code before the fix.
 
 #table(
   columns: (1fr, 3fr, 6fr, 8fr, 7fr),
@@ -420,7 +424,7 @@ These are candidates found by code reading. For \#1, \#5, \#6, \#7, \#11, \#12 a
   [Region overlap check (C1)], [`detect_region_overlap`, `pmp_region_init`], [`sm/src/pmp.c`],
   [TOR / NAPOT selection and placement (C2–C4)], [`pmp_region_init`, `tor_region_init`, `napot_region_init`], [`sm/src/pmp.c`],
   [Caller restriction (D1)], [`sbi_ecall_keystone_enclave_handler` (`cpu_is_enclave_context`)], [`sm/src/sm-sbi-opensbi.c`],
-  [`state[e]`], [`enclaves[eid].state` (the implementation's `ALLOCATED` is an intermediate state between ID allocation and completion of create; it does not appear in the model because Create is atomic)], [`sm/src/enclave.h`],
+  [`state[e]`], [`enclaves[eid].state` (the implementation's `ALLOCATED` is an intermediate state between ID allocation and completion of create; it does not appear in the design model, where Create is atomic; the implementation model has it)], [`sm/src/enclave.h`],
   [`share[e]`, `meta[e]`], [`enclaves[eid].adm_state_info`], [`sm/src/enclave.h`, `sm/src/adm.h`],
 )
 
@@ -437,7 +441,7 @@ The specifications are in `verif/tla/`. `make check` runs the checks and `make r
   [A5], [same], [Holds by construction: the range of permissions has no X],
   [B1–B5, B8], [same], [No counterexample],
   [B6, B7], [—], [Properties of the validation function itself; checked with CBMC in Section 10.4],
-  [C1, C2, and the consequences of C1], [`ADMRegions.tla` / `ADMRegions.cfg` (2 harts, 2 enclaves, 5 pages)], [No counterexample],
+  [C1, C2, and the consequences of C1], [`ADMRegions.tla` / `ADMRegions.cfg` (2 harts, 2 enclaves, 5 pages)], [No counterexample. The UTM is not placed (it lies under the lowest-priority entry, so the ADM entry wins where they overlap). The overlap check of the implementation is checked in Section 10.4],
   [C3], [—], [The TOR / NAPOT encoding is an implementation matter. The model assumes that an entry matches exactly its own region; the implementation is checked with CBMC in Section 10.4],
   [C4], [`ADMRegions.tla`], [Confirmed that an enclave whose ADM is not a power of two in size, or not aligned, reaches the running state],
   [C5], [—], [Holds by construction because transitions are atomic; the implementation is checked in Section 10.4],
@@ -458,7 +462,7 @@ The proofs are in `verif/rocq/`. `make prove` checks every proof and confirms th
 
 The difference from TLA+ is the scope of the guarantee. Harts, enclaves, ADM contents and metadata are arbitrary types (the only assumption is that equality of harts and of enclave IDs is decidable), and the structural predicate WF is kept as an arbitrary predicate. The TLA+ model fixed WF(d, m) to d = m. The results below therefore do not depend on the size of the configuration.
 
-The method is as follows. The transitions of `ADM.tla` are transcribed as an inductive transition relation `step`, and an inductive invariant `Inv` is shown to hold initially and to be preserved by every transition. The properties of Section 7 are derived from `Inv`. The step properties (A4, A7, A9, the step form of B5, and D1) are stated as theorems about one step from a reachable state.
+The method is as follows. The transitions of `ADM.tla` are transcribed as an inductive transition relation `step`, and an inductive invariant `Inv` is shown to hold initially and to be preserved by every transition. The properties of Section 7 are derived from `Inv`. The step properties (A4, A7, A9, the step form of B5, and D1) are stated as theorems about one step from a reachable state. Appendix A gives the definitions and theorems as formulas.
 
 #table(
   columns: (3fr, 3fr, 10fr),
@@ -493,7 +497,7 @@ The specification is in `verif/tla/ADMImpl.tla`. It is a module independent of t
 The main points of the model are as follows.
 
 - *PMP*: represented by the ADM entry of each hart (NONE / R / RW / unset). An unset entry falls through to the lowest-priority OS region, which grants everything to the host context and nothing to an enclave context. The properties are stated on this effective permission.
-- *IPI and HSM*: `pmp_set_global` reaches only the interruptible harts. HSM hart_stop / hart_start / hart_suspend are part of the model, which drops D4, an assumption of the design model. The HSM states are refined after the warm boot and resume sequences of OpenSBI 1.1: START_PENDING is split before and after `sm_init(false)`, and the interval between STARTED and the switch to S-mode is a separate state. A hart that is not STARTED, or that is in the SM (M-mode), has no effective permission on the ADM.
+- *IPI and HSM*: `pmp_set_global` reaches only the interruptible harts. HSM hart_stop / hart_start / hart_suspend are part of the model, which drops D4, an assumption of the design model. The HSM states are refined after the warm boot and resume sequences of OpenSBI 1.1: START_PENDING is split before and after `sm_init(false)`, and the interval between STARTED and the switch to S-mode is a separate state. A hart that is not STARTED, or that is in the SM (M-mode), has no effective permission on the ADM. `pmp_set_global` is split into transitions: the record and the read of the mask, the delivery to each hart of the mask, and the re-send. The HSM states may change in between.
 - *Stops*: each of the three stops is split into a transition that changes the state under the lock and a transition that performs `context_switch_to_host` outside the lock (`StopSwitch`). The latter reads `share` as it is at that moment.
 - *Properties*: the properties of Section 7, with the same names and meaning, restated on the effective permission. B3 is checked in its design form (the enclave is destroyed) and in a weaker form (it never executes again).
 - *Fix flags*: a `Fix*` constant per difference of Section 8. All false is the implementation before any fix; all true is the fixed version. \#7 has two flags, and `RestoreAt` selects how it is fixed (next subsection).
@@ -518,10 +522,22 @@ The main points of the model are as follows.
 #table(
   columns: (2fr, 9fr),
   table.header([*`RestoreAt`*], [*Meaning*]),
-  [`init_resend`], [The restarted hart programs its entries from the records in `sm_init(false)` (OpenSBI's `final_init`). At that point the hart is START_PENDING, and OpenSBI restricts IPI targets to STARTED / SUSPENDED harts, so later updates do not reach it. Therefore `send_and_sync_pmp_ipi`, after the usual round, looks for START_PENDING harts, waits until each is STARTED, and sends the update again. An `mb()` separates writing the record from reading the hart states. No change to OpenSBI is needed],
+  [`init_resend`], [The restarted hart programs its entries from the records in `sm_init(false)` (OpenSBI's `final_init`). At that point the hart is START_PENDING, and OpenSBI restricts IPI targets to STARTED / SUSPENDED harts, so later updates do not reach it. Therefore `send_and_sync_pmp_ipi`, after the usual round, sends the update again to the harts that were outside the mask of that round, waiting while a hart is START_PENDING. An `mb()` separates writing the record from reading the hart states. No change to OpenSBI is needed],
   [`init`], [Program the entries in `sm_init(false)` only, without re-sending],
   [`started`], [Add a hook to OpenSBI and program the entries after STARTED, just before the switch to S-mode. Needs an OpenSBI patch],
 )
+
+The constant `Resend` selects the targets of the re-send. The fixed version uses `mask`.
+
+#table(
+  columns: (2fr, 9fr),
+  table.header([*`Resend`*], [*Targets of the re-send*]),
+  [`mask`], [Every hart that was outside the mask of the round. The sender waits until the hart is no longer START_PENDING and sends (OpenSBI drops a hart that is not interruptible)],
+  [`state`], [The harts that are START_PENDING when the re-send loop looks at them. The first version of the fix did this],
+  [`atomic`], [The whole `pmp_set_global` is one transition, as in the earlier model],
+)
+
+`state` has a race. A restarting hart programs its entries from the records; the sender then reads the mask; the hart becomes STARTED before the re-send loop looks at it. The hart is in neither the mask nor the re-send. OpenSBI sets STARTED after `final_init` (`sm_init`, including console output), so the window exists. `atomic` takes the read of the mask and the loop as simultaneous and does not explore this race.
 
 A hart woken from non-retentive suspend does not go through `final_init`, so `init_resend` and `init` cannot restore its entries. OpenSBI's `hart_resume` hook is called before `sbi_hart_pmp_configure` and cannot be used either. `FixNonRetSuspend` therefore refuses non-retentive suspend altogether. The SM registers an HSM device with `sbi_hsm_set_device` in `sm_init(cold)`. Its `hart_suspend` returns an error other than `SBI_ENOTSUPP` for a non-retentive type (OpenSBI does not fall back to its default implementation) and `SBI_ENOTSUPP` for a retentive type (the default `wfi` is used). `hart_start` and `hart_stop` are not provided. If another HSM device is already registered, the SM cannot protect the ADM and stops booting. The generic, fu540 and mpfs platforms of OpenSBI 1.1 register no HSM device, and the default non-retentive suspend only executes `wfi` without powering the hart down, so refusing it costs nothing in practice.
 
@@ -532,7 +548,8 @@ Unless stated otherwise, the configuration has 2 harts and 1 enclave.
 - *Implementation before the fix* (`make impl-original`): every one of the 17 properties has a counterexample.
 - *Current implementation* (`make impl`; every difference fixed, the same configuration as the fixed version): all 17 properties hold.
 - *Before fixing \#1, \#5, \#7 and \#13* (\#6, \#11 and \#12 fixed): A1–A4, A6, A8, B1, B2, E1 and E2 have counterexamples due to \#7 and \#13, B3 in its design form due to \#1, and B4 and B5 due to \#5. Fixing \#7 alone leaves the same properties violated through \#13.
-- *Fixed version* (`make check-impl`): every property holds with 3 harts and 1 enclave, and with 2 harts and 2 enclaves (with one kind of data and metadata). The five reachability witnesses (resumption after a writable share, execution while a hart is stopped, validation failure, a hart restart during a writable share, a stop in the middle of its switch) are reached.
+- *Fixed version* (`make check-impl`): every property holds with 3 harts and 1 enclave, and with 2 harts and 2 enclaves (with one kind of data and metadata). The six reachability witnesses (resumption after a writable share, execution while a hart is stopped, validation failure, a hart restart during a writable share, a stop in the middle of its switch, a revocation waiting to be re-sent) are reached.
+- *Targets of the re-send* (`make impl-resend`; only `Resend` of the fixed version is changed): with `state`, A1–A4, A6, A8, B1, B2, E1 and E2 are violated. With `atomic`, all 17 hold and the race is not visible.
 - *Ways to fix \#7* (`make impl-ablation` and `make impl-restart`; only the \#7 part of the fixed version is changed):
 
   #table(
@@ -563,6 +580,8 @@ Unless stated otherwise, the configuration has 2 harts and 1 enclave.
 + *Hart restart through HSM (\#7)*: when the host stops a hart with hart_stop and starts it again with hart_start, only the SM and OS regions are programmed on that hart. The host on that hart gets full access to all memory through the OS region. It can read and write the ADM even while the enclave runs on another hart, which violates A2 and E1 (presumably the EPM as well). The host alone suffices; no cooperation from the enclave is needed. Inherited from the original Keystone. Waking from non-retentive suspend has the same effect.
 
   Programming the entries of the restarted hart in `sm_init(false)` is not enough (`RestoreAt = init`). The hart finishes doing so while still START_PENDING and misses every `pmp_set_global` other harts issue before it becomes STARTED. For example, right after an enclave is created, or right after a resume revokes a share, that hart alone becomes STARTED with a stale permission.
+
+  Choosing the targets of the re-send by the state the loop sees is not enough either (`Resend = state`). The counterexample: hart A restarts and programs its entries (START_PENDING). Hart B starts the `pmp_set_global` of a create, and A is not in the mask. A becomes STARTED. The loop of B sees that A is not START_PENDING and skips it. A has no entry for the new enclave, and the host on A can read and write the ADM while the enclave runs.
 + *Race between a stop and a resume (\#13, new)*: between the moment a stopping hart drops the lock and the end of its `context_switch_to_host`, the host can, from another hart:
   - resume the enclave. The revocation of the resume (`pmp_set_global(NO_PERM)`) completes first, and the stopping hart then grants RW on every hart. The enclave runs again while host harts hold RW (E1, B2).
   - destroy it and create a new enclave with the same ID. The late `context_switch_to_host` reads the `share` of the new enclave (RW right after create) and grants RW on its ADM on every hart (A1). This also happens with an exit or an interrupt-driven stop, which request no sharing.
@@ -581,8 +600,10 @@ Unless stated otherwise, the configuration has 2 harts and 1 enclave.
 === Caveats
 
 - The counterexamples are counterexamples of the model. They have not been reproduced on QEMU or on hardware. The behavior of OpenSBI is based on reading the 1.1 source used by the build.
-- The EPM, the UTM, and the intermediate state of create (ALLOCATED) are not modeled.
-- One IPI round of `pmp_set_global`, together with the re-send of `init_resend`, is one atomic transition. The memory ordering between the records and the HSM states (where the `mb()` goes) is an assumption outside the model.
+- The EPM and the UTM are not modeled. The part of create before the call of `pmp_set_global` is one transition.
+- In `pmp_set_global`, writing the record and reading the mask are one transition. The memory ordering between the two (`pmp_lock` and `mb()`) is an assumption outside the model. The delivery to the harts of the mask is one transition per hart, and a hart that left the mask before the delivery does not apply the update.
+- The re-send loop looks at the harts in numerical order; the model looks at them in any order.
+- The race of the re-send has a narrow time window; reproducing it on QEMU was not attempted.
 - The fix flags model one possible fix each; they are not fixes of the implementation. Every modeled difference (\#1, \#5, \#6, \#7, \#11, \#12 and \#13) is also fixed in the implementation.
 
 == 10.4 Checking the implementation with CBMC
@@ -596,8 +617,8 @@ For `validate_adm_regions`, the ADM is memory of size S (below 2#super[40]) with
 #table(
   columns: (2fr, 4fr, 8fr),
   table.header([*Property*], [*Harness and bounds*], [*Result*]),
-  [B7], [`b7.c`; any S > 0, at most 16 regions, any metadata], [No read outside the ADM, no overflow, termination (the loops are unwound far enough)],
-  [B6], [`b6.c`; S at least the ADM header, at most `N_MAX` regions, distinct metadata UIDs], [W1–W9 hold (checked with `N_MAX` = 2–6). A valid ADM with two regions is shown to exist, so the check is not vacuous],
+  [B7], [`b7.c`; any S > 0, at most 16 regions, any metadata], [No read outside the ADM, no write to the ADM, no overflow, termination (the loops are unwound far enough)],
+  [B6], [`b6.c`; S at least the ADM header, at most `N_MAX` regions, distinct metadata UIDs], [W1–W9 hold (checked with `N_MAX` = 2–6). A valid ADM with two regions is shown to exist, so the check is not vacuous. Metadata with a duplicated UID is checked separately never to be accepted (`-DDUP_META`, `N_MAX` = 2)],
 )
 
 Before the fix, the following counterexamples were found (`N_MAX` = 2).
@@ -618,17 +639,18 @@ The fix (`adm.c`):
 
 The ADMs built by the SDK and the runtime pass the new checks: the runtime passes every region as metadata on each stop, and writes the type into the region header. `hello-adm.ke` runs on an image built with the fixed SM and driver.
 
-Bounds: B6 holds for at most 6 regions (about 86 minutes with 6). Each condition relates at most two regions, so a larger bound is not expected to reveal a new kind of violation, but this is not proved. With 16 regions, the many reads at symbolic positions kept the check from finishing. B7 covers up to 16 regions (about 20 minutes).
+Bounds: B6 holds for at most 6 regions (about 56 minutes with 6). Each condition relates at most two regions, so a larger bound is not expected to reveal a new kind of violation, but this is not proved. With 16 regions, the many reads at symbolic positions kept the check from finishing. B7 covers up to 16 regions (about 37 minutes).
 
-=== PMP region allocation (C2, C3, C5)
+=== PMP region allocation (C1, C2, C3, C5)
 
-`pmp_regions.c` includes `sm/src/pmp.c` as it is and replaces the PMP CSRs with arrays (with the patched OpenSBI headers the SM is built with). After the SM and OS regions are created as in `sm_init`, K arbitrary operations follow (allocation with `PMP_PRI_ANY` or `PMP_PRI_BOTTOM`, or a free). Then, for any region created with `PMP_PRI_ANY` / `PMP_PRI_TOP`, the harness checks the following, with 56-bit physical addresses and 54-bit pmpaddr.
+`pmp_regions.c` includes `sm/src/pmp.c` as it is and replaces the PMP CSRs with arrays (with the patched OpenSBI headers the SM is built with). After the SM and OS regions are created as in `sm_init`, K arbitrary operations follow (allocation with `PMP_PRI_ANY` or `PMP_PRI_BOTTOM`, or a free of any region but the SM and OS regions). Then, for any region created with `PMP_PRI_ANY` / `PMP_PRI_TOP`, the harness checks the following, with 56-bit physical addresses and 54-bit pmpaddr.
 
+- C1: its address range overlaps no other region but the OS region.
 - C2: its entries come after the SM entry and before the OS entry.
 - C3: it shares no entry with another region. Programmed alone, its entry matches exactly `[addr, addr + size)` (by the RISC-V TOR / NAPOT matching rules).
 - C5: when an allocation fails, `reg_bitmap` and `region_def_bitmap` are unchanged.
 
-Before the fix, C2 and C3 (shared entries) had counterexamples (Section 8 \#14): allocate and free a UTM, allocate three TOR regions (registers 1–6), and the next NAPOT region receives register 7, shared with the OS. After the fix, which leaves the lowest-priority register out of the search for `PMP_PRI_ANY`, every property holds with K = 6 (about 15 minutes) and K = 8 (about 65 minutes), and both TOR and NAPOT regions are reached. The encoding of C3 (the TOR lower-bound register, the NAPOT mask) and C5 held before the fix.
+Before the fix, C2 and C3 (shared entries) had counterexamples (Section 8 \#14): allocate and free a UTM, allocate three TOR regions (registers 1–6), and the next NAPOT region receives register 7, shared with the OS. After the fix, which leaves the lowest-priority register out of the search for `PMP_PRI_ANY`, every property holds with K = 6 (about 27 minutes) and K = 8 (about 88 minutes). Both TOR and NAPOT regions, and frees in an order other than that of the allocations, are reached. The encoding of C3 (the TOR lower-bound register, the NAPOT mask) and C5 held before the fix.
 
 The cleanup of `create_enclave` on failure (C5 on the enclave side) was checked by code reading: it frees the regions it allocated in reverse order and unsets the entries it set on every hart before releasing the eid.
 
@@ -647,9 +669,13 @@ The cleanup of `create_enclave` on failure (C5 on the enclave side) was checked 
   [`admfail` (broken)], [The SM destroys the enclave (`exceeded maximum number of slot`), and the SDK's destroy succeeds. Eight repetitions do not exhaust any resource], [The SM keeps the enclave; later creations fail],
 )
 
-With the fixed SM, enclaves pinned to a restarted CPU (`hello-adm.ke`, `admfail.ke`) also run. \#13 requires timing a race and has not been reproduced on QEMU (checked in the model only). The new driver assumes the fixed SM (with an SM before the fixes, the driver frees memory the SM still protects after a validation failure).
+With the fixed SM, enclaves pinned to a restarted CPU (`hello-adm.ke`, `admfail.ke`) also run. The results of the table are the same with the SM after the correction of the re-send. \#13 requires timing a race and has not been reproduced on QEMU (checked in the model only). The new driver assumes the fixed SM (with an SM before the fixes, the driver frees memory the SM still protects after a validation failure).
 
 == 10.6 Remaining work
 
 + Reproduce \#13 on hardware or QEMU.
 + Raise the bound on the number of regions in the B6 check (or give an argument that does not depend on it).
++ Make H8 hold. `get_sealing_key` reads and writes, in M-mode and without a range check, the two addresses passed by the enclave (inherited from the original Keystone). A malicious enclave can presumably write to any physical address, and read any by comparing derived keys (from code reading; not confirmed by running it). The ADM of another enclave is within reach, so E1 and E2 are claims that exclude this path.
++ The enclave-side library trusts items WF does not constrain. In `sdk/src/edge/adm.c`, `adm_remove_region` computes sizes assuming that a region header immediately precedes its data, and `adm_setup_new_hdr` writes a new region header at `free_list`. Even with an ADM that passes validation, the host can presumably make the enclave misbehave through them. E2 guarantees W1–W9 and no more. Decide whether to strengthen WF (adjacency of header and data, range of `free_list`) or to check in the library.
+
+#rocq-appendix("en")

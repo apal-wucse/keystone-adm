@@ -12,7 +12,7 @@ all: docs
 docs: $(PDFS)
 
 # warnings (e.g. a missing font) are errors
-%.pdf: docs/%.typ docs/model.typ
+%.pdf: docs/%.typ docs/model.typ docs/rocq.typ
 	@out=$$($(TYPST) compile $(TYPST_FLAGS) $< $@ 2>&1); st=$$?; \
 	[ -z "$$out" ] || printf '%s\n' "$$out" >&2; \
 	[ $$st -eq 0 ] && [ -z "$$out" ] || { rm -f $@; exit 1; }
@@ -61,10 +61,11 @@ reach:
 IMPL_FIXES := FixValidateFail FixStaleMeta FixNullRW FixShareType \
 	FixDestroyGuard FixHartRestart FixNonRetSuspend FixStopping
 REACH_IMPL := Reach_ResumedAfterRWShare Reach_RunsWhileHartStopped \
-	Reach_ValidationFails Reach_RestartWhileShared Reach_StopSwitchPending
+	Reach_ValidationFails Reach_RestartWhileShared Reach_StopSwitchPending \
+	Reach_ResendWaits
 IMPL_ENV := TLC="$(TLC)" TLC_FLAGS="$(TLC_FLAGS)"
 
-.PHONY: impl impl-original impl-ablation impl-restart check-impl
+.PHONY: impl impl-original impl-ablation impl-restart impl-resend check-impl
 
 # The code as it is: report which properties hold (a report, not a test;
 # the counterexamples are in tla/.tlc/impl/<property>.log).
@@ -103,6 +104,20 @@ impl-restart:
 		$(IMPL_ENV) sh tla/run-props.sh $$d/base.cfg $$d | grep -v '^holds' || true; \
 	done
 
+# Which harts the re-send of init_resend covers, compared on the fully
+# fixed model (Resend = "mask"):
+#   state       those START_PENDING when the loop looks at them (the first
+#               version of the fix: a hart that becomes STARTED between the
+#               read of the mask and the loop is missed)
+#   atomic      pmp_set_global as one step (hides that race)
+impl-resend:
+	@for v in state atomic; do \
+		d=$(TLC_META)/resend/$$v; mkdir -p $$d; \
+		sed "s/Resend = \"mask\"/Resend = \"$$v\"/" tla/ADMImplFixed.cfg > $$d/base.cfg; \
+		echo "=== Resend = $$v"; \
+		$(IMPL_ENV) sh tla/run-props.sh $$d/base.cfg $$d | grep -v '^holds' || true; \
+	done
+
 # The fully fixed model: every property must hold, and the witnesses must
 # be reached.
 check-impl:
@@ -137,11 +152,13 @@ CBMC_PMP_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv
 	--unwind 60 --unwinding-assertions
 
 # A report: the failed properties of each harness (logs in cbmc/.out).
-#   b7   B7 for any S > 0: memory safety, overflow, termination
-#   b6   B6 (W1-W9) for at most N_MAX regions, and a witness that a valid
-#        ADM with N_MAX regions exists
-#   pmp  C2, C3, C5 for the region allocator after K operations, and
-#        witnesses that TOR and NAPOT regions are covered
+#   b7   B7 for any S > 0: memory safety, no write, overflow, termination
+#   b6   B6 (W1-W9) for at most N_MAX regions, a witness that a valid ADM
+#        with N_MAX regions exists, and that metadata with a duplicated
+#        uid is never accepted
+#   pmp  C1, C2, C3, C5 for the region allocator after K operations, and
+#        witnesses that TOR and NAPOT regions and out-of-order frees are
+#        covered
 cbmc:
 	@mkdir -p $(CBMC_OUT)
 	@echo "=== B7"; $(CBMC) $(CBMC_FLAGS) $(CBMC_SAFETY) \
@@ -156,13 +173,17 @@ cbmc:
 		if grep -q 'reach: .*: FAILURE' $(CBMC_OUT)/b6-reach.log; \
 		then echo "reached:     valid ADM with $(N_MAX) regions"; \
 		else echo "NOT REACHED: valid ADM with $(N_MAX) regions"; fi
+	@echo "=== B6, duplicated uid in the metadata"; $(CBMC) $(CBMC_FLAGS) -DN_MAX=$(N_MAX) \
+		-DDUP_META --unwindset $(CBMC_UNWIND_N) \
+		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6-dup.log 2>&1; \
+		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/b6-dup.log
 	@echo "=== PMP (K = $(K))"; $(CBMC) $(CBMC_PMP_FLAGS) cbmc/pmp_regions.c \
 		> $(CBMC_OUT)/pmp.log 2>&1; \
 		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/pmp.log
 	@$(CBMC) $(CBMC_PMP_FLAGS) -DREACH cbmc/pmp_regions.c > $(CBMC_OUT)/pmp-reach.log 2>&1; \
-		for r in TOR NAPOT; do \
-			if grep -q "reach: a $$r region.*: FAILURE" $(CBMC_OUT)/pmp-reach.log; \
-			then echo "reached:     $$r region"; else echo "NOT REACHED: $$r region"; fi; \
+		for r in "a TOR region" "a NAPOT region" "a free of a region other"; do \
+			if grep -q "reach: $$r.*: FAILURE" $(CBMC_OUT)/pmp-reach.log; \
+			then echo "reached:     $$r"; else echo "NOT REACHED: $$r"; fi; \
 		done
 
 # --- Rocq proofs ---------------------------------------------------------------

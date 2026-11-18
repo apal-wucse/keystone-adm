@@ -3,8 +3,9 @@
  *
  * After the SM and OS regions are set up as in sm_init, K arbitrary
  * operations follow: allocate a region with PMP_PRI_ANY (EPM, ADM) or
- * PMP_PRI_BOTTOM (UTM), or free a region.  Then, for any region i
- * allocated with PMP_PRI_ANY or PMP_PRI_TOP:
+ * PMP_PRI_BOTTOM (UTM), or free any region but those two.  Then, for any
+ * region i allocated with PMP_PRI_ANY or PMP_PRI_TOP:
+ *   C1  it overlaps no other region but the OS region;
  *   C2  its entries lie strictly between the SM entry and the OS entry;
  *   C3  no other region uses its entries, and programmed alone, its entry
  *       matches exactly [addr, addr + size);
@@ -82,7 +83,7 @@ static int entry_hi(int i) { return region_register_idx(i); }
 
 void harness(void) {
     int prio[PMP_MAX_N_REGION];
-    int sm, os, r;
+    int sm, os, last = -1, other = 0;
 
     __CPROVER_assume(pmp_region_init(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &sm, 0) == 0);
     prio[sm] = PMP_PRI_TOP;
@@ -97,17 +98,20 @@ void harness(void) {
             __CPROVER_assume(size > 0 && start < ((uintptr_t)1 << PA_BITS));
             __CPROVER_assume(size < ((uintptr_t)1 << PA_BITS) - start);
             uint32_t rb = reg_bitmap, db = region_def_bitmap;
+            int r;
             int ret   = pmp_region_init(start, size, pri, &r, 0);
             log_op[s] = op, log_start[s] = start, log_size[s] = size, log_ret[s] = ret;
             log_rid[s] = r;
             if (ret == 0)
-                prio[r] = pri;
+                prio[r] = pri, last = r;
             else
                 A(reg_bitmap == rb && region_def_bitmap == db,
                   "C5: a failed allocation changes nothing");
         } else {
+            int r;
             __CPROVER_assume(r >= 0 && r < PMP_MAX_N_REGION && is_pmp_region_valid(r));
             __CPROVER_assume(r != sm && r != os);
+            other |= r != last;
             pmp_region_free_atomic(r);
             log_op[s] = 2, log_rid[s] = r;
         }
@@ -122,7 +126,12 @@ void harness(void) {
     /* witnesses, expected to fail: the checks below cover both encodings */
     A(!(prio[i] == PMP_PRI_ANY && region_is_tor(i)), "reach: a TOR region of PMP_PRI_ANY");
     A(!(prio[i] == PMP_PRI_ANY && region_is_napot(i)), "reach: a NAPOT region of PMP_PRI_ANY");
+    A(!other, "reach: a free of a region other than the last allocated");
 #endif
+    if (j != os)
+        A((u128)region_get_addr(i) + region_get_size(i) <= region_get_addr(j) ||
+              (u128)region_get_addr(j) + region_get_size(j) <= region_get_addr(i),
+          "C1: regions are disjoint");
     if (i != sm)
         A(entry_lo(i) > entry_hi(sm) && entry_hi(i) < PMP_N_REG - 1,
           "C2: entries between the SM and OS entries");
