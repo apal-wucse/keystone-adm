@@ -129,10 +129,20 @@ CBMC_N_LOOPS := 1 3 4 5
 CBMC_UNWIND_N = $(subst $(eval) ,$(comma),$(foreach l,$(CBMC_N_LOOPS),validate_adm_regions.$(l):$(shell echo $$(($(N_MAX) + 1)))))
 comma := ,
 
+# number of allocations and frees in the PMP harness
+K ?= 6
+# OpenSBI headers, set by the verif devshell
+OPENSBI_INCLUDE ?= $(error OPENSBI_INCLUDE is not set; enter the verif devshell)
+CBMC_PMP_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv_xlen=64 \
+	'-DTARGET_PLATFORM_HEADER="platform/generic/platform.h"' -DK=$(K) \
+	--unwind 60 --unwinding-assertions
+
 # A report: the failed properties of each harness (logs in cbmc/.out).
-#   b7  B7 for any S > 0: memory safety, overflow, termination
-#   b6  B6 (W1-W9) for at most N_MAX regions, and a witness that a valid
-#       ADM with N_MAX regions exists
+#   b7   B7 for any S > 0: memory safety, overflow, termination
+#   b6   B6 (W1-W9) for at most N_MAX regions, and a witness that a valid
+#        ADM with N_MAX regions exists
+#   pmp  C2, C3, C5 for the region allocator after K operations, and
+#        witnesses that TOR and NAPOT regions are covered
 cbmc:
 	@mkdir -p $(CBMC_OUT)
 	@echo "=== B7"; $(CBMC) $(CBMC_FLAGS) $(CBMC_SAFETY) \
@@ -147,6 +157,14 @@ cbmc:
 		if grep -q 'reach: .*: FAILURE' $(CBMC_OUT)/b6-reach.log; \
 		then echo "reached:     valid ADM with $(N_MAX) regions"; \
 		else echo "NOT REACHED: valid ADM with $(N_MAX) regions"; fi
+	@echo "=== PMP (K = $(K))"; $(CBMC) $(CBMC_PMP_FLAGS) cbmc/pmp_regions.c \
+		> $(CBMC_OUT)/pmp.log 2>&1; \
+		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/pmp.log
+	@$(CBMC) $(CBMC_PMP_FLAGS) -DREACH cbmc/pmp_regions.c > $(CBMC_OUT)/pmp-reach.log 2>&1; \
+		for r in TOR NAPOT; do \
+			if grep -q "reach: a $$r region.*: FAILURE" $(CBMC_OUT)/pmp-reach.log; \
+			then echo "reached:     $$r region"; else echo "NOT REACHED: $$r region"; fi; \
+		done
 
 # --- Rocq proofs ---------------------------------------------------------------
 

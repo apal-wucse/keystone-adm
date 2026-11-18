@@ -703,7 +703,7 @@ The second half of E2 guarantees only the structure (number, types, sizes, offse
 
 These are candidates found by code reading. For #1, #5, #6, #7, #11, #12 and #13, the effect on the properties of Section 7 was checked with the implementation model of Section 10.3. The others are outside the scope of the model or are handled at the code level.
 
-#1–#7 and #11–#13 have been fixed in `++sm/src/++`. #2–#4 are fixed in `++adm.c++` after the CBMC check of Section 10.4. #1 and #5 are fixed as `++FixValidateFail++` and `++FixStaleMeta++` of Section 10.3 (`++enclave.c++`). For #6, #11 and #12, `++stop_enclave_with_share++` checks its arguments and the state first, and the guard of `++destroy_enclave++` is limited to FRESH / STOPPED. #7 and #13 are fixed as `++FixHartRestart++` (`++init_resend++`), `++FixNonRetSuspend++` and `++FixStopping++` of Section 10.3 (`++pmp.c++`, `++ipi.c++`, `++sm.c++`, `++enclave.c++`). The "Implementation" column of the table describes the code before the fix.
+#1–#7 and #11–#14 have been fixed in `++sm/src/++`. #14 is fixed in `++pmp.c++` after the CBMC check of Section 10.4. #2–#4 are fixed in `++adm.c++` after the CBMC check of Section 10.4. #1 and #5 are fixed as `++FixValidateFail++` and `++FixStaleMeta++` of Section 10.3 (`++enclave.c++`). For #6, #11 and #12, `++stop_enclave_with_share++` checks its arguments and the state first, and the guard of `++destroy_enclave++` is limited to FRESH / STOPPED. #7 and #13 are fixed as `++FixHartRestart++` (`++init_resend++`), `++FixNonRetSuspend++` and `++FixStopping++` of Section 10.3 (`++pmp.c++`, `++ipi.c++`, `++sm.c++`, `++enclave.c++`). The "Implementation" column of the table describes the code before the fix.
 
 [cols="1,3,6,8,7",options="header"]
 |===
@@ -790,6 +790,12 @@ These are candidates found by code reading. For #1, #5, #6, #7, #11, #12 and #13
 | A stop is atomic: when the enclave is STOPPED, the PMP switch is complete
 | `++stop_enclave_with_share++`, `++stop_enclave++` and `++exit_enclave++` set `++state = STOPPED++` under the lock, drop the lock, and only then call `++context_switch_to_host++`. That function reads `++share++` as it is at that moment, calls `++pmp_set_global++` / `++pmp_set_keystone++`, and swaps the register context in `++threads[0]++`. Between dropping the lock and the end of the switch, a resume or destroy from another hart is accepted (found by checking the implementation model; switching outside the lock is inherited from the original Keystone)
 | `++enclave.c++` `++stop_enclave_with_share++`, `++stop_enclave++`, `++exit_enclave++`, `++context_switch_to_host++`
+
+| 14
+| C2, C3
+| The entries of the ADM and the EPM lie between the SM and OS entries and are shared with no other region
+| A UTM (`++PMP_PRI_BOTTOM++`) shares the lowest-priority register with the OS region. Freeing a UTM clears that bit of `++reg_bitmap++`, so once `++PMP_PRI_ANY++` allocations (EPM, ADM) have used up registers 1–6, the next one receives the lowest-priority register. The entry of that region is overwritten by the OS region (all memory, all permissions) on every switch to the host. The host only needs to create and destroy enclaves (found with CBMC; inherited from the original Keystone)
+| `++pmp.c++` `++get_free_reg_idx++`, `++get_conseq_free_reg_idx++`, `++pmp_region_free_atomic++`
 
 |===
 
@@ -905,7 +911,7 @@ The specifications are in `++verif/tla/++`. `++make check++` runs the checks and
 
 | C3
 | —
-| The TOR / NAPOT encoding is an implementation matter. The model assumes that an entry matches exactly its own region
+| The TOR / NAPOT encoding is an implementation matter. The model assumes that an entry matches exactly its own region; the implementation is checked with CBMC in Section 10.4
 
 | C4
 | `++ADMRegions.tla++`
@@ -913,7 +919,7 @@ The specifications are in `++verif/tla/++`. `++make check++` runs the checks and
 
 | C5
 | —
-| Holds by construction because transitions are atomic; an implementation matter
+| Holds by construction because transitions are atomic; the implementation is checked in Section 10.4
 
 | D1, D2
 | `++ADM.tla++` / `++ADM.cfg++`
@@ -1169,9 +1175,13 @@ The runtime's `++dispatch_edgecall_ocall_with_share++` passes the arguments of t
 * One IPI round of `++pmp_set_global++`, together with the re-send of `++init_resend++`, is one atomic transition. The memory ordering between the records and the HSM states (where the `++mb()++` goes) is an assumption outside the model.
 * The fix flags model one possible fix each; they are not fixes of the implementation. Every modeled difference (#1, #5, #6, #7, #11, #12 and #13) is also fixed in the implementation.
 
-=== 10.4 Checking the validation function with CBMC
+=== 10.4 Checking the implementation with CBMC
 
-The harnesses are in `++verif/cbmc/++`. `++make cbmc++` checks `++validate_adm_regions++` of `++sm/src/adm.c++` as it is with CBMC. The ADM is memory of size S (below 2^40^) with arbitrary contents, and the metadata are 16 arbitrary entries. The harnesses compute in 128 bits so that wrap-around cannot hide a violation.
+The harnesses are in `++verif/cbmc/++`. `++make cbmc++` checks `++validate_adm_regions++` of `++sm/src/adm.c++` and the region allocator of `++sm/src/pmp.c++` as they are with CBMC.
+
+==== The validation function (B6, B7)
+
+For `++validate_adm_regions++`, the ADM is memory of size S (below 2^40^) with arbitrary contents, and the metadata are 16 arbitrary entries. The harnesses compute in 128 bits so that wrap-around cannot hide a violation.
 
 [cols="2,4,8",options="header"]
 |===
@@ -1185,7 +1195,7 @@ The harnesses are in `++verif/cbmc/++`. `++make cbmc++` checks `++validate_adm_r
 
 | B6
 | `++b6.c++`; S at least the ADM header, at most `++N_MAX++` regions, distinct metadata UIDs
-| W1–W9 hold (checked with `++N_MAX++` = 2, 3, 4). A valid ADM with two regions is shown to exist, so the check is not vacuous
+| W1–W9 hold (checked with `++N_MAX++` = 2–6). A valid ADM with two regions is shown to exist, so the check is not vacuous
 |===
 
 Before the fix, the following counterexamples were found (`++N_MAX++` = 2).
@@ -1204,12 +1214,51 @@ The fix (`++adm.c++`):
 * Read each field of the ADM once.
 * New error codes `++ADM_REGION_COUNT_MISMATCH++`, `++ADM_INVALID_UID++` and `++ADM_TYPE_MISMATCH++`.
 
-The ADMs built by the SDK and the runtime pass the new checks: the runtime passes every region as metadata on each stop, and writes the type into the region header.
+The ADMs built by the SDK and the runtime pass the new checks: the runtime passes every region as metadata on each stop, and writes the type into the region header. `++hello-adm.ke++` runs on an image built with the fixed SM and driver.
 
-Bounds: B6 holds for at most 4 regions. Each condition relates at most two regions, so a larger bound is not expected to reveal a new kind of violation, but this is not proved. With 16 regions, the many reads at symbolic positions kept the check from finishing. B7 covers up to 16 regions (about 20 minutes).
+Bounds: B6 holds for at most 6 regions (about 86 minutes with 6). Each condition relates at most two regions, so a larger bound is not expected to reveal a new kind of violation, but this is not proved. With 16 regions, the many reads at symbolic positions kept the check from finishing. B7 covers up to 16 regions (about 20 minutes).
 
-=== 10.5 Remaining work
+==== PMP region allocation (C2, C3, C5)
 
-. Reproduce #7 and #13 on QEMU, and confirm that they no longer occur after the fix. Also check the fix of #1 (destruction on validation failure) on QEMU.
+`++pmp_regions.c++` includes `++sm/src/pmp.c++` as it is and replaces the PMP CSRs with arrays (with the patched OpenSBI headers the SM is built with). After the SM and OS regions are created as in `++sm_init++`, K arbitrary operations follow (allocation with `++PMP_PRI_ANY++` or `++PMP_PRI_BOTTOM++`, or a free). Then, for any region created with `++PMP_PRI_ANY++` / `++PMP_PRI_TOP++`, the harness checks the following, with 56-bit physical addresses and 54-bit pmpaddr.
+
+* C2: its entries come after the SM entry and before the OS entry.
+* C3: it shares no entry with another region. Programmed alone, its entry matches exactly `++[addr, addr + size)++` (by the RISC-V TOR / NAPOT matching rules).
+* C5: when an allocation fails, `++reg_bitmap++` and `++region_def_bitmap++` are unchanged.
+
+Before the fix, C2 and C3 (shared entries) had counterexamples (Section 8 #14): allocate and free a UTM, allocate three TOR regions (registers 1–6), and the next NAPOT region receives register 7, shared with the OS. After the fix, which leaves the lowest-priority register out of the search for `++PMP_PRI_ANY++`, every property holds with K = 6 (about 15 minutes) and K = 8 (about 65 minutes), and both TOR and NAPOT regions are reached. The encoding of C3 (the TOR lower-bound register, the NAPOT mask) and C5 held before the fix.
+
+The cleanup of `++create_enclave++` on failure (C5 on the enclave side) was checked by code reading: it frees the regions it allocated in reverse order and unsets the entries it set on every hart before releasing the eid.
+
+=== 10.5 Checks on QEMU
+
+`++verif/qemu/run-tests.sh [BIOS]++` boots the image of `++run-virt++` on a fresh overlay (with the SM replaced by `++BIOS++` if given), copies the test apps `++admfail.ke++` and `++admpeek.ke++` into it, and runs them.
+
+* `++admpeek++` (#7): after creating an enclave, stop and restart a CPU with CPU hotplug, and read the host's mapping of the ADM from that CPU.
+* `++admfail++` (#1): while the enclave shares the ADM read-write, the host breaks the ADM header. Validation fails on resume and the SM destroys the enclave. The check is whether the destroy by the SDK then succeeds.
+
+[cols="4,6,6",options="header"]
+|===
+| Check
+| Fixed SM
+| SM before the fixes (`++ee980f5++`)
+
+| `++admpeek++` (CPU 1, CPU 3)
+| Access to the ADM faults before and after the restart
+| After the restart, the host reads the ADM (#7 reproduced)
+
+| `++admfail++` (not broken)
+| Completes normally
+| Completes normally
+
+| `++admfail++` (broken)
+| The SM destroys the enclave (`++exceeded maximum number of slot++`), and the SDK's destroy succeeds. Eight repetitions do not exhaust any resource
+| The SM keeps the enclave; later creations fail
+|===
+
+With the fixed SM, enclaves pinned to a restarted CPU (`++hello-adm.ke++`, `++admfail.ke++`) also run. #13 requires timing a race and has not been reproduced on QEMU (checked in the model only). The new driver assumes the fixed SM (with an SM before the fixes, the driver frees memory the SM still protects after a validation failure).
+
+=== 10.6 Remaining work
+
+. Reproduce #13 on hardware or QEMU.
 . Raise the bound on the number of regions in the B6 check (or give an argument that does not depend on it).
-. Confirm C3 and C5 for the region allocation in `++pmp.c++`.

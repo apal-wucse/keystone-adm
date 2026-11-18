@@ -10,6 +10,8 @@
   driver = pkgsRiscv64.callPackage ./driver { };
   bootrom = pkgsRiscv64.callPackage ./bootrom { };
   apps = pkgsRiscv64.callPackage ./apps { };
-  # documentation tooling only; uses the build platform's package set
-  verif = pkgsRiscv64.buildPackages.callPackage ./verif { };
+  # verification tooling; uses the build platform's package set
+  verif = pkgsRiscv64.buildPackages.callPackage ./verif {
+    inherit (pkgsRiscv64.keystonePkgs) keystone-sm;
+  };
 }
