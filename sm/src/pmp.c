@@ -104,10 +104,14 @@ static region_id get_free_region_idx() {
     return search_rightmost_unset(region_def_bitmap, PMP_MAX_N_REGION, 0x1);
 }
 
-static pmpreg_id get_free_reg_idx() { return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x1); }
+/* PMP_PRI_ANY never takes the bottom register, which the OS region shares
+ * with PMP_PRI_BOTTOM regions (freeing one of them clears its bit) */
+static pmpreg_id get_free_reg_idx() {
+    return search_rightmost_unset(reg_bitmap, PMP_N_REG - 1, 0x1);
+}
 
 static pmpreg_id get_conseq_free_reg_idx() {
-    return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x3);
+    return search_rightmost_unset(reg_bitmap, PMP_N_REG - 1, 0x3);
 }
 
 /* We do an integery overflow safety check here for the inputs (addr +
