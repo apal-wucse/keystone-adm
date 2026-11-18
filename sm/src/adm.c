@@ -24,6 +24,9 @@ const char* adm_validation_err_msg[] = {
     [ADM_REGION_COUNT_MISMATCH]         = "number of regions is mismatched",
     [ADM_INVALID_UID]                   = "region uid is unknown or duplicated",
     [ADM_TYPE_MISMATCH]                 = "region type is mismatched",
+    [ADM_HEADER_NOT_ADJACENT]           = "region header is not followed by its data",
+    [ADM_MISALIGNED]                    = "region header is misaligned",
+    [ADM_INVALID_FREE_LIST]             = "invalid free list",
 };
 
 /* [a, a + l) and [b, b + m) share a byte; a + l and b + m must not overflow */
@@ -70,6 +73,7 @@ validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type_inf
     const uintptr_t hdr_size = sizeof(AdmHeader);
     const uintptr_t rhdr     = sizeof(AdmRegionHeader);
     uintptr_t hoff[ADM_SLOT_MAX], uid[ADM_SLOT_MAX], doff[ADM_SLOT_MAX], dsize[ADM_SLOT_MAX];
+    uintptr_t free_list, end = hdr_size;
     AdmValidationError ret;
     size_t n, expected = 0;
 
@@ -94,9 +98,11 @@ validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type_inf
         hoff[i] = info->data_offsets[i];
         uid[i]  = info->uid_tbl[i];
 
-        /* region header: after the ADM header, inside the ADM, after the previous one */
+        /* region header: after the ADM header, inside the ADM, aligned, after the previous one */
         if (hoff[i] < hdr_size || hoff[i] > size - rhdr)
             return ADM_EXCEEDED_REGION_SIZE;
+        if (hoff[i] % DATA_ALIGN_BYTES != 0)
+            return ADM_MISALIGNED;
         if (i > 0 && hoff[i] < hoff[i - 1] + rhdr)
             return ADM_INVALID_ORDER;
 
@@ -117,7 +123,9 @@ validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type_inf
         doff[i]               = data->offset;
         dsize[i]              = data->size;
 
-        /* data body: inside the ADM, after the ADM header */
+        /* data body: right after its header, inside the ADM */
+        if (doff[i] != hoff[i] + rhdr)
+            return ADM_HEADER_NOT_ADJACENT;
         if (dsize[i] > size || doff[i] > size - dsize[i])
             return ADM_EXCEEDED_REGION_SIZE;
         if (overlaps(0, hdr_size, doff[i], dsize[i]))
@@ -141,5 +149,12 @@ validate_adm_regions(uintptr_t start_addr, uintptr_t size, AdmTypeInfo* type_inf
                 return ADM_REGION_OVERLAPPED;
         }
     }
+
+    /* the free list: aligned, after the last region (the regions are in order) */
+    free_list = info->free_list;
+    if (n > 0)
+        end = doff[n - 1] + dsize[n - 1];
+    if (free_list < end || free_list % DATA_ALIGN_BYTES != 0)
+        return ADM_INVALID_FREE_LIST;
     return ADM_VALID;
 }
