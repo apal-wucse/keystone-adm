@@ -144,19 +144,10 @@ uintptr_t dispatch_edgecall_syscall_protected(
         edge_call->allowed_adm_write = 0;
 
     if (allow_write) {
-        AdmRegionHeader* region_hdr;
         AdmTypeInfo type_info[ADM_SLOT_MAX];
+        size_t region_n = 0;
 
-        AdmHeader* header = adm_get_header();
-        size_t region_n   = adm_region_count();
-
-        for (size_t i = 0; i < region_n; i++) {
-            region_hdr          = adm_get_region_header(i);
-            type_info[i].uid    = header->uid_tbl[i];
-            type_info[i].type   = region_hdr->type;
-            type_info[i].size   = region_hdr->size;
-            type_info[i].offset = region_hdr->offset;
-        }
+        adm_gen_type_info(type_info, &region_n);
 
         ret = sbi_stop_enclave_with_share((uintptr_t)type_info, region_n, ADM_SHARE_RW);
 

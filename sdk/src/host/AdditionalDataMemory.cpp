@@ -86,24 +86,19 @@ bool AdditionalDataMemory::validateMemory() {
         logger.warn("validation failed, exceed maximum slot size");
         return false;
     }
-    /* Validate total data size */
-    size_t total           = 0;
-    size_t hdrSize         = sizeof(AdmHeader);
-    size_t dataWrapperSize = sizeof(AdmRegionHeader);
-    size_t storedNum       = additionalData.getStoredSize();
-    total += hdrSize + dataWrapperSize * storedNum;
-    for (const AdditionalData::DataBytes& d : additionalData.getStoredData()) {
-        size_t dataSize;
-        if (d.size % DATA_ALIGN_BYTES != 0) {
-            dataSize = (d.size / DATA_ALIGN_BYTES + 1) * DATA_ALIGN_BYTES;
-        } else {
-            dataSize = d.size;
-        }
-        total += dataSize;
-    }
-    if (total > admSize) {
+    /* Every header and its data must fit, with the layout of finalize() */
+    if (admSize < sizeof(AdmHeader)) {
         logger.warn("validation failed, exceed allocated memory size");
         return false;
+    }
+    uintptr_t offset = sizeof(AdmHeader);
+    for (const AdditionalData::DataBytes& d : additionalData.getStoredData()) {
+        if (offset > admSize || admSize - offset < sizeof(AdmRegionHeader) ||
+            d.size > admSize - offset - sizeof(AdmRegionHeader)) {
+            logger.warn("validation failed, exceed allocated memory size");
+            return false;
+        }
+        offset += sizeof(AdmRegionHeader) + (d.size / DATA_ALIGN_BYTES + 1) * DATA_ALIGN_BYTES;
     }
     return true;
 }

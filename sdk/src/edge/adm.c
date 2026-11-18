@@ -70,11 +70,11 @@ static uintptr_t adm_setup_new_hdr(size_t size, uintptr_t uid, AdmDataTypes type
             return (uintptr_t)NULL;
     }
 
+    /* the header and the data must fit after the free list */
     new_offset = _adm_hdr->free_list;
-    if (new_offset > UINTPTR_MAX - _adm_start || new_offset >= _adm_len)
-        return (uintptr_t)NULL;
-    if (size > UINTPTR_MAX - (_adm_start + new_offset + sizeof(AdmRegionHeader)) ||
-        size > _adm_len - (new_offset + sizeof(AdmRegionHeader))) {
+    if (new_offset < sizeof(AdmHeader) || new_offset > _adm_len ||
+        _adm_len - new_offset < sizeof(AdmRegionHeader) ||
+        size > _adm_len - new_offset - sizeof(AdmRegionHeader)) {
         return (uintptr_t)NULL;
     }
 
@@ -121,57 +121,40 @@ void* adm_new_region(size_t size, uintptr_t uid, AdmDataTypes type) {
     return (void*)(_adm_start + data_offset);
 }
 
-/* region removing & relocating */
+/* Removes a region.  The other regions stay where they are: the space of a
+ * region that is not the last one is free again only once the later ones
+ * are removed.  Relies on the layout the SM validates: every header is
+ * followed by its data, and the regions are in the order of their index. */
 ADMERR adm_remove_region(uintptr_t uid) {
     /* check validity */
     if (!enabled || !_adm_hdr)
         return ADM_ERR_NOT_AVAILABLE;
 
-    for (size_t i = 0; i < _adm_hdr->data_n; i++) {
+    size_t n = _adm_hdr->data_n;
+    for (size_t i = 0; i < n; i++) {
         /* look for specified uid */
         if (_adm_hdr->uid_tbl[i] != uid)
             continue;
 
-        if (i < _adm_hdr->data_n - 1) { // number of successor >= 1
-            uintptr_t offset_gap       = _adm_hdr->data_offsets[i + 1] - _adm_hdr->data_offsets[i];
-            uintptr_t copy_dst         = _adm_start + _adm_hdr->data_offsets[i];
-            uintptr_t copy_src         = _adm_start + _adm_hdr->data_offsets[i + 1];
-            AdmRegionHeader* last_data = adm_get_region_header(_adm_hdr->data_n - 1);
-            uintptr_t before_end       = last_data->offset + last_data->size;
-            uintptr_t copy_size        = before_end - _adm_hdr->data_offsets[i + 1];
-            uintptr_t new_free_list =
-                ((before_end - offset_gap) / DATA_ALIGN_BYTES + 1) * DATA_ALIGN_BYTES;
+        /* clear the header and the data */
+        AdmRegionHeader* hdr = (AdmRegionHeader*)(_adm_start + _adm_hdr->data_offsets[i]);
+        memset((void*)hdr, 0, sizeof(AdmRegionHeader) + hdr->size);
 
-            /* relocate region header */
-            for (size_t j = i; j < _adm_hdr->data_n - 1; j++) {
-                _adm_hdr->data_offsets[j] = _adm_hdr->data_offsets[j + 1] - offset_gap;
-                _adm_hdr->uid_tbl[j]      = _adm_hdr->uid_tbl[j + 1];
+        for (size_t j = i; j < n - 1; j++) {
+            _adm_hdr->data_offsets[j] = _adm_hdr->data_offsets[j + 1];
+            _adm_hdr->uid_tbl[j]      = _adm_hdr->uid_tbl[j + 1];
+        }
+        _adm_hdr->data_offsets[n - 1] = 0;
+        _adm_hdr->uid_tbl[n - 1]      = 0;
+        _adm_hdr->data_n              = n - 1;
+
+        if (i == n - 1) { // the tail: free up to the last region that is left
+            uintptr_t end = sizeof(AdmHeader);
+            if (n > 1) {
+                hdr = (AdmRegionHeader*)(_adm_start + _adm_hdr->data_offsets[n - 2]);
+                end = ((hdr->offset + hdr->size) / DATA_ALIGN_BYTES + 1) * DATA_ALIGN_BYTES;
             }
-
-            /* clear trailing metadata */
-            _adm_hdr->data_offsets[_adm_hdr->data_n - 1] = 0;
-            _adm_hdr->uid_tbl[_adm_hdr->data_n - 1]      = 0;
-            _adm_hdr->data_n--;
-            _adm_hdr->free_list = new_free_list;
-
-            /* relocate region */
-            memcpy((void*)copy_dst, (void*)copy_src, copy_size);
-
-            /* clear old region */
-            memset((void*)(_adm_start + before_end - offset_gap), 0, offset_gap);
-        } else { // target is the tail
-            uintptr_t remove_base        = _adm_start + _adm_hdr->data_offsets[i];
-            AdmRegionHeader* remove_data = (AdmRegionHeader*)remove_base;
-            uintptr_t remove_size =
-                remove_data->offset + remove_data->size - _adm_hdr->data_offsets[i];
-
-            /* clear out */
-            _adm_hdr->free_list       = _adm_hdr->data_offsets[i];
-            _adm_hdr->data_offsets[i] = 0;
-            _adm_hdr->uid_tbl[i]      = 0;
-            _adm_hdr->data_n--;
-
-            memset((void*)remove_base, 0, remove_size);
+            _adm_hdr->free_list = end;
         }
         return ADM_ERR_SUCCESS;
     }
@@ -187,7 +170,7 @@ ADMERR adm_reset() {
     /* clear out */
     memset((void*)_adm_start, 0, _adm_len);
     /* set freelist */
-    _adm_hdr->free_list = (uintptr_t)(_adm_start + sizeof(AdmHeader));
+    _adm_hdr->free_list = sizeof(AdmHeader);
 
     return ADM_ERR_SUCCESS;
 }
@@ -225,6 +208,21 @@ bool adm_region_exists(uintptr_t uid) {
     return false;
 }
 
+/* bytes per element of a static length array */
+static size_t adm_elem_size(AdmDataTypes type) {
+    switch (type) {
+    case TYPE_STATIC_ARR_16:
+        return 2;
+    case TYPE_STATIC_ARR_32:
+        return 4;
+    case TYPE_STATIC_ARR_64:
+        return 8;
+    default:
+        return 1;
+    }
+}
+
+/* The size in the metadata of a static length array is its number of elements. */
 ADMERR adm_gen_type_info(AdmTypeInfo* type_info, size_t* count) {
     if (!enabled || !_adm_hdr) {
         return ADM_ERR_NOT_AVAILABLE;
@@ -233,7 +231,7 @@ ADMERR adm_gen_type_info(AdmTypeInfo* type_info, size_t* count) {
         AdmRegionHeader* region_hdr = adm_get_region_header(i);
         type_info[i].uid            = _adm_hdr->uid_tbl[i];
         type_info[i].type           = region_hdr->type;
-        type_info[i].size           = region_hdr->size;
+        type_info[i].size           = region_hdr->size / adm_elem_size(region_hdr->type);
         type_info[i].offset         = region_hdr->offset;
     }
     *count = _adm_hdr->data_n;
