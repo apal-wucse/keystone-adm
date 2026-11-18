@@ -30,13 +30,14 @@ void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm) {
     SBI_TLB_INFO_INIT(&tlb_info, type, 0, region_idx, perm, sbi_pmp_ipi_local_update, source_hart);
     sbi_tlb_request(mask, 0, &tlb_info);
 
-    /* START_PENDING harts are not reached above: resend once they are STARTED */
+    /* A hart outside the mask may have been START_PENDING with the old value
+     * restored: resend to every such hart once it is no longer START_PENDING
+     * (sbi_tlb_request skips a hart that is not interruptible). */
     sbi_hartmask_for_each_hart(h, &dom->assigned_harts) {
-        if (h == source_hart || sbi_hsm_hart_get_state(dom, h) != SBI_HSM_STATE_START_PENDING)
+        if (h == source_hart || (h < BITS_PER_LONG && (mask >> h) & 1UL))
             continue;
         while (sbi_hsm_hart_get_state(dom, h) == SBI_HSM_STATE_START_PENDING)
             cpu_relax();
-        if (sbi_hsm_hart_get_state(dom, h) == SBI_HSM_STATE_STARTED)
-            sbi_tlb_request(1UL, h, &tlb_info);
+        sbi_tlb_request(1UL, h, &tlb_info);
     }
 }
