@@ -1,8 +1,9 @@
 /*
  * The enclave-side library (sdk/src/edge/adm.c) on an ADM the SM accepts
- * (MODEL.typ 6.2): adm_new_region and adm_remove_region write only inside
- * the ADM, keep the other regions and their data where they are, and leave
- * an ADM that the SM accepts with the metadata of adm_gen_type_info.
+ * (MODEL.typ 6.2): adm_new_region, adm_set_bytes and adm_remove_region
+ * write only inside the ADM, keep the other regions and their data where
+ * they are, and leave an ADM that the SM accepts with the metadata of
+ * adm_gen_type_info.  adm_reset leaves an empty ADM that the SM accepts.
  * The new region has a non-zero uid and a size that fits its type.
  * The ADM is the first S bytes of a buffer of S_FIX bytes, S <= S_FIX.
  */
@@ -34,6 +35,14 @@ void* memset(void* dst, int c, size_t n) {
     uint8_t* d = dst;
     for (size_t i = 0; i < n; i++)
         d[i] = (uint8_t)c;
+    return dst;
+}
+
+void* memcpy(void* dst, const void* src, size_t n) {
+    uint8_t* d       = dst;
+    const uint8_t* c = src;
+    for (size_t i = 0; i < n; i++)
+        d[i] = c[i];
     return dst;
 }
 
@@ -100,10 +109,41 @@ void harness(void) {
     uintptr_t uid, p = 0;
     size_t size;
     AdmDataTypes type;
-    _Bool remove;
+    unsigned op;
+    _Bool remove = op == 0, kept = 1;
+    uint8_t src[S_FIX];
     ADMERR err     = ADM_ERR_SUCCESS;
     uintptr_t uid0 = n0 > 0 ? h->uid_tbl[0] : ADM_UID_UNUSED;
-    if (remove) {
+    if (op == 2) {
+        size_t j;
+        __CPROVER_assume(uid != ADM_UID_UNUSED && size <= S_FIX && j < size);
+        err = adm_set_bytes(src, size, uid);
+        if (err == ADM_ERR_SUCCESS) {
+            uintptr_t q = 0;
+            size_t qsize;
+            A(adm_get_region(uid, &q, &qsize) == ADM_ERR_SUCCESS && qsize == size &&
+                  q >= (uintptr_t)adm + HDR + RHDR && size <= S && q - (uintptr_t)adm <= S - size,
+              "set: the region is inside the ADM and found by its uid");
+            A(*(uint8_t*)(q + j) == src[j], "set: the region holds the bytes");
+            A(h->data_n == n0 + 1, "set: one region more");
+        } else {
+            A(h->data_n == n0, "set: no region is added on failure");
+        }
+#ifdef REACH
+        A(err != ADM_ERR_SUCCESS, "reach: bytes are set");
+#endif
+    } else if (op == 3) {
+        size_t j;
+        __CPROVER_assume(j < S);
+        kept = 0;
+        err  = adm_reset();
+        A(err == ADM_ERR_SUCCESS && h->data_n == 0 && h->free_list == HDR,
+          "reset: the ADM is empty");
+        A(j >= HDR ? adm[j] == 0 : 1, "reset: the data is cleared");
+#ifdef REACH
+        A(n0 == 0, "reach: an ADM with a region is reset");
+#endif
+    } else if (remove) {
         err = adm_remove_region(uid);
         A(h->data_n == (err == ADM_ERR_SUCCESS ? n0 - 1 : n0), "remove: one region less");
 #ifdef REACH
@@ -136,7 +176,7 @@ void harness(void) {
     if (S < S_FIX)
         A(adm[g] == gval, "nothing is written after the ADM");
 
-    if (kuid != ADM_UID_UNUSED && !(remove && err == ADM_ERR_SUCCESS && uid == kuid)) {
+    if (kept && kuid != ADM_UID_UNUSED && !(remove && err == ADM_ERR_SUCCESS && uid == kuid)) {
         uintptr_t q = 0;
         size_t qsize;
         A(adm_get_region(kuid, &q, &qsize) == ADM_ERR_SUCCESS && qsize == ksize && q == kptr,

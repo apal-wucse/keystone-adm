@@ -654,32 +654,33 @@ Bounds: B6 holds for at most 6 regions (about 68 minutes with 6). Each condition
 
 === The enclave-side library (\#16)
 
-`admlib.c` starts from any ADM that the validation function of the SM accepts (with any metadata), calls `adm_new_region` or `adm_remove_region` of `sdk/src/edge/adm.c` once with any arguments, and checks the following. The validation function is that of `sm/src/adm.c`, as it is.
+`admlib.c` starts from any ADM that the validation function of the SM accepts (with any metadata), calls one of `adm_new_region`, `adm_set_bytes`, `adm_remove_region` and `adm_reset` of `sdk/src/edge/adm.c` once with any arguments, and checks the following. The validation function is that of `sm/src/adm.c`, as it is.
 
 - Nothing is written outside the ADM. The ADM is the first S bytes (any S) of a buffer of `S_FIX` bytes; accesses outside the buffer are caught by the pointer checks of CBMC, and a byte after the ADM is the same before and after the operation.
 - The other regions remain, at the same place and with the same contents.
 - After the operation, the ADM passes validation again with the metadata of `adm_gen_type_info`: the library preserves WF.
-- An added region is inside the ADM and is found by its UID.
+- An added region is inside the ADM and is found by its UID. With `adm_set_bytes`, the region holds the given bytes.
+- After `adm_reset`, there is no region, everything after the header is 0, and the ADM passes validation (the other regions are not required to remain).
 
-The region to add has a non-zero UID and a size that fits its type. `memset` is replaced by a byte loop.
+The region to add has a non-zero UID and a size that fits its type. `memset` and `memcpy` are replaced by byte loops.
 
 #table(
   columns: (3fr, 2fr, 8fr),
   table.header([*Regions before the operation*], [*`S_FIX`*], [*Result*]),
-  [at most 1], [304], [Every property holds (about 30 seconds). An addition and a removal are reached],
-  [at most 2], [336], [Every property holds (about 1 minute). An addition, a removal, and the removal of a region other than the last are reached],
-  [at most 4], [512], [As above (about 11 minutes)],
-  [at most 6], [640], [As above (about 34 minutes)],
+  [at most 1], [304], [Every property holds (about 4 minutes). An addition, a setting of bytes, a removal, and a reset of an ADM with a region are reached],
+  [at most 2], [336], [Every property holds (about 9 minutes). In addition to the above, the removal of a region other than the last is reached],
+  [at most 4], [512], [As above (about 90 minutes)],
+  [at most 6], [640], [As above (about 7 hours 46 minutes)],
 )
 
-`make cbmc` uses the setting of the second row (`LIB_N` and `LIB_S` change it). With the library and the validation function before the fix, the setting of the first row gives counterexamples, including writes outside the ADM (34 of 644 properties).
+The times include the reachability runs. `make cbmc` uses the setting of the second row (`LIB_N` and `LIB_S` change it). With the library and the validation function before the fix, the setting of the first row gives counterexamples, including writes outside the ADM (34 of 644 properties, with the harness for addition and removal only).
 
 This check found two more errors, both fixed.
 
 - An ADM with a region header at an offset that is not a multiple of 8 passed validation, and removing its last region left `free_list` misaligned. The position of the region headers was added to W12. The SM reads the region headers in M-mode too, so aligned headers are also what the SM wants.
 - `adm_gen_type_info` and the runtime put the size in bytes into the metadata. The SM compares the size of a static-length array (`STATIC_ARR_16/32/64`) as a number of elements (`SizeOK`, Section 6.2), so that an ADM with a region of these types always failed validation after a writable share. The library now gives the number of elements, and the runtime calls `adm_gen_type_info`.
 
-Bounds: the number of regions and the size of the ADM are small (table above). The check covers adding and removing a region; `adm_set_bytes` and `adm_reset` are not included. The allocator inside the ADM (`adm_alloc.c`) is out of scope (Section 1.2).
+Bounds: the number of regions and the size of the ADM are small (table above). The allocator inside the ADM (`adm_alloc.c`) is out of scope (Section 1.2).
 
 A removal does not move the other regions. Before the fix it moved the later regions down, which invalidated, on every removal, the pointers into them, the offsets inside the ADM passed to the host, and the pointers kept by the allocator. In exchange, the space of a removed region that is not the last one is reused only once all the later regions are removed. The region the runtime uses for syscalls is normally the last one, so such holes do not accumulate.
 
@@ -733,6 +734,5 @@ So the cause of \#13 (a resume accepted in the middle of a stop), and that the f
 == 10.6 Remaining work
 
 + Check H8 mechanically. The fix of \#15, and that the other SBI calls taking an address (create, attest, stop with sharing, the plugins) copy through MPRV, are established by code reading. The attack of \#15 itself was not run (it needs a malicious runtime).
-+ Check the remaining functions of the library (`adm_set_bytes`, `adm_reset`).
 
 #rocq-appendix("en")

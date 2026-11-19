@@ -149,14 +149,15 @@ LIB_S ?= 336
 CBMC_LIB_LOOPS := $(foreach l,$(CBMC_N_LOOPS),validate_adm_regions.$(l)) adm_get_region.0 \
 	adm_remove_region.0 adm_remove_region.1 adm_gen_type_info.0 adm_setup_new_hdr.0
 CBMC_LIB_UNWIND = $(subst $(eval) ,$(comma),$(foreach l,$(CBMC_LIB_LOOPS),$(l):$(shell echo $$(($(LIB_N) + 2)))) \
-	memset.0:$(shell echo $$(($(LIB_S) + 1))))
+	memset.0:$(shell echo $$(($(LIB_S) + 1))) memcpy.0:$(shell echo $$(($(LIB_S) + 1))))
 CBMC_LIB_FLAGS = --function harness -I ../sdk/include/edge -I cbmc/stubs -I ../sm/src \
 	-D__riscv_xlen=64 --unwind 17 --unwinding-assertions --unwindset $(CBMC_LIB_UNWIND) \
 	-DN_MAX=$(LIB_N) -DS_FIX=$(LIB_S)
 CBMC_LIB_SAFETY := --pointer-check --bounds-check --pointer-overflow-check
 CBMC_LIB_SRC := cbmc/admlib.c cbmc/admlib_sm.c ../sdk/src/edge/adm.c ../sm/src/adm.c
 # the last witness needs two regions
-CBMC_LIB_REACH = "a region is added" "a region is removed" \
+CBMC_LIB_REACH = "a region is added" "a region is removed" "bytes are set" \
+	"an ADM with a region is reset" \
 	$(if $(filter 1,$(LIB_N)),,"a region before another one is removed")
 
 # number of allocations and frees in the PMP harness
@@ -174,8 +175,8 @@ CBMC_PMP_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv
 #        uid is never accepted
 #   lib  the enclave-side library on an ADM the SM accepts, with at most
 #        LIB_N regions in LIB_S bytes: writes stay inside the ADM, the other
-#        regions are kept, the SM accepts the result; witnesses that a
-#        region is added and removed
+#        regions are kept, the SM accepts the result (add, set bytes,
+#        remove, reset); witnesses that each operation takes effect
 #   pmp  C1, C2, C3, C5 for the region allocator after K operations, and
 #        witnesses that TOR and NAPOT regions and out-of-order frees are
 #        covered
