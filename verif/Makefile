@@ -1,12 +1,13 @@
-DOCS := MODEL MODEL.en
+DOCS := MODEL MODEL.en PROOF PROOF.en
 PDFS := $(addsuffix .pdf,$(DOCS))
+PYTHON ?= python3
 
 TYPST ?= typst
 # Directory containing the IPAex fonts; set by the verif devshell
 VERIF_FONTS_DIR ?= $(error VERIF_FONTS_DIR is not set; enter the verif devshell)
 TYPST_FLAGS = --ignore-system-fonts --font-path "$(VERIF_FONTS_DIR)"
 
-.PHONY: all docs check reach prove cbmc clean
+.PHONY: all docs check reach prove prove-figures cbmc clean
 all: docs
 
 docs: $(PDFS)
@@ -16,6 +17,15 @@ docs: $(PDFS)
 	@out=$$($(TYPST) compile $(TYPST_FLAGS) $< $@ 2>&1); st=$$?; \
 	[ -z "$$out" ] || printf '%s\n' "$$out" >&2; \
 	[ $$st -eq 0 ] && [ -z "$$out" ] || { rm -f $@; exit 1; }
+
+# PROOF: the proofs of rocq/ADM.v and ADMRegions.v as figures of natural
+# deduction; the figures are generated.  Without --no-pdf-tags the
+# structure tree of the formulas takes three quarters of the file.
+PROOF.pdf PROOF.en.pdf: docs/proof.typ docs/prooftree.typ docs/proof-gen.typ
+PROOF.pdf PROOF.en.pdf: TYPST_FLAGS += --no-pdf-tags
+
+docs/proof-gen.typ: docs/prooftree.py
+	$(PYTHON) $< typ > $@
 
 # --- TLA+ model checking -----------------------------------------------------
 
@@ -168,6 +178,15 @@ CBMC_PMP_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv
 	'-DTARGET_PLATFORM_HEADER="platform/generic/platform.h"' -DK=$(K) \
 	--unwind 60 --unwinding-assertions
 
+# entries of the enclave table in the H8 harness (16 and above: an id
+# outside the table); all of them: H8_EIDS="$(seq -s ' ' 0 16) 4294967295"
+H8_EIDS ?= 0 15 16
+CBMC_H8_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv_xlen=64 \
+	'-DTARGET_PLATFORM_HEADER="platform/generic/platform.h"' \
+	--pointer-check --bounds-check --unwind 17 --unwinding-assertions
+CBMC_H8_REACH := "a sealing key is derived" "a report is copied out" "an enclave is created" \
+	"an enclave is destroyed" "an enclave stops with metadata" "a plugin copies a word out"
+
 # A report: the failed properties of each harness (logs in cbmc/.out).
 #   b7   B7 for any S > 0: memory safety, no write, overflow, termination
 #   b6   B6 (W1-W12) for at most N_MAX regions, a witness that a valid ADM
@@ -178,17 +197,13 @@ CBMC_PMP_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv
 #        regions are kept, the SM accepts the result (add, set bytes,
 #        remove, reset); witnesses that each operation takes effect
 #   pmp  C1, C2, C3, C5 for the region allocator after K operations, and
-# entries of the enclave table in the H8 harness (16 and above: an id
-# outside the table); all of them: H8_EIDS="$(seq -s ' ' 0 16) 4294967295"
-H8_EIDS ?= 0 15 16
-CBMC_H8_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv_xlen=64 \
-	'-DTARGET_PLATFORM_HEADER="platform/generic/platform.h"' \
-	--pointer-check --bounds-check --unwind 17 --unwinding-assertions
-CBMC_H8_REACH := "a sealing key is derived" "a report is copied out" "an enclave is created" \
-	"an enclave is destroyed" "an enclave stops with metadata" "a plugin copies a word out"
-
 #        witnesses that TOR and NAPOT regions and out-of-order frees are
 #        covered
+#   h8   H8 for every SBI function with arbitrary arguments: the SM touches
+#        memory outside its own only through the MPRV copy, inside the EPM
+#        of the caller, or inside a registered region; witnesses; the copy
+#        loops of mprv.h; and a control: without the check of
+#        get_sealing_key (qemu/unfix-15.patch) the harness must fail
 cbmc:
 	@mkdir -p $(CBMC_OUT)
 	@echo "=== B7"; $(CBMC) $(CBMC_FLAGS) $(CBMC_SAFETY) \
@@ -199,11 +214,6 @@ cbmc:
 		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6.log 2>&1; \
 		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/b6.log
 	@$(CBMC) $(CBMC_FLAGS) -DN_MAX=$(N_MAX) -DREACH --unwindset $(CBMC_UNWIND_N) \
-#   h8   H8 for every SBI function with arbitrary arguments: the SM touches
-#        memory outside its own only through the MPRV copy, inside the EPM
-#        of the caller, or inside a registered region; witnesses; the copy
-#        loops of mprv.h; and a control: without the check of
-#        get_sealing_key (qemu/unfix-15.patch) the harness must fail
 		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6-reach.log 2>&1; \
 		if grep -q 'reach: .*: FAILURE' $(CBMC_OUT)/b6-reach.log; \
 		then echo "reached:     valid ADM with $(N_MAX) regions"; \
@@ -228,16 +238,6 @@ cbmc:
 			if grep -q "reach: $$r.*: FAILURE" $(CBMC_OUT)/pmp-reach.log; \
 			then echo "reached:     $$r"; else echo "NOT REACHED: $$r"; fi; \
 		done
-
-# --- Rocq proofs ---------------------------------------------------------------
-
-ROCQ ?= rocq
-ROCQ_FLAGS := -Q rocq ADMVerif
-ROCQ_LOG := rocq/.assumptions.log
-
-rocq/%.vo: rocq/%.v
-	$(ROCQ) compile $(ROCQ_FLAGS) $<
-
 	@for e in $(H8_EIDS); do echo "=== H8 (EID = $$e)"; \
 		$(CBMC) $(CBMC_H8_FLAGS) -DEID=$$e cbmc/h8.c > $(CBMC_OUT)/h8-$$e.log 2>&1; \
 		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/h8-$$e.log; \
@@ -263,6 +263,16 @@ rocq/%.vo: rocq/%.v
 		> $(CBMC_OUT)/h8-unfix.log 2>&1; \
 		if grep -q 'seal: the key is written inside the EPM: FAILURE' $(CBMC_OUT)/h8-unfix.log; \
 		then echo "fails as expected"; else echo "NOT DETECTED"; fi
+
+# --- Rocq proofs ---------------------------------------------------------------
+
+ROCQ ?= rocq
+ROCQ_FLAGS := -Q rocq ADMVerif
+ROCQ_LOG := rocq/.assumptions.log
+
+rocq/%.vo: rocq/%.v
+	$(ROCQ) compile $(ROCQ_FLAGS) $<
+
 rocq/ADMRegions.vo: rocq/ADM.vo
 
 # Design model: every property is proved for all reachable states, and no
@@ -276,7 +286,23 @@ prove: rocq/ADM.vo rocq/ADMRegions.vo
 	 t=$$(grep -c '^Print Assumptions' rocq/Assumptions.v); \
 	 test "$$n" = "$$t" || { echo "some theorem depends on an axiom"; exit 1; }
 
+# The figures of PROOF.pdf as Rocq proofs: one lemma for each figure, with
+# one tactic step for each inference.
+#   FigADM.v      the definitions of ADM.v with the proofs of the figures in
+#                 place of its own; the theorems of ADM.v follow, with no axiom
+#   FigRegions.v  ADMRegions.v with the lemmas of its figures
+FIG := rocq/.fig
+prove-figures: rocq/ADM.vo
+	@mkdir -p $(FIG)
+	$(PYTHON) docs/prooftree.py rocq rocq/ADM.v rocq/ADMRegions.v $(FIG)
+	cd $(FIG) && $(ROCQ) compile FigADM.v > adm.log 2>&1 || { tail adm.log; exit 1; }
+	cd $(FIG) && $(ROCQ) compile -Q .. ADMVerif FigRegions.v > regions.log 2>&1 || { tail regions.log; exit 1; }
+	@n=$$(grep -c '^Closed under the global context' $(FIG)/adm.log); \
+	 t=$$(grep -c '^Print Assumptions' $(FIG)/FigADM.v); \
+	 test "$$n" = "$$t" || { echo "some theorem depends on an axiom"; exit 1; }; \
+	 echo "$$(cat $(FIG)/Fig*.v | grep -c '^Lemma fig') lemmas of the figures proved; $$n theorems closed"
+
 clean:
-	rm -f $(PDFS)
-	rm -rf tla/.tlc cbmc/.out
+	rm -f $(PDFS) docs/proof-gen.typ
+	rm -rf tla/.tlc cbmc/.out $(FIG)
 	rm -f rocq/*.vo rocq/*.vok rocq/*.vos rocq/*.glob rocq/.*.aux $(ROCQ_LOG)

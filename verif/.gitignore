@@ -7,3 +7,5 @@
 /rocq/.*.aux
 /rocq/.assumptions.log
 /cbmc/.out/
+/docs/proof-gen.typ
+/rocq/.fig/

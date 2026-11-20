@@ -5,6 +5,7 @@
   cbmc,
   gnumake,
   ipaexfont,
+  python3,
   rocq-core,
   tlaplus,
   typst,
@@ -14,6 +15,7 @@ mkShell {
   nativeBuildInputs = [
     cbmc
     gnumake
+    python3
     rocq-core
     tlaplus
     typst
