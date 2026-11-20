@@ -10,7 +10,9 @@
 #define UID_TEST        7
 
 /* The SM accepts an identifier of at most 1024 bytes.
- * 0, or: 1 no key, 2 the key is all zero, 4 a longer identifier is accepted. */
+ * 0, or: 1 no key, 2 the key is all zero, 4 a longer identifier is accepted.
+ * A runtime with verif/qemu/seal-outside.patch asks for the key of a 9-byte
+ * identifier at an address outside the EPM: 32 refused, 64 nothing written. */
 static int check_sealing_key(void) {
     static struct sealing_key key;
     static char ident[2000] = "admfail";
@@ -23,6 +25,9 @@ static int check_sealing_key(void) {
         ret |= 2;
     if (!get_sealing_key(&key, sizeof(key), ident, sizeof(ident)))
         ret |= 4;
+    int out = get_sealing_key(&key, sizeof(key), ident, 9);
+    if (out)
+        ret |= out == 77 ? 64 : 32;
     return ret;
 }
 
