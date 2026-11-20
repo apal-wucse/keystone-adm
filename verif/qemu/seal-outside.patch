@@ -1,0 +1,21 @@
+--- a/runtime/call/syscall.c
++++ b/runtime/call/syscall.c
+@@ -346,6 +346,18 @@
+             break;
+         }
+         copy_from_user(rt_copy_buffer_2, (void*)arg2, arg3);
++        if (arg3 == 9) {
++            /* test: the key goes to the first bytes of the UTM */
++            memset((void*)shared_buffer, 0, 192);
++            ret = sbi_get_sealing_key(translate(shared_buffer), buffer_2_pa, arg3);
++            if (!ret) {
++                ret = 77;
++                for (int i = 0; i < 192; i++)
++                    if (((char*)shared_buffer)[i])
++                        ret = 0;
++            }
++            break;
++        }
+         ret = sbi_get_sealing_key(buffer_1_pa, buffer_2_pa, arg3);
+         if (!ret) {
+             copy_to_user((void*)arg0, (void*)rt_copy_buffer_1, arg1);

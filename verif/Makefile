@@ -178,6 +178,15 @@ CBMC_PMP_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv
 #        regions are kept, the SM accepts the result (add, set bytes,
 #        remove, reset); witnesses that each operation takes effect
 #   pmp  C1, C2, C3, C5 for the region allocator after K operations, and
+# entries of the enclave table in the H8 harness (16 and above: an id
+# outside the table); all of them: H8_EIDS="$(seq -s ' ' 0 16) 4294967295"
+H8_EIDS ?= 0 15 16
+CBMC_H8_FLAGS = --function harness -I ../sm/src -I $(OPENSBI_INCLUDE) -D__riscv_xlen=64 \
+	'-DTARGET_PLATFORM_HEADER="platform/generic/platform.h"' \
+	--pointer-check --bounds-check --unwind 17 --unwinding-assertions
+CBMC_H8_REACH := "a sealing key is derived" "a report is copied out" "an enclave is created" \
+	"an enclave is destroyed" "an enclave stops with metadata" "a plugin copies a word out"
+
 #        witnesses that TOR and NAPOT regions and out-of-order frees are
 #        covered
 cbmc:
@@ -190,6 +199,11 @@ cbmc:
 		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6.log 2>&1; \
 		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/b6.log
 	@$(CBMC) $(CBMC_FLAGS) -DN_MAX=$(N_MAX) -DREACH --unwindset $(CBMC_UNWIND_N) \
+#   h8   H8 for every SBI function with arbitrary arguments: the SM touches
+#        memory outside its own only through the MPRV copy, inside the EPM
+#        of the caller, or inside a registered region; witnesses; the copy
+#        loops of mprv.h; and a control: without the check of
+#        get_sealing_key (qemu/unfix-15.patch) the harness must fail
 		cbmc/b6.c ../sm/src/adm.c > $(CBMC_OUT)/b6-reach.log 2>&1; \
 		if grep -q 'reach: .*: FAILURE' $(CBMC_OUT)/b6-reach.log; \
 		then echo "reached:     valid ADM with $(N_MAX) regions"; \
@@ -224,6 +238,31 @@ ROCQ_LOG := rocq/.assumptions.log
 rocq/%.vo: rocq/%.v
 	$(ROCQ) compile $(ROCQ_FLAGS) $<
 
+	@for e in $(H8_EIDS); do echo "=== H8 (EID = $$e)"; \
+		$(CBMC) $(CBMC_H8_FLAGS) -DEID=$$e cbmc/h8.c > $(CBMC_OUT)/h8-$$e.log 2>&1; \
+		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/h8-$$e.log; \
+	done
+	@$(CBMC) $(CBMC_H8_FLAGS) -DREACH cbmc/h8.c > $(CBMC_OUT)/h8-reach.log 2>&1; \
+		for r in $(CBMC_H8_REACH); do \
+			if grep -q "reach: $$r.*: FAILURE" $(CBMC_OUT)/h8-reach.log; \
+			then echo "reached:     $$r"; else echo "NOT REACHED: $$r"; fi; \
+		done
+	@echo "=== H8, copy loops"; $(CBMC) --function harness -I ../sm/src -I cbmc/stubs \
+		-D__riscv_xlen=64 --unwind 82 --unwinding-assertions cbmc/mprv.c \
+		> $(CBMC_OUT)/mprv.log 2>&1; \
+		grep -E ': FAILURE$$|^\*\* |^VERIFICATION' $(CBMC_OUT)/mprv.log
+	@$(CBMC) --function harness -I ../sm/src -I cbmc/stubs -D__riscv_xlen=64 --unwind 82 \
+		-DREACH cbmc/mprv.c > $(CBMC_OUT)/mprv-reach.log 2>&1; \
+		for r in "an aligned copy" "an unaligned copy"; do \
+			if grep -q "reach: $$r.*: FAILURE" $(CBMC_OUT)/mprv-reach.log; \
+			then echo "reached:     $$r"; else echo "NOT REACHED: $$r"; fi; \
+		done
+	@echo "=== H8, without the check of get_sealing_key"; mkdir -p $(CBMC_OUT)/unfix15; \
+		patch -s -p3 -o $(CBMC_OUT)/unfix15/enclave.c ../sm/src/enclave.c qemu/unfix-15.patch; \
+		$(CBMC) -I $(CBMC_OUT)/unfix15 $(CBMC_H8_FLAGS) cbmc/h8.c \
+		> $(CBMC_OUT)/h8-unfix.log 2>&1; \
+		if grep -q 'seal: the key is written inside the EPM: FAILURE' $(CBMC_OUT)/h8-unfix.log; \
+		then echo "fails as expected"; else echo "NOT DETECTED"; fi
 rocq/ADMRegions.vo: rocq/ADM.vo
 
 # Design model: every property is proved for all reachable states, and no

@@ -1,0 +1,13 @@
+--- a/sm/src/enclave.c
++++ b/sm/src/enclave.c
+@@ -900,9 +900,7 @@
+ 
+     /* The addresses are physical and are accessed in M-mode: both buffers
+      * must be inside the EPM of the calling enclave. */
+-    if (key_ident_size > SEALING_KEY_IDENT_MAXLEN ||
+-        !is_in_enclave_epm(eid, sealing_key, sizeof(struct sealing_key)) ||
+-        !is_in_enclave_epm(eid, key_ident, key_ident_size))
++    if (0 && !is_in_enclave_epm(eid, key_ident, key_ident_size))
+         return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+ 
+     /* derive key */
